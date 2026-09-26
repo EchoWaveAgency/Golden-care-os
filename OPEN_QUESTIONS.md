@@ -31,3 +31,11 @@ Each item has a configurable mechanism already (or planned). Placeholders are cl
 
 ## Brand
 20. Patient-facing tagline: "A place where beauty meets wellness" (logo) vs "نرعاك لحياة أفضل" (service promise). Both are stored on the organization and editable.
+
+## Website (added session 2)
+21. Official mobile and WhatsApp numbers, Google Maps link and working hours (set in `/os/settings?tab=site`; nothing is shown until set).
+22. Legal review of privacy, terms, appointment and communication-consent texts (`src/lib/site/legal.ts`) before launch.
+23. Real specialty page content, doctor biographies and photos — approved by the Medical Director (demo content must be replaced).
+24. Response-time SLA for new inquiries (default 30 minutes) and working-hours rules for it.
+25. Production domain (`NEXT_PUBLIC_SITE_URL`) and analytics/pixel IDs.
+26. Whether online booking requests should hold the slot until confirmed (currently: they do not; staff confirm and the slot is booked at conversion).

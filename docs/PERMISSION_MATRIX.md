@@ -24,6 +24,9 @@ Deny by default. A user's effective permissions = union of active role grants (`
 | hr_manager | مدير الموارد البشرية | staff.read (HR module in Phase 2) |
 | inventory_controller | مراقب المخزون | — (Phase 2) |
 | security_auditor | مراجع أمن المعلومات | audit.read |
+| marketing | التسويق والمحتوى | content.edit, content.marketing_approve, content.publish, marketing.read, lead.read |
+
+Added in 0010: patient_relations and front_desk get lead.read/lead.write; medical_director gets content.edit and content.medical_approve; center_director gets content.publish, marketing.read, lead.read; operations_manager gets lead.read, marketing.read; owner gets marketing.read. Anonymous visitors: only the public website functions.
 
 ## Attribute rules (ABAC) enforced in the database
 - **Doctor sees a patient only while treating them** — an appointment or encounter links them (`app.is_treating_doctor`).

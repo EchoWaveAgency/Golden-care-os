@@ -8,7 +8,7 @@ A production-grade healthcare operating system for Golden Care Clinics, built on
 
 ---
 
-## What works today — ما يعمل الآن (Phase 1, milestone 1)
+## What works today — ما يعمل الآن
 
 | Area | Status |
 |---|---|
@@ -23,6 +23,11 @@ A production-grade healthcare operating system for Golden Care Clinics, built on
 | Double-entry general ledger, automatic balanced journals, period locks, trial balance | ✅ |
 | Append-only audit trail written by database triggers | ✅ |
 | Executive command center (live figures only) | ✅ First version |
+| **Public website** `/ar` `/en` — specialties, doctors, offers, booking from live availability, landing pages, SEO | ✅ |
+| **Website CMS** with Draft → Medical Review → Marketing Review → Published, versions, scheduling | ✅ |
+| **Patient Relations inbox** — website/campaign requests with UTM, SLA, one-click conversion to appointment | ✅ |
+| Settings — services, effective-dated prices, doctor schedules, leave/holidays, contact details | ✅ |
+| Patient portal, online payments, HR/payroll, inventory, laser, settlements | ⏳ next milestones |
 
 Everything else in the master specification is planned in phases — see `PROGRESS.md`.
 
@@ -42,11 +47,13 @@ npm run demo:data        # synthetic demo users and data (password printed)
 npm run build && npx next start -p 3100
 ```
 
+Website: http://localhost:3100/ar · Staff system: http://localhost:3100/os
+
 Requires PostgreSQL 16 server binaries (`/usr/lib/postgresql/16/bin`). On a hosted Supabase project, see `docs/DEPLOYMENT_RUNBOOK.md`.
 
 ### Demo accounts (synthetic data only)
 
-`reception@`, `dr.derm@`, `dr.dental@`, `dr.obgyn@`, `nurse@`, `cashier@`, `accountant@`, `auditor@`, `owner@`, `director@`, `admin@`, `relations@` — all `@demo.goldencare.local`.
+`reception@`, `relations@`, `marketing@`, `meddir@`, `dr.derm@`, `dr.dental@`, `dr.obgyn@`, `nurse@`, `cashier@`, `accountant@`, `auditor@`, `owner@`, `director@`, `admin@` — all `@demo.goldencare.local`.
 
 ## Repository map
 
@@ -54,11 +61,13 @@ Requires PostgreSQL 16 server binaries (`/usr/lib/postgresql/16/bin`). On a host
 supabase/migrations/   schema, RLS, triggers, RPCs (source of truth)
 supabase/seed.sql      organization, branch, starter chart of accounts, fiscal periods
 supabase/tests/        SQL test suites + concurrency checks
-src/app/(app)/         role workspaces (reception, patients, doctor, billing, cashier, accounting, audit, executive)
+src/app/os/(shell)/    staff workspaces (reception, leads, patients, doctor, billing, cashier, accounting, content, settings, audit, executive)
+src/app/(site)/[lang]/ public website (ar/en): home, specialties, doctors, offers, book, contact, landing pages, policies
 src/app/actions/       server actions (all writes go through the signed-in user's session → RLS applies)
 src/lib/               i18n, formatting, normalization, navigation, error mapping
 scripts/               db-test, local stack, demo data
 docs/                  architecture, permissions, accounting events, security, tests, deployment, Arabic user guide
+docs/website/          website architecture, sitemap, CMS model, landing pages, analytics, SEO, security, UAT
 ```
 
 ## Non-negotiables built in

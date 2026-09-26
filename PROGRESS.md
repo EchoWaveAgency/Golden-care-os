@@ -45,3 +45,23 @@ Scope added from master prompt v3 section 20 (`docs/specs/WEBSITE_PORTAL_SPEC.md
 - **Phase 3b** — online booking from real availability (schedules + rooms + devices), offers with price/terms snapshot.
 - **Phase 3c** — patient portal (separate patient auth context, release gate, family access grants, OTP adapter, financial account, online payments).
 Prerequisites from Phase 1 M2: settings screens (services/prices/schedules), refunds & credit notes, specialty templates + prescriptions (release source).
+
+## Session 2 — 2026-09-26: website, CMS, Patient Relations, settings
+
+### Delivered
+- Staff system moved to `/os`; public website at `/ar` and `/en` on the same database.
+- Migration 0010: content workflow with medical approval and published snapshots, offers with capacity and frozen price, landing pages, leads funnel with SLA and activity timeline, live availability from schedules/exceptions/bookings, anonymous public API, new `marketing` role and 7 permissions.
+- Staff: Patient Relations inbox (`/os/leads`) with one-click conversion to patient + appointment; website CMS (`/os/content`) with approval steps and version history; settings (`/os/settings`) for services, effective-dated prices, doctor schedules, leave/holidays, contact details and tracking IDs.
+- Website: home, specialties (+ detail with services, prices, doctors, offers, FAQ, preparation, disclaimer), doctors, offers, booking wizard on real availability, contact/callback, about, 4 policy pages (legal review required), landing pages with UTM capture and real countdown, sitemap, robots, hreflang, JSON-LD, consent-gated analytics, WhatsApp button.
+- Demo website content is created through the real approval workflow (marketing + medical director demo users).
+
+### Verified
+- SQL suites 6/6 + concurrency ✅ (new: `06_website_crm.sql`).
+- Unit tests 18/18, typecheck, lint, production build ✅.
+- Browser: staff journey 27/27 ✅ and website journey 17/17 ✅ (visitor books → inbox with UTM → conversion → CMS edit keeps approved version live).
+
+### Not built yet (honest scope)
+Patient portal (OTP, release gate, family access, financial account), online payments/deposits, medical articles & instruction library, devices page, testimonials, A/B tests, marketing dashboard, redirect manager, notifications (WhatsApp/SMS), and all Phase 2 modules (HR, payroll, inventory, laser, settlements).
+
+### Next milestone (proposed)
+Patient portal + release gate + notifications adapter (WhatsApp Business) + prescriptions (release source) + marketing funnel dashboard.
