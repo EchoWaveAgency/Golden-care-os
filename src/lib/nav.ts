@@ -8,6 +8,7 @@ export type NavItem = { href: string; label: DictKey; section: DictKey; any: str
 export const NAV: NavItem[] = [
   { href: "/os/executive", label: "nav.executive", section: "nav.section.governance", any: ["dashboard.executive"] },
   { href: "/os/reception", label: "nav.reception", section: "nav.section.front", any: ["appointment.write"] },
+  { href: "/os/leads", label: "nav.leads", section: "nav.section.front", any: ["lead.read"] },
   { href: "/os/patients", label: "nav.patients", section: "nav.section.front", any: ["patient.read"] },
   { href: "/os/appointments/new", label: "nav.appointments", section: "nav.section.front", any: ["appointment.write"] },
   { href: "/os/doctor", label: "nav.doctor", section: "nav.section.clinical", any: ["clinical.write.own"] },
@@ -15,6 +16,8 @@ export const NAV: NavItem[] = [
   { href: "/os/cashier", label: "nav.cashier", section: "nav.section.finance", any: ["cash.session", "cash.supervise"] },
   { href: "/os/accounting", label: "nav.accounting", section: "nav.section.finance", any: ["accounting.read"] },
   { href: "/os/audit", label: "nav.audit", section: "nav.section.governance", any: ["audit.read"] },
+  { href: "/os/content", label: "nav.content", section: "nav.section.web", any: ["content.edit", "content.medical_approve", "content.marketing_approve", "content.publish"] },
+  { href: "/os/settings", label: "nav.settings", section: "nav.section.admin", any: ["settings.manage"] },
 ];
 
 export function navFor(perms: Set<string>): NavItem[] {
@@ -23,7 +26,7 @@ export function navFor(perms: Set<string>): NavItem[] {
 
 /** Landing page for a user: the first workspace their permissions open. */
 export function homeFor(perms: Set<string>): string | null {
-  const order = ["/os/executive", "/os/reception", "/os/doctor", "/os/cashier", "/os/billing", "/os/accounting", "/os/patients", "/os/audit"];
+  const order = ["/os/executive", "/os/reception", "/os/leads", "/os/doctor", "/os/cashier", "/os/billing", "/os/accounting", "/os/patients", "/os/content", "/os/settings", "/os/audit"];
   const allowed = new Set(navFor(perms).map((i) => i.href));
   return order.find((h) => allowed.has(h)) ?? null;
 }
