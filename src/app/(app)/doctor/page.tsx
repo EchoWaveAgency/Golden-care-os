@@ -42,7 +42,7 @@ export default async function DoctorPage({ searchParams }: { searchParams: { err
             {rows.map((a) => (
               <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                 <div className="flex items-center gap-4">
-                  <span className="w-14 text-lg font-semibold text-navy-700 whitespace-nowrap">{timeOnly(rangeStart(a.slot), locale)}</span>
+                  <span className="min-w-[5.5rem] text-lg font-semibold text-navy-700 whitespace-nowrap">{timeOnly(rangeStart(a.slot), locale)}</span>
                   <div>
                     <Link href={`/patients/${a.patient_id}`} className="font-medium text-navy-700 hover:underline">{patientName(a.patient, locale)}</Link>
                     <p className="num text-xs text-ink-300">{a.patient?.mrn}{a.queue_no ? ` · #${a.queue_no}` : ""}</p>
