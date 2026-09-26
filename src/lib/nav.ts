@@ -15,10 +15,12 @@ export const NAV: NavItem[] = [
   { href: "/os/doctor", label: "nav.doctor", section: "nav.section.clinical", any: ["clinical.write.own"] },
   { href: "/os/billing", label: "nav.billing", section: "nav.section.finance", any: ["billing.read"] },
   { href: "/os/cashier", label: "nav.cashier", section: "nav.section.finance", any: ["cash.session", "cash.supervise"] },
+  { href: "/os/refunds", label: "nav.refunds", section: "nav.section.finance", any: ["refund.request", "refund.approve"] },
   { href: "/os/accounting", label: "nav.accounting", section: "nav.section.finance", any: ["accounting.read"] },
   { href: "/os/audit", label: "nav.audit", section: "nav.section.governance", any: ["audit.read"] },
   { href: "/os/content", label: "nav.content", section: "nav.section.web", any: ["content.edit", "content.medical_approve", "content.marketing_approve", "content.publish"] },
   { href: "/os/settings", label: "nav.settings", section: "nav.section.admin", any: ["settings.manage"] },
+  { href: "/os/users", label: "nav.users", section: "nav.section.admin", any: ["users.manage"] },
   { href: "/os/messages", label: "nav.messages", section: "nav.section.admin", any: ["messages.manage"] },
 ];
 

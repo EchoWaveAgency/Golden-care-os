@@ -40,6 +40,17 @@ const RULES: Rule[] = [
   { match: /evidence of relationship is required/, ar: "اكتب مستند إثبات صلة القرابة أو الولاية.", en: "Record the evidence of relationship or guardianship." },
   { match: /resolution note is required/, ar: "اكتب ما تم لحل الطلب قبل إغلاقه.", en: "Write the resolution before closing." },
   { match: /only failed messages can be retried/, ar: "يمكن إعادة المحاولة للرسائل الفاشلة فقط.", en: "Only failed messages can be retried." },
+  { match: /refund reason is required/, ar: "اكتب سبب الاسترداد.", en: "Enter the reason for the refund." },
+  { match: /exceeds the refundable amount/, ar: "المبلغ أكبر من المتاح للاسترداد على هذه الفاتورة.", en: "The amount exceeds what can be refunded on this invoice." },
+  { match: /cannot approve your own refund/, ar: "لا يمكنك الموافقة على طلب استرداد قدّمته بنفسك. يلزم مسؤول آخر.", en: "You cannot approve a refund you requested; another approver is required." },
+  { match: /note is required to reject/, ar: "اكتب سبب الرفض.", en: "Write the reason for rejecting." },
+  { match: /must be approved before payment/, ar: "يجب اعتماد الاسترداد قبل صرفه.", en: "The refund must be approved before it is paid." },
+  { match: /open a cashier session before paying cash/, ar: "افتح وردية خزينة قبل صرف نقدية.", en: "Open a cashier session before paying out cash." },
+  { match: /refund already/, ar: "تم اتخاذ قرار في هذا الطلب بالفعل.", en: "This request has already been decided." },
+  { match: /your own roles/, ar: "لا يمكنك تعديل صلاحياتك بنفسك.", en: "You cannot change your own roles." },
+  { match: /your own account/, ar: "لا يمكنك إيقاف حسابك بنفسك.", en: "You cannot deactivate your own account." },
+  { match: /already active for the user/, ar: "هذا الدور مفعّل للمستخدم بالفعل.", en: "This role is already active for the user." },
+  { match: /end date must be in the future/, ar: "تاريخ الانتهاء يجب أن يكون في المستقبل.", en: "The end date must be in the future." },
   { match: /permission denied|row-level security|42501/, ar: "ليست لديك صلاحية لتنفيذ هذا الإجراء.", en: "You do not have permission to do this." },
 ];
 
@@ -60,6 +71,7 @@ const PORTAL_RULES: Rule[] = [
   { match: /survey already submitted/, ar: "تم إرسال تقييمك لهذه الزيارة من قبل. شكرًا لك.", en: "You already rated this visit. Thank you." },
   { match: /survey is available after the visit/, ar: "التقييم متاح بعد انتهاء الزيارة.", en: "Rating is available after the visit." },
   { match: /no matching patient file/, ar: "لم نجد ملفًا بهذا الرقم ورقم الموبايل معًا. تأكد من البيانات.", en: "No file matches that number and mobile together. Please check the details." },
+  { match: /nothing to pay/, ar: "لا يوجد مبلغ مستحق على هذه الفاتورة.", en: "There is nothing to pay on this invoice." },
   { match: /check constraint|violates|invalid input/, ar: "تأكد من البيانات المدخلة.", en: "Please check the details you entered." },
   { match: /not found|permission denied|42501/, ar: "هذا الإجراء غير متاح لحسابك.", en: "This action is not available for your account." },
 ];

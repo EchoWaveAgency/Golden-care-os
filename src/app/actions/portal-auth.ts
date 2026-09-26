@@ -2,6 +2,7 @@
 import { cookies, headers } from "next/headers";
 import { PORTAL_FOR_COOKIE } from "@/lib/portal";
 import { toWesternDigits } from "@/lib/format";
+import { isLocalStack } from "@/lib/payments/gateway";
 import { redirect } from "next/navigation";
 import { adminClient } from "@/lib/server/admin";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -34,7 +35,7 @@ export async function requestOtp(_prev: OtpState, form: FormData): Promise<OtpSt
                                   vars: { code: row.code }, body: renderTemplate(tpl?.body ?? "{{code}}", { code: row.code }, lang) });
     await db.rpc("svc_log_otp_message", { p_patient: row.patient_id, p_ok: r.ok, p_provider: r.provider, p_provider_id: r.id ?? null, p_error: r.error ?? null });
     // Local development only (explicit flag); never set PORTAL_DEV_SHOW_OTP in production.
-    if (process.env.PORTAL_DEV_SHOW_OTP === "true") devCode = row.code;
+    if (process.env.PORTAL_DEV_SHOW_OTP === "true" && isLocalStack()) devCode = row.code;
   }
   return { step: "code", phone, info: T[lang].sent, devCode };
 }

@@ -49,3 +49,10 @@ Each item has a configurable mechanism already (or planned). Placeholders are cl
 32. Family access policy: minimum age for a child's own account, default duration of guardian access, accepted evidence documents.
 33. Complaint response targets (default: complaints 24 h, other requests 4 h) and escalation owner.
 34. Reminder timing (default one reminder 20–28 h before) and quiet hours.
+
+## Refunds, payments, users (added session 4)
+35. Refund policy: who may request, approval limits (e.g. above an amount needs the Center Director), time limits, and whether refunds reduce the doctor's share. The system enforces request → approval by another person → payout; the rules on top are the clinic's to set.
+36. Payment gateway: Paymob account (secret/public keys, integration id, HMAC secret) or another provider (Fawry, Kashier). The Paymob adapter follows the published Intention API and callback HMAC and must be tested end-to-end in the Paymob sandbox before going live.
+37. Who resolves "captured but unmatched" online payments and within what time (default: chief accountant, next working day).
+38. Gateway fees and settlement: how often Paymob settles to the bank and which account records fees (planned entry: Dr bank + bank charges / Cr gateway clearing).
+39. Multi-factor sign-in for privileged roles (the `mfa_required` flag exists; enforcement is the next security item).

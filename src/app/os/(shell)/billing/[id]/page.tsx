@@ -12,11 +12,12 @@ import { Banner } from "@/components/Banner";
 import { Empty } from "@/components/Empty";
 import { PrintButton } from "@/components/PrintButton";
 import { PaymentForm } from "./PaymentForm";
+import { requestRefund } from "@/app/actions/refunds";
 import type { DictKey } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
-export default async function InvoicePage({ params, searchParams }: { params: { id: string }; searchParams: { error?: string; paid?: string } }) {
+export default async function InvoicePage({ params, searchParams }: { params: { id: string }; searchParams: { error?: string; paid?: string; ok?: string } }) {
   const ctx = await requireAny("billing.read");
   const { t, locale } = ctx;
   const ar = locale === "ar";
@@ -29,9 +30,12 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
     ctx.supabase.from("payments").select("id, receipt_no, method, amount, reference, received_at").eq("invoice_id", inv.id).order("received_at"),
     ctx.supabase.rpc("patient_directory", { p_ids: [inv.patient_id] }),
     inv.status === "draft" ? ctx.supabase.from("services").select("id, code, name_ar, name_en").eq("is_active", true).order("code") : Promise.resolve({ data: [] }),
-    ctx.supabase.from("payment_methods").select("code, name_ar, name_en, requires_reference").eq("is_active", true),
+    ctx.supabase.from("payment_methods").select("code, name_ar, name_en, requires_reference").eq("is_active", true).neq("code", "online"),
     inv.status === "draft" ? ctx.supabase.from("staff").select("id, full_name_ar, full_name_en").eq("kind", "doctor").eq("is_active", true) : Promise.resolve({ data: [] }),
   ]);
+  const { data: refunds } = await ctx.supabase.from("refunds").select("id, ref, amount, status, reason, requested_at").eq("invoice_id", inv.id).order("requested_at");
+  const refundable = Number(inv.amount_paid) - Number(inv.refunded_total ?? 0)
+    - (refunds ?? []).filter((r) => r.status === "requested" || r.status === "approved").reduce((a, r) => a + Number(r.amount), 0);
   const patient = ((dir ?? []) as { mrn: string; full_name_ar: string }[])[0];
   const isDraft = inv.status === "draft";
   const canPay = ["issued", "partially_paid"].includes(inv.status) && ctx.can("payment.collect");
@@ -44,7 +48,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
           subtitle={patient ? `${patient.full_name_ar} · ${patient.mrn}` : undefined}
           actions={<><StatusBadge status={inv.status} label={t(`bill.status.${inv.status}` as DictKey)} />{!isDraft && <PrintButton label={t("common.print")} />}</>}
         />
-        <Banner error={searchParams.error} success={searchParams.paid ? (ar ? "تم تسجيل الدفعة وإصدار الإيصال." : "Payment recorded and receipt issued.") : undefined} />
+        <Banner error={searchParams.error} success={searchParams.paid ? (ar ? "تم تسجيل الدفعة وإصدار الإيصال." : "Payment recorded and receipt issued.") : searchParams.ok === "refund_requested" ? (ar ? "تم إرسال طلب الاسترداد للاعتماد." : "Refund request sent for approval.") : undefined} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -100,6 +104,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
             <Sum k={t("bill.net")} v={money(inv.total, locale)} strong />
             <Sum k={t("bill.paid")} v={money(inv.amount_paid, locale)} />
             <Sum k={t("bill.balance")} v={money(inv.balance, locale)} strong />
+            {Number(inv.refunded_total ?? 0) > 0 && <Sum k={ar ? "تم رده للمريض" : "Refunded to patient"} v={money(inv.refunded_total ?? 0, locale)} />}
           </dl>
 
           {isDraft && ctx.can("billing.write") && (
@@ -163,6 +168,36 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
               </ul>
             )}
           </div>
+
+          {((refunds ?? []).length > 0 || (refundable > 0 && ctx.can("refund.request"))) && (
+            <div className="card p-5">
+              <h2 className="mb-3 font-medium text-navy-700">{ar ? "الاسترداد" : "Refunds"}</h2>
+              {(refunds ?? []).length > 0 && (
+                <ul className="mb-3 space-y-1 text-sm">
+                  {(refunds ?? []).map((r) => (
+                    <li key={r.id} className="flex justify-between gap-2"><span><span className="num">{r.ref}</span> <span className="text-xs text-ink-300">· {r.status}</span></span><span className="num">{money(r.amount, locale)}</span></li>
+                  ))}
+                </ul>
+              )}
+              {refundable > 0 && ctx.can("refund.request") && (
+                <details>
+                  <summary className="cursor-pointer text-sm text-teal-700">{ar ? "طلب استرداد" : "Request a refund"}</summary>
+                  <form action={requestRefund} className="mt-3 space-y-2">
+                    <input type="hidden" name="invoice_id" value={inv.id} />
+                    <label className="label" htmlFor="rf-amount">{ar ? "المبلغ (المتاح" : "Amount (available"} <span className="num">{money(refundable, locale)}</span>)</label>
+                    <input id="rf-amount" name="amount" type="number" min="0.01" step="0.01" max={refundable} required className="input num" />
+                    <label className="label" htmlFor="rf-method">{ar ? "طريقة الرد" : "Refund method"}</label>
+                    <select id="rf-method" name="method" className="input">
+                      {(methods ?? []).map((m: { code: string; name_ar: string; name_en: string }) => <option key={m.code} value={m.code}>{ar ? m.name_ar : m.name_en}</option>)}
+                    </select>
+                    <label className="label" htmlFor="rf-reason">{ar ? "السبب" : "Reason"}</label>
+                    <input id="rf-reason" name="reason" required minLength={3} className="input" />
+                    <SubmitButton pendingLabel="…" className="btn-ghost w-full">{ar ? "إرسال للاعتماد" : "Send for approval"}</SubmitButton>
+                  </form>
+                </details>
+              )}
+            </div>
+          )}
 
           {inv.status === "issued" && Number(inv.amount_paid) === 0 && ctx.can("invoice.void") && (
             <details className="card p-5">

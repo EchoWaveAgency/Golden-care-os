@@ -30,6 +30,8 @@ Added in 0010: patient_relations and front_desk get lead.read/lead.write; medica
 
 Added in 0011: `clinical.release` and `prescription.restricted` → medical_director; `messages.manage` → system_admin, operations_manager; `ticket.read` → patient_relations, front_desk, quality_manager, operations_manager, center_director, medical_director; `ticket.write` → patient_relations, quality_manager. The treating doctor can always sign and release their own prescriptions and visit summaries.
 
+Added in 0013: `refund.request` → front_desk, cashier, patient_relations; `refund.approve` → chief_accountant, center_director (never for their own requests); payout uses `payment.collect`. User administration requires `users.manage`; only holders with an all-branch grant may grant privileged or all-branch roles and activate/deactivate accounts.
+
 **Patients (portal)** have no role and no table grants. A signed-in patient account can call only `portal_*` functions, each of which checks `app.portal_require(patient, level)`: the patient's own file, or a live family grant (`appointments` = appointments and requests; `full` = also released visits, prescriptions and invoices). Anything else answers "not found".
 
 ## Attribute rules (ABAC) enforced in the database

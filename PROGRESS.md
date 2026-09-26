@@ -88,3 +88,24 @@ Online payment in the portal, lab/radiology results, document uploads, SMS fallb
 
 ### Next milestone (proposed)
 Refunds & credit notes (maker-checker), online payments (Paymob/Fawry adapter, deposits for bookings), user administration + MFA for privileged roles, specialty clinical templates.
+
+## Session 4 — 2026-09-26: refunds, online payments, user administration
+
+### Delivered
+- **Refunds with maker-checker** (migration 0013): request (reason, amount within what was paid minus refunds and pending requests) → approval by a *different* person with `refund.approve` → payout by a cashier. Cash payouts need an open session and are subtracted from expected cash at closing. Journal: Dr Patient refunds (4910) / Cr the method's account. Invoice shows the refunded amount. Screens: refund card on the invoice, `/os/refunds` queue.
+- **Online payment from the patient account**: "Pay now" on any invoice with a balance → payment intent (patient's own file or a full-access family grant) → gateway checkout → the invoice is marked paid only by the gateway's signed server callback (Dr gateway clearing 1150 / Cr A/R). Paymob adapter (Intention API + HMAC-verified callback) and a local simulator. Declines, duplicate callbacks, second charges, unknown orders, amount mismatches and "paid at the desk meanwhile" are all handled without double posting; unmatched captures are listed for finance.
+- **Users & roles** `/os/users`: create accounts (one-time password shown once, forced change at first sign-in), grant roles per branch with optional end date (temporary delegation), end grants and deactivate accounts with a reason (nothing deleted, all audited; deactivated accounts are also blocked from signing in). Branch administrators cannot grant privileged or all-branch roles.
+- Cash-session row locks added to payment and refund posting; staff can no longer record "online" payments by hand.
+
+### Independent review
+A separate reviewer audited the money and access paths before release and found 10 issues (double charge on a reused intent, capture lost if the intent expired mid-checkout, callback matched on an unsigned field, voids/refunds treated as sales, user-clearable password flag, cash-session race, unscoped branch admins, silent ban failure, half-created accounts, simulator usable outside local). All 10 are fixed and covered by tests.
+
+### Verified
+- SQL suites 8/8 + concurrency (incl. 10 parallel gateway callbacks → 1 payment) ✅; unit tests 24/24; typecheck, lint, build ✅.
+- Browser: staff 27/27, portal 35/35, milestone-4 journey 25/25 ✅.
+
+### Not built yet (honest scope)
+Live Paymob sandbox test (needs the clinic's account), gateway settlement/fees entry, patient deposits/advances, credit notes that reduce revenue per doctor, MFA enforcement, HR/payroll, inventory, laser, doctor settlements.
+
+### Next milestone (proposed)
+Doctor settlements (per-doctor revenue share from invoice lines, net of refunds and discounts, monthly statement + payable), MFA for privileged roles, patient deposits for bookings.

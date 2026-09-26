@@ -13,7 +13,7 @@ const loadContext = cache(async () => {
   if (!user) redirect("/os/login");
 
   const [{ data: profile }, { data: permRows }, { data: staff }] = await Promise.all([
-    supabase.from("profiles").select("user_id, full_name_ar, full_name_en, locale").eq("user_id", user.id).maybeSingle(),
+    supabase.from("profiles").select("user_id, full_name_ar, full_name_en, locale, must_change_password").eq("user_id", user.id).maybeSingle(),
     supabase.rpc("my_permissions"),
     supabase.from("staff").select("id, branch_id, kind, full_name_ar, full_name_en").eq("user_id", user.id).maybeSingle(),
   ]);

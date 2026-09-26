@@ -50,7 +50,19 @@ PAID2=$("${PSQL[@]}" -c "select amount_paid from public.invoices where id='$INV2
 SUMP=$("${PSQL[@]}" -c "select sum(amount) from public.payments where invoice_id='$INV2'")
 [ "$PAID2" = "500.00" ] && [ "$SUMP" = "500.00" ] || { echo "paid=$PAID2 sum=$SUMP"; exit 1; }
 
-# 4) Whole ledger still balances.
+# 4) Ten parallel gateway callbacks for the same captured payment → one payment.
+INV3=$(new_invoice)
+"${PSQL[@]}" -c "$(as_fd) select public.issue_invoice('$INV3');" >/dev/null
+"${PSQL[@]}" -c "insert into public.payment_intents (invoice_id, branch_id, patient_id, amount, provider, provider_order_id, status)
+                 values ('$INV3', '$B1', '$PID', 500, 'paymob', 'conc-order-1', 'pending');" >/dev/null
+for i in $(seq 1 10); do
+  "${PSQL[@]}" -c "set role service_role; select public.svc_payment_confirm('paymob', 'conc-order-1', 'conc-txn-1', 50000, true);" >/dev/null 2>&1 &
+done
+wait
+GP=$("${PSQL[@]}" -c "select count(*) from public.payments where invoice_id='$INV3'")
+[ "$GP" = "1" ] || { echo "gateway callbacks produced $GP payments"; exit 1; }
+
+# 5) Whole ledger still balances.
 BAL=$("${PSQL[@]}" -c "select sum(debit) - sum(credit) from public.journal_lines")
 [ "$BAL" = "0.00" ] || { echo "ledger imbalance $BAL"; exit 1; }
-echo "bookings=1 payments=1 split-paid=$PAID2 ledger-balance=$BAL"
+echo "bookings=1 payments=1 split-paid=$PAID2 gateway-callbacks=1 ledger-balance=$BAL"

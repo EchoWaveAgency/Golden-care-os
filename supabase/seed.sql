@@ -21,6 +21,7 @@ select org.id, c, ar, en, t::public.account_type, p from org, (values
   ('1120', 'تحصيلات البطاقات تحت التسوية',    'Card settlements clearing',   'asset',     true),
   ('1130', 'تحصيلات إنستاباي تحت التسوية',    'InstaPay clearing',           'asset',     true),
   ('1140', 'تحصيلات المحافظ تحت التسوية',     'Mobile wallet clearing',      'asset',     true),
+  ('1150', 'تحصيلات بوابة الدفع الإلكتروني تحت التسوية', 'Online payment gateway clearing', 'asset', true),
   ('1200', 'ذمم المرضى',                     'Patient receivables',         'asset',     true),
   ('1300', 'المخزون الطبي',                  'Medical inventory',           'asset',     true),
   ('2000', 'الالتزامات',                     'Liabilities',                 'liability', false),
@@ -37,6 +38,7 @@ select org.id, c, ar, en, t::public.account_type, p from org, (values
   ('4110', 'إيرادات الليزر والتجميل',         'Laser & aesthetics revenue',  'revenue',   true),
   ('4120', 'إيرادات الأسنان',                 'Dental revenue',              'revenue',   true),
   ('4900', 'خصومات مسموح بها',               'Discounts allowed',           'revenue',   true),
+  ('4910', 'مردودات ومبالغ مستردة للمرضى',    'Patient refunds (contra revenue)', 'revenue', true),
   ('5000', 'المصروفات',                      'Expenses',                    'expense',   false),
   ('5100', 'أتعاب الأطباء',                  'Doctor fees',                 'expense',   true),
   ('5200', 'الرواتب والأجور',                'Salaries & wages',            'expense',   true),
@@ -51,7 +53,7 @@ select a.organization_id, k, a.id from public.accounts a join (values
   ('cash_on_hand', '1100'), ('bank_main', '1110'), ('card_clearing', '1120'),
   ('instapay_clearing', '1130'), ('wallet_clearing', '1140'), ('ar_patients', '1200'),
   ('patient_advances', '2200'), ('revenue_services', '4100'), ('discounts_allowed', '4900'),
-  ('cash_over_short', '5900')
+  ('cash_over_short', '5900'), ('gateway_clearing', '1150'), ('refunds', '4910')
 ) m(k, code) on m.code = a.code
 where a.organization_id = '00000000-0000-4000-8000-000000000001'
 on conflict do nothing;

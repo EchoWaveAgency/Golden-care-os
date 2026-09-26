@@ -6,7 +6,11 @@
 - **Separation of duties**: no self-granting roles; invoice issuer cannot void; self-service profile cannot change activation/MFA flags.
 - **Immutability**: posted journals, payments, patients (no delete), signed encounters, addenda, consents and audit events cannot be altered through normal operations — guards apply to the database owner as well.
 - **Audit trail**: trigger-based, captures actor, action, table, record, changed columns and before/after data; readable only with `audit.read`.
-- **Service role key**: server-side scripts only; not used in request handling. Never prefixed `NEXT_PUBLIC_`.
+- **Service role key**: never prefixed `NEXT_PUBLIC_`, never sent to the browser. Used only by scripts and these audited server paths, each of which calls narrow `svc_*` functions: patient OTP sign-in, the message dispatcher, the WhatsApp and Paymob webhooks (signature verified first), starting a portal payment (after the patient's own session created the intent), and account creation / sign-in blocking (after the database confirmed `users.manage`).
+- **Payments**: a payment is recorded only from the gateway's server-to-server callback with a valid HMAC; the patient's return URL never changes state. The callback is matched on the signed gateway order id. Only completed standalone sales count. Second charges and unknown orders are recorded as exceptions for finance. Staff cannot record "online" payments by hand.
+- **Refunds**: maker-checker enforced in the database (the approver can never be the requester), then payout by a cashier with a journal entry.
+- **Accounts**: created with a one-time password the user must replace at first sign-in; deactivation removes every permission in the database and blocks sign-in at the Auth level; grants end instead of being deleted; branch administrators cannot grant privileged or all-branch roles.
+- **Simulators** (payment simulator, on-screen OTP) only work when the database URL is localhost, whatever the flags say.
 - **Web**: security headers (frame deny, nosniff, referrer policy, permissions policy); fonts self-hosted (no third-party requests); `robots: noindex`.
 - **Input handling**: zod validation in server actions; prices resolved server-side; parameterized access through PostgREST; error messages mapped so raw database text is never shown.
 - **Idempotency** on payments and bookings.

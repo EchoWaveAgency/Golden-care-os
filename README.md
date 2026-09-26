@@ -32,7 +32,10 @@ A production-grade healthcare operating system for Golden Care Clinics, built on
 | **Patient portal** `/ar/portal` — WhatsApp code sign-in, appointments (book/cancel/rate), visits, prescriptions, invoices, complaints, family access | ✅ |
 | **WhatsApp notifications** — templates, outbox with retry/dead-letter, delivery webhooks, opt-out | ✅ (needs Meta template approval) |
 | Complaints & requests desk, message monitor | ✅ |
-| Online payments, refunds, HR/payroll, inventory, laser, settlements | ⏳ next milestones |
+| **Refunds** with maker-checker approval and cashier payout | ✅ |
+| **Online payment** from the patient account (Paymob adapter + local simulator) | ✅ (needs Paymob account + sandbox test) |
+| **Users & roles** — create accounts, temporary delegation, deactivate, forced password change | ✅ |
+| HR/payroll, inventory, laser, doctor settlements, MFA | ⏳ next milestones |
 
 Everything else in the master specification is planned in phases — see `PROGRESS.md`.
 
@@ -68,13 +71,14 @@ Requires PostgreSQL 16 server binaries (`/usr/lib/postgresql/16/bin`). On a host
 supabase/migrations/   schema, RLS, triggers, RPCs (source of truth)
 supabase/seed.sql      organization, branch, starter chart of accounts, fiscal periods
 supabase/tests/        SQL test suites + concurrency checks
-src/app/os/(shell)/    staff workspaces (reception, leads, tickets, patients, doctor, billing, cashier, accounting, content, messages, settings, audit, executive)
+src/app/os/(shell)/    staff workspaces (reception, leads, tickets, patients, doctor, billing, cashier, refunds, accounting, content, messages, users, settings, audit, executive)
 src/app/(site)/[lang]/ public website (ar/en): home, specialties, doctors, offers, book, contact, landing pages, policies
                        + portal/ (patient sign-in) and portal/(account)/ (signed-in patient pages)
 src/app/api/           public slots, message dispatcher job, WhatsApp webhook
 src/app/actions/       server actions (all writes go through the signed-in user's session → RLS applies)
 src/lib/               i18n, formatting, normalization, navigation, error mapping
 scripts/               db-test, local stack, demo data
+e2e/                   browser journeys (staff, portal, milestone 4)
 docs/                  architecture, permissions, accounting events, security, tests, deployment, Arabic user guide
 docs/website/          website architecture, sitemap, CMS model, landing pages, analytics, SEO, security, UAT
 ```

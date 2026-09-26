@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getContext } from "@/lib/session";
 import { navFor } from "@/lib/nav";
 import { signOut, setLocale } from "@/app/actions/auth";
@@ -8,6 +9,8 @@ import { NavLinks, BackField, type NavGroup } from "@/components/NavLinks";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const ctx = await getContext();
+  // Accounts created by an administrator must set their own password first.
+  if (ctx.profile?.must_change_password) redirect("/os/password");
   const { t, locale } = ctx;
   const items = navFor(ctx.perms);
   const sections = Array.from(new Set(items.map((i) => i.section)));

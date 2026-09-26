@@ -20,7 +20,7 @@ export type InvoiceRow = {
   id: string; invoice_no: string | null; branch_id: string; patient_id: string; appointment_id: string | null;
   status: InvoiceStatus; currency: string; subtotal: string; discount_total: string; total: string;
   amount_paid: string; balance: string; issued_at: string | null; created_at: string; issued_by: string | null;
-  void_reason: string | null;
+  void_reason: string | null; refunded_total?: string;
 };
 
 export type InvoiceLineRow = {
