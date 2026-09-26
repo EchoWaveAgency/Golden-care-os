@@ -7,7 +7,7 @@ import { Feathers } from "./Feathers";
 export function SiteFooter({ lang, address, mobile, whatsapp, hours, mapUrl }: { lang: Lang; address: string | null; mobile: string | null; whatsapp: string | null; hours: string | null; mapUrl: string | null }) {
   const c = copy(lang);
   return (
-    <footer className="mt-24 bg-navy-900 text-ivory-200">
+    <footer className="no-print mt-24 bg-navy-900 text-ivory-200">
       <Feathers className="rounded-none" />
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-2">

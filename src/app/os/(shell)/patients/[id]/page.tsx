@@ -10,6 +10,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { Banner } from "@/components/Banner";
 import { Empty } from "@/components/Empty";
 import type { DictKey } from "@/lib/i18n";
+import { PortalCard } from "./PortalCard";
 
 export const dynamic = "force-dynamic";
 
@@ -116,6 +117,7 @@ export default async function PatientPage({ params, searchParams }: { params: { 
             )}
           </section>
         )}
+        <PortalCard ctx={ctx} patientId={p.id} />
       </div>
     </>
   );

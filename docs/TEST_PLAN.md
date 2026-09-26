@@ -24,3 +24,8 @@
 | 13 | Unauthorized access attempt | ✅ |
 | 14 | Provider failure → safe retry | ◑ idempotent payment retry done; external providers Phase 3 |
 | 2–4, 8–12 | WhatsApp, laser package, dental plan, settlements, purchasing, payroll, lab results, complaints | Phase 2–3 |
+
+## Session 3 additions — prescriptions, portal, messaging
+- `supabase/tests/07_portal_rx_messaging.sql`: allergy acknowledgement gate; restricted medicines; signed prescriptions immutable; only the treating doctor (or `clinical.release`) releases; OTP stored hashed, expiry, 5-attempt lockout, throttling; patient A cannot read patient B through any `portal_*` function; family `appointments` vs `full` levels, expiry and revocation; patients have no direct table access; outbox idempotency, opt-out → skipped, delivery statuses never move backwards; retry permission.
+- Browser journey (portal, 35 checks): doctor prescribes → allergy gate → sign → release → patient OTP sign-in (unknown number gets a neutral answer; wrong code rejected) → overview/medical/printable Rx/invoice → book from live availability and cancel → complaint resolved by Patient Relations → outbox shows masked numbers → second patient blocked, tampered "acting for" cookie ignored → appointments-only sharing → English on mobile → sign out.
+- Operations: dispatcher `POST /api/jobs/dispatch` without the secret → 401; with it → queued messages sent once (second run 0); webhook verification token checked; unsigned webhook POST refused.

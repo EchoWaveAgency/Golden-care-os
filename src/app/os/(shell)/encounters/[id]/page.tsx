@@ -8,11 +8,13 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SubmitButton } from "@/components/SubmitButton";
 import { Banner } from "@/components/Banner";
 import type { DictKey } from "@/lib/i18n";
+import { PrescriptionsPanel, ReleasePanel } from "./Panels";
 
 export const dynamic = "force-dynamic";
 
 type Enc = {
-  id: string; ref: string; patient_id: string; status: "draft" | "signed" | "entered_in_error";
+  id: string; ref: string; patient_id: string; status: "draft" | "signed" | "entered_in_error"; doctor_id: string;
+  patient_summary: string | null; patient_instructions: string | null; summary_released_at: string | null;
   chief_complaint: string | null; assessment: string | null; plan: string | null; signed_at: string | null; created_at: string;
   patient: { mrn: string; first_name_ar: string; last_name_ar: string; first_name_en: string | null; last_name_en: string | null; date_of_birth: string | null; sex: string } | null;
 };
@@ -24,7 +26,7 @@ export default async function EncounterPage({ params, searchParams }: { params: 
 
   const { data: e } = await ctx.supabase
     .from("encounters")
-    .select("id, ref, patient_id, status, chief_complaint, assessment, plan, signed_at, created_at, patient:patients(mrn, first_name_ar, last_name_ar, first_name_en, last_name_en, date_of_birth, sex)")
+    .select("id, ref, patient_id, doctor_id, status, chief_complaint, assessment, plan, signed_at, created_at, patient_summary, patient_instructions, summary_released_at, patient:patients(mrn, first_name_ar, last_name_ar, first_name_en, last_name_en, date_of_birth, sex)")
     .eq("id", params.id)
     .maybeSingle<Enc>();
   if (!e) notFound();
@@ -125,6 +127,10 @@ export default async function EncounterPage({ params, searchParams }: { params: 
           )}
         </section>
       )}
+      <PrescriptionsPanel ctx={ctx} encounterId={e.id} isOwner={canWrite && e.doctor_id === ctx.staff?.id}
+        hasAllergies={(alerts ?? []).some((a) => a.kind === "allergy")} />
+      <ReleasePanel ctx={ctx} encounterId={e.id} signed={signed} releasedAt={e.summary_released_at} summary={e.patient_summary}
+        instructions={e.patient_instructions} canRelease={(canWrite && e.doctor_id === ctx.staff?.id) || ctx.can("clinical.release")} />
     </div>
   );
 }

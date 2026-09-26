@@ -65,3 +65,26 @@ Patient portal (OTP, release gate, family access, financial account), online pay
 
 ### Next milestone (proposed)
 Patient portal + release gate + notifications adapter (WhatsApp Business) + prescriptions (release source) + marketing funnel dashboard.
+
+## Session 3 — 2026-09-26: prescriptions, patient portal, WhatsApp notifications
+
+### Delivered
+- **Prescriptions** (migration 0011): drug catalogue with restricted list, draft → signed prescriptions tied to the encounter, allergy acknowledgement enforced by the database (audited `ALLERGY_ACKNOWLEDGED`), restricted medicines need `prescription.restricted`, signed prescriptions are immutable, printable A5 sheet (staff and patient).
+- **Release gate**: nothing clinical reaches the patient until the treating doctor (or `clinical.release`) releases it. Visit summaries are a separate plain-language text — internal notes, assessment and plan are never exposed.
+- **Patient portal** `/ar/portal`, `/en/portal`: passwordless sign-in with a 6-digit WhatsApp code (hashed, 10-minute expiry, 5 attempts, per-phone and per-IP throttling, identical response for unknown numbers); overview, appointments (book from live availability → held as *requested* + lead for Patient Relations; cancel outside the policy window; visit rating), released visits and prescriptions (printable), invoices and receipts, requests/complaints, family sharing and my details (WhatsApp consent).
+- **Family / guardian access**: grants with level (appointments only / full file), relation, expiry, evidence; granted by the patient (MRN + phone must match) or by staff (evidence required); revocable; the portal re-checks the grant on every call.
+- **Isolation**: patients have no table access at all — only `portal_*` functions, which check the signed-in account and live grants and answer "not found" for anything else.
+- **Notifications**: templates (ar/en) + outbox with idempotency keys, retry with exponential backoff, dead-letter after 5 attempts, delivery-status webhooks that never move backwards, opt-out respected (status *skipped*). Appointment confirmation / cancellation / reminder (20–28 h) / "new item in your account". WhatsApp Cloud API adapter + dev adapter (logs only). Dispatcher `POST /api/jobs/dispatch` (Bearer `CRON_SECRET`), webhook `/api/webhooks/whatsapp` (verify token + HMAC signature).
+- **Staff screens**: prescriptions and release panels in the encounter; `/os/tickets` (deadlines, satisfaction score, resolve with a note shown to the patient); `/os/messages` (outbox with masked numbers, retry); patient file → portal account status and family access.
+- Proper 404 pages for the website and the staff system.
+
+### Verified
+- SQL suites 7/7 + concurrency ✅ (new `07_portal_rx_messaging.sql`: allergy gate, restricted drugs, release gate, OTP hashing/lockout, portal isolation between patients, family levels, outbox idempotency and monotonic statuses).
+- Unit tests 20/20, typecheck, lint, production build ✅.
+- Browser: staff journey 27/27 ✅; portal journey 35/35 ✅ (doctor prescribes → allergy gate → sign → release → patient OTP sign-in → sees summary/Rx/invoice → books and cancels → complaint resolved by Patient Relations → second patient blocked, tampered cookie ignored → sharing appointments-only → English mobile). Dispatcher sent 10 queued messages, second run sent 0 (idempotent); webhook verification checked.
+
+### Not built yet (honest scope)
+Online payment in the portal, lab/radiology results, document uploads, SMS fallback, reminder preferences per channel, marketing funnel dashboard, native app. Phase 2 modules (HR, payroll, inventory, laser, settlements) are untouched.
+
+### Next milestone (proposed)
+Refunds & credit notes (maker-checker), online payments (Paymob/Fawry adapter, deposits for bookings), user administration + MFA for privileged roles, specialty clinical templates.

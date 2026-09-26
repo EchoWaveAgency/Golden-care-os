@@ -30,6 +30,16 @@ const RULES: Rule[] = [
   { match: /only the treating doctor/, ar: "التوقيع متاح للطبيب المعالج فقط.", en: "Only the treating doctor can sign." },
   { match: /no open fiscal period/, ar: "الفترة المحاسبية مغلقة أو غير معرفة لهذا التاريخ.", en: "No open fiscal period for this date." },
   { match: /is not configured/, ar: "إعدادات الحسابات غير مكتملة. تواصل مع رئيس الحسابات.", en: "Accounting settings are incomplete. Contact the chief accountant." },
+  { match: /allergy acknowledgement required/, ar: "المريض لديه حساسية مسجلة. راجعها وأكّد الإقرار قبل التوقيع.", en: "The patient has a recorded allergy. Review it and confirm the acknowledgement before signing." },
+  { match: /restricted medicine/, ar: "هذا الدواء ضمن القائمة المقيدة ويتطلب صلاحية خاصة.", en: "This medicine is on the restricted list and needs special authorization." },
+  { match: /prescription has no items/, ar: "أضف دواءً واحدًا على الأقل.", en: "Add at least one medicine." },
+  { match: /signed prescriptions cannot be changed/, ar: "الروشتة موقّعة ولا يمكن تعديلها.", en: "The prescription is signed and cannot be changed." },
+  { match: /patient-facing summary is required/, ar: "اكتب ملخصًا مبسطًا للمريض قبل الإفراج.", en: "Write a patient-facing summary before releasing." },
+  { match: /only signed records can be released/, ar: "يجب توقيع السجل أولًا.", en: "Sign the record first." },
+  { match: /already released/, ar: "تم الإفراج عنه بالفعل.", en: "Already released." },
+  { match: /evidence of relationship is required/, ar: "اكتب مستند إثبات صلة القرابة أو الولاية.", en: "Record the evidence of relationship or guardianship." },
+  { match: /resolution note is required/, ar: "اكتب ما تم لحل الطلب قبل إغلاقه.", en: "Write the resolution before closing." },
+  { match: /only failed messages can be retried/, ar: "يمكن إعادة المحاولة للرسائل الفاشلة فقط.", en: "Only failed messages can be retried." },
   { match: /permission denied|row-level security|42501/, ar: "ليست لديك صلاحية لتنفيذ هذا الإجراء.", en: "You do not have permission to do this." },
 ];
 
@@ -38,4 +48,25 @@ export function friendlyError(message: string | undefined | null, locale: Locale
   const rule = RULES.find((r) => r.match.test(text));
   if (rule) return locale === "ar" ? rule.ar : rule.en;
   return locale === "ar" ? "حدث خطأ غير متوقع. لم يُحفظ شيء." : "Something went wrong. Nothing was saved.";
+}
+
+// Patient-facing wording for the portal (never reveals whether another file exists).
+const PORTAL_RULES: Rule[] = [
+  { match: /no longer available/, ar: "هذا الموعد لم يعد متاحًا. اختر وقتًا آخر.", en: "That time is no longer available. Please choose another." },
+  { match: /too many pending requests/, ar: "لديك 3 طلبات حجز بانتظار التأكيد. سنتواصل معك قريبًا.", en: "You already have 3 booking requests awaiting confirmation. We will contact you soon." },
+  { match: /online cancellation closes/, ar: "الإلغاء من الحساب غير متاح قبل الموعد مباشرة. تواصل معنا عبر واتساب أو الهاتف.", en: "Online cancellation is closed this close to the appointment. Please contact us by WhatsApp or phone." },
+  { match: /can no longer be cancelled online/, ar: "لا يمكن إلغاء هذا الموعد من الحساب.", en: "This appointment can no longer be cancelled online." },
+  { match: /too many requests/, ar: "وصلت للحد اليومي للطلبات. حاول غدًا أو تواصل معنا.", en: "You have reached today's request limit. Try tomorrow or contact us." },
+  { match: /survey already submitted/, ar: "تم إرسال تقييمك لهذه الزيارة من قبل. شكرًا لك.", en: "You already rated this visit. Thank you." },
+  { match: /survey is available after the visit/, ar: "التقييم متاح بعد انتهاء الزيارة.", en: "Rating is available after the visit." },
+  { match: /no matching patient file/, ar: "لم نجد ملفًا بهذا الرقم ورقم الموبايل معًا. تأكد من البيانات.", en: "No file matches that number and mobile together. Please check the details." },
+  { match: /check constraint|violates|invalid input/, ar: "تأكد من البيانات المدخلة.", en: "Please check the details you entered." },
+  { match: /not found|permission denied|42501/, ar: "هذا الإجراء غير متاح لحسابك.", en: "This action is not available for your account." },
+];
+
+export function portalError(message: string | undefined | null, lang: Locale): string {
+  const text = message ?? "";
+  const rule = PORTAL_RULES.find((r) => r.match.test(text));
+  if (rule) return lang === "ar" ? rule.ar : rule.en;
+  return lang === "ar" ? "حدث خطأ غير متوقع. حاول مرة أخرى." : "Something went wrong. Please try again.";
 }

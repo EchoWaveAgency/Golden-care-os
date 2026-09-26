@@ -38,4 +38,14 @@ Each item has a configurable mechanism already (or planned). Placeholders are cl
 23. Real specialty page content, doctor biographies and photos — approved by the Medical Director (demo content must be replaced).
 24. Response-time SLA for new inquiries (default 30 minutes) and working-hours rules for it.
 25. Production domain (`NEXT_PUBLIC_SITE_URL`) and analytics/pixel IDs.
-26. Whether online booking requests should hold the slot until confirmed (currently: they do not; staff confirm and the slot is booked at conversion).
+26. Whether website booking requests should hold the slot until confirmed (website: they do not; portal bookings by signed-in patients do hold it as "requested").
+
+## Portal, prescriptions and messaging (added session 3)
+27. WhatsApp Business account: provider (Meta Cloud API direct or a BSP), sender number, and Meta approval of the 5 templates in `message_templates` (names `gc_*`). Until approved, messages cannot be delivered in production.
+28. SMS fallback provider for patients without WhatsApp (and for sign-in codes).
+29. Drug formulary: the real list the clinic prescribes from, and which items are restricted (demo list is illustrative only).
+30. Who besides the treating doctor may release results (default: `clinical.release` → Medical Director).
+31. Online cancellation window (default 24 h, `policy.cancel_hours`) and whether portal bookings need a deposit.
+32. Family access policy: minimum age for a child's own account, default duration of guardian access, accepted evidence documents.
+33. Complaint response targets (default: complaints 24 h, other requests 4 h) and escalation owner.
+34. Reminder timing (default one reminder 20–28 h before) and quiet hours.

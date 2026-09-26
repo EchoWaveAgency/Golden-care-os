@@ -9,6 +9,7 @@ export const NAV: NavItem[] = [
   { href: "/os/executive", label: "nav.executive", section: "nav.section.governance", any: ["dashboard.executive"] },
   { href: "/os/reception", label: "nav.reception", section: "nav.section.front", any: ["appointment.write"] },
   { href: "/os/leads", label: "nav.leads", section: "nav.section.front", any: ["lead.read"] },
+  { href: "/os/tickets", label: "nav.tickets", section: "nav.section.front", any: ["ticket.read"] },
   { href: "/os/patients", label: "nav.patients", section: "nav.section.front", any: ["patient.read"] },
   { href: "/os/appointments/new", label: "nav.appointments", section: "nav.section.front", any: ["appointment.write"] },
   { href: "/os/doctor", label: "nav.doctor", section: "nav.section.clinical", any: ["clinical.write.own"] },
@@ -18,6 +19,7 @@ export const NAV: NavItem[] = [
   { href: "/os/audit", label: "nav.audit", section: "nav.section.governance", any: ["audit.read"] },
   { href: "/os/content", label: "nav.content", section: "nav.section.web", any: ["content.edit", "content.medical_approve", "content.marketing_approve", "content.publish"] },
   { href: "/os/settings", label: "nav.settings", section: "nav.section.admin", any: ["settings.manage"] },
+  { href: "/os/messages", label: "nav.messages", section: "nav.section.admin", any: ["messages.manage"] },
 ];
 
 export function navFor(perms: Set<string>): NavItem[] {

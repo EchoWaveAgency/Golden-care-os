@@ -33,7 +33,7 @@ export function Consent({ ids, text, accept, reject }: { ids: Ids; text: string;
         <Script id="tiktok" strategy="afterInteractive">{`!function(w,d,t){w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track"];ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.load=function(e){var n="https://analytics.tiktok.com/i18n/pixel/events.js";var o=d.createElement("script");o.type="text/javascript";o.async=!0;o.src=n+"?sdkid="+e+"&lib="+t;var a=d.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};ttq.load('${ids.tiktok}');ttq.page();}(window,document,'ttq');`}</Script>
       )}
       {state === "unknown" && anyIds && (
-        <div role="dialog" aria-live="polite" className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-2xl rounded-2xl border border-ivory-300 bg-white p-4 shadow-card sm:flex sm:items-center sm:gap-4">
+        <div role="dialog" aria-live="polite" className="no-print fixed inset-x-3 bottom-3 z-50 mx-auto max-w-2xl rounded-2xl border border-ivory-300 bg-white p-4 shadow-card sm:flex sm:items-center sm:gap-4">
           <p className="flex-1 text-sm text-ink-500">{text}</p>
           <div className="mt-3 flex gap-2 sm:mt-0">
             <button onClick={() => decide("denied")} className="rounded-full px-4 py-2 text-sm text-ink-500 hover:bg-ivory-200">{reject}</button>

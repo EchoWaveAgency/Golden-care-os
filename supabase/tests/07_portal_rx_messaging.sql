@@ -214,3 +214,11 @@ select app.outbox_result(:'m1', true, 'whatsapp', 'wamid.TEST1', null);
 select app.outbox_status('wamid.TEST1', 'read');
 select app.outbox_status('wamid.TEST1', 'delivered');   -- late webhook must not move backwards
 select test.assert((select status from public.message_outbox where id = :'m1') = 'read', 'delivery status monotonic');
+
+-- Service wrappers are closed to users.
+set role authenticated;
+select test.expect_error($q$select public.svc_portal_otp_issue('01550000001', null)$q$, 'permission denied');
+select test.expect_error($q$select public.svc_outbox_claim(10)$q$, 'permission denied');
+set role anon;
+select test.expect_error($q$select public.svc_portal_otp_verify('01550000001', '1')$q$, 'permission denied');
+reset role;

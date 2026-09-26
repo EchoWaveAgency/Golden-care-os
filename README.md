@@ -27,7 +27,12 @@ A production-grade healthcare operating system for Golden Care Clinics, built on
 | **Website CMS** with Draft → Medical Review → Marketing Review → Published, versions, scheduling | ✅ |
 | **Patient Relations inbox** — website/campaign requests with UTM, SLA, one-click conversion to appointment | ✅ |
 | Settings — services, effective-dated prices, doctor schedules, leave/holidays, contact details | ✅ |
-| Patient portal, online payments, HR/payroll, inventory, laser, settlements | ⏳ next milestones |
+| **Prescriptions** with drug catalogue, allergy acknowledgement, restricted medicines, printable Rx | ✅ |
+| **Release gate** — the doctor decides what the patient sees (plain-language summary, never internal notes) | ✅ |
+| **Patient portal** `/ar/portal` — WhatsApp code sign-in, appointments (book/cancel/rate), visits, prescriptions, invoices, complaints, family access | ✅ |
+| **WhatsApp notifications** — templates, outbox with retry/dead-letter, delivery webhooks, opt-out | ✅ (needs Meta template approval) |
+| Complaints & requests desk, message monitor | ✅ |
+| Online payments, refunds, HR/payroll, inventory, laser, settlements | ⏳ next milestones |
 
 Everything else in the master specification is planned in phases — see `PROGRESS.md`.
 
@@ -47,7 +52,9 @@ npm run demo:data        # synthetic demo users and data (password printed)
 npm run build && npx next start -p 3100
 ```
 
-Website: http://localhost:3100/ar · Staff system: http://localhost:3100/os
+Website: http://localhost:3100/ar · Staff system: http://localhost:3100/os · Patient portal: http://localhost:3100/ar/portal
+
+Locally, messages are only logged (`MESSAGING_MODE=dev`) and the portal shows the sign-in code on screen (`PORTAL_DEV_SHOW_OTP=true`). Both flags are written by `stack:local` and must never be set in staging or production. Demo patients sign in with their synthetic numbers, e.g. `01001110001`.
 
 Requires PostgreSQL 16 server binaries (`/usr/lib/postgresql/16/bin`). On a hosted Supabase project, see `docs/DEPLOYMENT_RUNBOOK.md`.
 
@@ -61,8 +68,10 @@ Requires PostgreSQL 16 server binaries (`/usr/lib/postgresql/16/bin`). On a host
 supabase/migrations/   schema, RLS, triggers, RPCs (source of truth)
 supabase/seed.sql      organization, branch, starter chart of accounts, fiscal periods
 supabase/tests/        SQL test suites + concurrency checks
-src/app/os/(shell)/    staff workspaces (reception, leads, patients, doctor, billing, cashier, accounting, content, settings, audit, executive)
+src/app/os/(shell)/    staff workspaces (reception, leads, tickets, patients, doctor, billing, cashier, accounting, content, messages, settings, audit, executive)
 src/app/(site)/[lang]/ public website (ar/en): home, specialties, doctors, offers, book, contact, landing pages, policies
+                       + portal/ (patient sign-in) and portal/(account)/ (signed-in patient pages)
+src/app/api/           public slots, message dispatcher job, WhatsApp webhook
 src/app/actions/       server actions (all writes go through the signed-in user's session → RLS applies)
 src/lib/               i18n, formatting, normalization, navigation, error mapping
 scripts/               db-test, local stack, demo data

@@ -30,8 +30,9 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  // Refreshes the session for the staff system and the patient portal.
+  const { data: { user } } = await supabase.auth.getUser();
   if (path.startsWith("/os") && !path.startsWith("/os/login")) {
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       const to = request.nextUrl.clone();
       to.pathname = "/os/login";
@@ -44,5 +45,5 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   // Public website pages skip the auth round-trip except for the session refresh on /os.
-  matcher: ["/", "/os/:path*"],
+  matcher: ["/", "/os/:path*", "/ar/portal/:path*", "/en/portal/:path*"],
 };

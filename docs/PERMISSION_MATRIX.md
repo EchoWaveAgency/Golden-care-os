@@ -28,6 +28,10 @@ Deny by default. A user's effective permissions = union of active role grants (`
 
 Added in 0010: patient_relations and front_desk get lead.read/lead.write; medical_director gets content.edit and content.medical_approve; center_director gets content.publish, marketing.read, lead.read; operations_manager gets lead.read, marketing.read; owner gets marketing.read. Anonymous visitors: only the public website functions.
 
+Added in 0011: `clinical.release` and `prescription.restricted` → medical_director; `messages.manage` → system_admin, operations_manager; `ticket.read` → patient_relations, front_desk, quality_manager, operations_manager, center_director, medical_director; `ticket.write` → patient_relations, quality_manager. The treating doctor can always sign and release their own prescriptions and visit summaries.
+
+**Patients (portal)** have no role and no table grants. A signed-in patient account can call only `portal_*` functions, each of which checks `app.portal_require(patient, level)`: the patient's own file, or a live family grant (`appointments` = appointments and requests; `full` = also released visits, prescriptions and invoices). Anything else answers "not found".
+
 ## Attribute rules (ABAC) enforced in the database
 - **Doctor sees a patient only while treating them** — an appointment or encounter links them (`app.is_treating_doctor`).
 - **Doctor documents only their own encounters**; only the treating doctor can sign; signed encounters are locked.

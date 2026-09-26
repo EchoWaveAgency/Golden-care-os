@@ -5,6 +5,7 @@ import { navFor, homeFor, canAccess } from "./nav";
 import { friendlyError } from "./errors";
 import { NEXT_STATUS, APPOINTMENT_STATUSES, primaryAction } from "./appointments";
 import { translator } from "./i18n";
+import { renderTemplate, waNumber } from "./messaging/render";
 
 describe("normalization mirrors the database", () => {
   it("normalizes Arabic names", () => {
@@ -81,4 +82,13 @@ describe("i18n", () => {
     expect(translator("ar")("nav.reception")).toBe("الاستقبال");
     expect(translator("en")("nav.reception")).toBe("Reception");
   });
+});
+
+describe("messaging", () => {
+  it("renders named variables with English fallbacks", () => {
+    expect(renderTemplate("مرحبًا {{name}} — {{ref}}", { name: "ليلى", ref: "APT-1" }, "ar")).toBe("مرحبًا ليلى — APT-1");
+    expect(renderTemplate("Hi {{name}} with {{doctor}}", { name: "ليلى", name_en: "Laila", doctor: "د. سارة", doctor_en: "Dr. Sara" }, "en")).toBe("Hi Laila with Dr. Sara");
+    expect(renderTemplate("{{missing}}!", {}, "ar")).toBe("!");
+  });
+  it("formats WhatsApp numbers", () => expect(waNumber("+201001234567")).toBe("201001234567"));
 });

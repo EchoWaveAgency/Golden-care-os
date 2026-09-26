@@ -8,7 +8,7 @@ const config: Config = {
     extend: {
       colors: {
         ivory: { DEFAULT: "#FBF7EF", 50: "#FFFDF8", 100: "#FBF7EF", 200: "#F3ECDD", 300: "#E8DCC4" },
-        gold: { DEFAULT: "#B8872F", 300: "#E4C27A", 500: "#B8872F", 700: "#8A6420", 800: "#6B4D18" },
+        gold: { DEFAULT: "#B8872F", 50: "#FBF4E4", 100: "#F5E6C4", 300: "#E4C27A", 500: "#B8872F", 700: "#8A6420", 800: "#6B4D18" },
         teal: { DEFAULT: "#0F5E63", 50: "#E8F3F3", 100: "#CFE6E7", 500: "#15797F", 700: "#0F5E63", 900: "#0A3F43" },
         navy: { DEFAULT: "#14304A", 500: "#23496B", 700: "#14304A", 900: "#0C1E2F" },
         ember: { DEFAULT: "#D9692B", 100: "#FBE7DA" },

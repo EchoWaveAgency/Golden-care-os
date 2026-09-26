@@ -56,5 +56,11 @@ cat > "$ROOT/.env.local" <<ENV
 NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON
 SUPABASE_SERVICE_ROLE_KEY=$SERVICE
+NEXT_PUBLIC_SITE_URL=http://localhost:3100
+# Local development only: messages are logged, not sent; the portal shows the sign-in code on screen.
+MESSAGING_MODE=dev
+PORTAL_DEV_SHOW_OTP=true
+CRON_SECRET=$(node -e "console.log(require('crypto').randomBytes(24).toString('hex'))")
+WHATSAPP_VERIFY_TOKEN=$(node -e "console.log(require('crypto').randomBytes(12).toString('hex'))")
 ENV
 echo "Local stack ready on http://localhost:54321 (.env.local written). Next: npm run demo:data"

@@ -93,6 +93,19 @@ if (!already.length) {
       slot: `[${start.toISOString()},${end.toISOString()})`, channel: i % 2 ? "whatsapp" : "phone" }), "appointment");
   }
 }
+// Illustrative drug list for the prescription screen (the clinic's pharmacist must approve the real formulary).
+const drugs = [
+  ["Paracetamol", "paracetamol", "500 mg", "tablet", false], ["Ibuprofen", "ibuprofen", "400 mg", "tablet", false],
+  ["Amoxicillin", "amoxicillin", "500 mg", "capsule", false], ["Azithromycin", "azithromycin", "500 mg", "tablet", false],
+  ["Fusidic acid cream", "fusidic acid", "2%", "cream", false], ["Hydrocortisone cream", "hydrocortisone", "1%", "cream", false],
+  ["Chlorhexidine mouthwash", "chlorhexidine", "0.12%", "mouthwash", false], ["Folic acid", "folic acid", "5 mg", "tablet", false],
+  ["Isotretinoin", "isotretinoin", "20 mg", "capsule", true], ["Tramadol", "tramadol", "50 mg", "capsule", true],
+];
+must(await db.from("drugs").upsert(drugs.map(([t, g, s, f, r]) => ({ trade_name: t, generic_name: g, strength: s, form: f, is_restricted: r })), { onConflict: "trade_name,strength,form" }), "drugs");
+// A recorded allergy on the first demo patient, to exercise the prescribing safety check.
+const hasAllergy = must(await db.from("patient_alerts").select("id").eq("patient_id", patients[0].id).eq("kind", "allergy"), "alerts");
+if (!hasAllergy.length) must(await db.from("patient_alerts").insert({ patient_id: patients[0].id, kind: "allergy", severity: "high", label: "Penicillin" }), "allergy");
+
 await import("./demo-website.mjs").then((m) => m.seedWebsite({ db, url, PASSWORD, BRANCH }));
 console.log(`Demo ready. ${people.length} users (password: ${PASSWORD}), ${patients.length} patients, today's schedule created.`);
 for (const p of people) console.log(`  ${p.role.padEnd(18)} ${p.email}`);
