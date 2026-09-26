@@ -1,6 +1,6 @@
 "use server";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { getContext } from "@/lib/session";
 import { friendlyError } from "@/lib/errors";
 import { clinicToday, clinicLocalToIso } from "@/lib/format";
@@ -115,6 +115,7 @@ export async function saveSiteSetting(form: FormData) {
   }).eq("key", key);
   if (error) back("site", friendlyError(error.message, ctx.locale));
   revalidatePath("/os/settings");
+  revalidateTag("site");
   revalidatePath("/ar", "layout");
   revalidatePath("/en", "layout");
   back("site", undefined, "ok");

@@ -54,6 +54,12 @@ describe("role workspaces", () => {
     expect(canAccess("/os/billing/123", p)).toBe(false);
   });
   it("no permissions → no home", () => expect(homeFor(new Set())).toBeNull());
+  it("marketing starts in website content", () => {
+    expect(homeFor(new Set(["content.edit", "content.marketing_approve", "content.publish", "marketing.read", "lead.read"]))).toBe("/os/content");
+  });
+  it("patient relations starts in the inquiry inbox", () => {
+    expect(homeFor(new Set(["patient.read", "patient.write", "appointment.read", "appointment.write", "lead.read", "lead.write"]))).toBe("/os/leads");
+  });
 });
 
 describe("errors", () => {

@@ -27,6 +27,8 @@ const people = [
   { email: "accountant@demo.goldencare.local", ar: "رئيس الحسابات", en: "Chief Accountant", role: "chief_accountant", branch: null, kind: "finance" },
   { email: "cashier@demo.goldencare.local", ar: "أمين الخزينة", en: "Cashier", role: "cashier", branch: BRANCH, kind: "finance" },
   { email: "auditor@demo.goldencare.local", ar: "المراجع المالي", en: "Financial Auditor", role: "financial_auditor", branch: null },
+  { email: "marketing@demo.goldencare.local", ar: "فريق التسويق", en: "Marketing Team", role: "marketing", branch: null },
+  { email: "meddir@demo.goldencare.local", ar: "د. المدير الطبي", en: "Medical Director", role: "medical_director", branch: null, kind: "management" },
 ];
 
 const specialties = must(await db.from("specialties").select("id, code"), "specialties");
@@ -91,5 +93,6 @@ if (!already.length) {
       slot: `[${start.toISOString()},${end.toISOString()})`, channel: i % 2 ? "whatsapp" : "phone" }), "appointment");
   }
 }
+await import("./demo-website.mjs").then((m) => m.seedWebsite({ db, url, PASSWORD, BRANCH }));
 console.log(`Demo ready. ${people.length} users (password: ${PASSWORD}), ${patients.length} patients, today's schedule created.`);
 for (const p of people) console.log(`  ${p.role.padEnd(18)} ${p.email}`);

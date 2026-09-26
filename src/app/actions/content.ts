@@ -1,6 +1,6 @@
 "use server";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { getContext } from "@/lib/session";
 import { friendlyError } from "@/lib/errors";
 import { clinicLocalToIso } from "@/lib/format";
@@ -63,6 +63,7 @@ export async function transitionContent(form: FormData) {
   });
   if (error) fail(path, friendlyError(error.message, ctx.locale));
   revalidatePath(path);
+  revalidateTag("site");
   revalidatePath("/ar", "layout");
   revalidatePath("/en", "layout");
   redirect(path);

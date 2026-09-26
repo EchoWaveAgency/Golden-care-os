@@ -26,8 +26,10 @@ export function navFor(perms: Set<string>): NavItem[] {
 
 /** Landing page for a user: the first workspace their permissions open. */
 export function homeFor(perms: Set<string>): string | null {
-  const order = ["/os/executive", "/os/reception", "/os/leads", "/os/doctor", "/os/cashier", "/os/billing", "/os/accounting", "/os/patients", "/os/content", "/os/settings", "/os/audit"];
+  const order = ["/os/executive", "/os/reception", "/os/doctor", "/os/cashier", "/os/billing", "/os/accounting", "/os/content", "/os/leads", "/os/patients", "/os/settings", "/os/audit"];
   const allowed = new Set(navFor(perms).map((i) => i.href));
+  // Patient Relations (inquiries, no cash handling) starts in the inquiry inbox, not reception.
+  if (allowed.has("/os/leads") && perms.has("lead.write") && !perms.has("payment.collect") && !allowed.has("/os/executive")) return "/os/leads";
   return order.find((h) => allowed.has(h)) ?? null;
 }
 
