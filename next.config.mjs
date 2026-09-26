@@ -2,6 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Fonts are self-hosted (@fontsource); no third-party font requests.
+  optimizeFonts: false,
   async headers() {
     return [
       {

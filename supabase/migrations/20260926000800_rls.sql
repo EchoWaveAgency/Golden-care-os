@@ -303,3 +303,8 @@ grant execute on function
   public.reverse_journal_entry(uuid, text), public.trial_balance(uuid, date, date),
   public.lock_fiscal_period(uuid)
   to authenticated;
+
+-- Trusted server-side jobs (service_role) run triggers and defaults that call app.* helpers.
+grant usage on schema app to service_role;
+grant execute on all functions in schema app to service_role;
+grant select, insert, update on app.queue_counters to service_role;
