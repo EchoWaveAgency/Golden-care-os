@@ -32,6 +32,8 @@ Added in 0011: `clinical.release` and `prescription.restricted` → medical_dire
 
 Added in 0013: `refund.request` → front_desk, cashier, patient_relations; `refund.approve` → chief_accountant, center_director (never for their own requests); payout uses `payment.collect`. User administration requires `users.manage`; only holders with an all-branch grant may grant privileged or all-branch roles and activate/deactivate accounts.
 
+Added in 0014: `contract.manage` → chief_accountant, center_director; `settlement.prepare` → accountant, chief_accountant; `settlement.approve` → chief_accountant, center_director; `settlement.pay` → chief_accountant. The database refuses the same person preparing and approving, entering the contract and approving, or approving and paying. Doctors read only their own approved statements. Any account with `mfa_required` (automatic for privileged roles) has no permission at all until the session has passed two-factor sign-in (aal2).
+
 **Patients (portal)** have no role and no table grants. A signed-in patient account can call only `portal_*` functions, each of which checks `app.portal_require(patient, level)`: the patient's own file, or a live family grant (`appointments` = appointments and requests; `full` = also released visits, prescriptions and invoices). Anything else answers "not found".
 
 ## Attribute rules (ABAC) enforced in the database

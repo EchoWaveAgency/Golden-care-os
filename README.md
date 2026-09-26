@@ -35,7 +35,9 @@ A production-grade healthcare operating system for Golden Care Clinics, built on
 | **Refunds** with maker-checker approval and cashier payout | ✅ |
 | **Online payment** from the patient account (Paymob adapter + local simulator) | ✅ (needs Paymob account + sandbox test) |
 | **Users & roles** — create accounts, temporary delegation, deactivate, forced password change | ✅ |
-| HR/payroll, inventory, laser, doctor settlements, MFA | ⏳ next milestones |
+| **Doctor settlements** — contracts, monthly statements net of discounts/refunds/voids, 3-way maker-checker, journals | ✅ |
+| **Two-factor sign-in** (authenticator app) enforced by the database for privileged roles | ✅ |
+| HR/payroll, inventory, laser device logs, patient deposits | ⏳ next milestones |
 
 Everything else in the master specification is planned in phases — see `PROGRESS.md`.
 
@@ -58,6 +60,8 @@ npm run build && npx next start -p 3100
 Website: http://localhost:3100/ar · Staff system: http://localhost:3100/os · Patient portal: http://localhost:3100/ar/portal
 
 Locally, messages are only logged (`MESSAGING_MODE=dev`) and the portal shows the sign-in code on screen (`PORTAL_DEV_SHOW_OTP=true`). Both flags are written by `stack:local` and must never be set in staging or production. Demo patients sign in with their synthetic numbers, e.g. `01001110001`.
+
+Privileged demo users (owner, director, admin, meddir, accountant, …) must set up an authenticator app at first sign-in.
 
 Requires PostgreSQL 16 server binaries (`/usr/lib/postgresql/16/bin`). On a hosted Supabase project, see `docs/DEPLOYMENT_RUNBOOK.md`.
 

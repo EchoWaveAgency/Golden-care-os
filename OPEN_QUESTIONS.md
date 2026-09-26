@@ -56,3 +56,13 @@ Each item has a configurable mechanism already (or planned). Placeholders are cl
 37. Who resolves "captured but unmatched" online payments and within what time (default: chief accountant, next working day).
 38. Gateway fees and settlement: how often Paymob settles to the bank and which account records fees (planned entry: Dr bank + bank charges / Cr gateway clearing).
 39. Multi-factor sign-in for privileged roles (the `mfa_required` flag exists; enforcement is the next security item).
+
+## Doctor settlements and sign-in security (added session 5)
+40. Each doctor's contract terms (share %, fixed fees per service, effective dates) — to be entered from the signed contracts.
+41. Settlement basis: invoiced (implemented) or collected cash; month cut-off; payment day.
+42. Withholding tax on doctors' professional fees and how it is shown on the statement (not implemented — needs the accountant's rule).
+43. Whether discounts reduce the doctor's base (implemented: line discounts do) and whether refunds are shared (implemented: proportional deduction).
+44. Payout method (implemented: bank transfer with reference; cash payouts not enabled).
+45. Negative statements (implemented: carried to the next statement) — or recovered another way?
+46. Which roles besides the privileged ones should require two-factor sign-in (e.g. cashiers, doctors).
+47. Who may run the break-glass procedure and where the record is kept.

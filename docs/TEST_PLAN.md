@@ -36,3 +36,7 @@
 - Unit (`gateway.test.ts`): HMAC verification and tampering, signed order id only, non-sale transactions rejected, simulator disabled against remote databases.
 - Browser `e2e/m4-journey.mjs` (25 checks): admin creates account → forced password change → reception refund request → chief accountant approves → cashier pays from a session, cash closes exactly → trial balance → patient pays online (declined, then success with receipt) → finance sees capture → deactivated account cannot sign in.
 - Independent code review of the money paths before release; all 10 findings fixed (see PROGRESS session 4).
+
+## Session 5 additions — settlements and two-factor sign-in
+- `supabase/tests/09_settlements_mfa.sql`: aal1 sessions get no permission / menu / data / doctor identity when MFA is required; automatic MFA for privileged roles; admin require/reset rules; flags not writable directly; grants not rewritable; contracts (permissions, overlap, retroactive lock, automatic end); statement math (percent, fixed per unit, line discounts, proportional refund, other doctors excluded), duplicate/future refusal, drafts hidden from doctors, three maker-checker rules, journals, idempotent payment, no-contract block, cancel and redo, stale drafts, void reversal, negative carry with correct accrual, ledger balanced.
+- Browser `e2e/m5-journey.mjs` (20 checks) and all earlier journeys now run with real two-factor sign-in for privileged demo users (`e2e/mfa.mjs`).

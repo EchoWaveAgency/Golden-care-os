@@ -53,7 +53,8 @@ select a.organization_id, k, a.id from public.accounts a join (values
   ('cash_on_hand', '1100'), ('bank_main', '1110'), ('card_clearing', '1120'),
   ('instapay_clearing', '1130'), ('wallet_clearing', '1140'), ('ar_patients', '1200'),
   ('patient_advances', '2200'), ('revenue_services', '4100'), ('discounts_allowed', '4900'),
-  ('cash_over_short', '5900'), ('gateway_clearing', '1150'), ('refunds', '4910')
+  ('cash_over_short', '5900'), ('gateway_clearing', '1150'), ('refunds', '4910'),
+  ('doctor_fees', '5100'), ('doctor_fees_payable', '2300')
 ) m(k, code) on m.code = a.code
 where a.organization_id = '00000000-0000-4000-8000-000000000001'
 on conflict do nothing;

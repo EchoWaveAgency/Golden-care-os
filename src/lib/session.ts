@@ -12,11 +12,13 @@ const loadContext = cache(async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/os/login");
 
-  const [{ data: profile }, { data: permRows }, { data: staff }] = await Promise.all([
+  const [{ data: profile }, { data: permRows }, { data: staff }, { data: security }] = await Promise.all([
     supabase.from("profiles").select("user_id, full_name_ar, full_name_en, locale, must_change_password").eq("user_id", user.id).maybeSingle(),
     supabase.rpc("my_permissions"),
     supabase.from("staff").select("id, branch_id, kind, full_name_ar, full_name_en").eq("user_id", user.id).maybeSingle(),
+    supabase.rpc("my_security"),
   ]);
+  const sec = (security ?? {}) as { mfa_required?: boolean; aal?: string | null };
 
   const rows = (permRows ?? []) as { permission_code: string; branch_id: string | null }[];
   const perms = new Set(rows.map((r) => r.permission_code));
@@ -41,6 +43,8 @@ const loadContext = cache(async () => {
     locale,
     t: translator(locale),
     can: (p: string) => perms.has(p),
+    /** True when this account must use two-factor sign-in and the session has not done it yet. */
+    needsMfa: Boolean(sec.mfa_required) && sec.aal !== "aal2",
   };
 });
 

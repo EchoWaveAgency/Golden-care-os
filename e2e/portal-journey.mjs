@@ -1,6 +1,7 @@
 // Milestone 3 journey: prescription with allergy check → release → patient OTP sign-in → portal → isolation.
 import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
+import { passMfa } from "./mfa.mjs";
 
 const BASE = "http://localhost:3100";
 const OUT = process.env.E2E_OUT ?? "/tmp/";
@@ -23,6 +24,7 @@ async function staff(email) {
   await page.type("#password", PASS);
   await submit(page, "button[type=submit]");
   await page.waitForFunction(() => !["/os", "/os/login"].includes(location.pathname), { timeout: 15000 }).catch(() => {});
+  await passMfa(page, email);
   return page;
 }
 async function patient(phone, lang = "ar", mobile = false) {

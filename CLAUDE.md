@@ -18,9 +18,10 @@ Next.js 14 (App Router, Server Components, Server Actions) · Supabase (Postgres
 7. All UI text is bilingual: `src/lib/i18n.ts` in the staff system, `src/lib/site/copy.ts` or inline ar/en pairs on the website and portal. Dates/times are localized strings — do not wrap them in `.num`.
 8. Don't invent clinic policy (prices, doctor contracts, refund rules, tax). Build the configurable mechanism and log the question in `OPEN_QUESTIONS.md`.
 9. Patients never get table grants. Portal features are `portal_*` SECURITY DEFINER functions that call `app.portal_require(patient, level)` first.
+10. Any new permission check must go through `app.has_permission` / `app.current_staff_id` (both enforce two-factor sign-in). Never check `user_roles` directly in new code.
 
 ## Module map
-Identity/permissions (0002) · Audit (0003) · Patients (0004) · Scheduling + encounters (0005) · Ledger (0006) · Billing + cashier (0007) · RLS/grants (0008) · Reference data (0009) · Website/CMS/leads (0010) · Prescriptions, release gate, portal API, messaging (0011) · Service-role wrappers (0012) · Refunds, online payments, user administration (0013).
+Identity/permissions (0002) · Audit (0003) · Patients (0004) · Scheduling + encounters (0005) · Ledger (0006) · Billing + cashier (0007) · RLS/grants (0008) · Reference data (0009) · Website/CMS/leads (0010) · Prescriptions, release gate, portal API, messaging (0011) · Service-role wrappers (0012) · Refunds, online payments, user administration (0013) · Doctor settlements, two-factor enforcement (0014).
 
 ## Current phase
-Phase 1 core + website + patient portal (session 3). See `PROGRESS.md`.
+Phase 1 core + website + portal + payments + settlements + MFA (session 5). See `PROGRESS.md`.

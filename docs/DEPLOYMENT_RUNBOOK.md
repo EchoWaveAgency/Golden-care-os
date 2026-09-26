@@ -18,6 +18,12 @@ Never point staging or local at production. Never run `demo-data.mjs` against pr
 6. Vercel project env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Production and Preview use their own projects). The service-role key is not needed by the web app.
 7. Enable PITR and schedule an independent encrypted `pg_dump` to off-platform storage.
 
+## Security settings before go-live
+- Supabase → Authentication → Multi-factor: enable TOTP (enroll + verify).
+- Set `PAYMENTS_MODE=paymob` with the Paymob keys; never set `PAYMENTS_MODE=dev` or `PORTAL_DEV_SHOW_OTP` (they are also ignored unless the database URL is localhost).
+- Create at least two all-branch system administrators; each enrolls an authenticator at first sign-in.
+- Store the break-glass procedure (`scripts/break-glass-mfa-reset.mjs`) with the owner; it needs the service key and must be run with two people present.
+
 ## Release checklist
 - [ ] CI green: typecheck, lint, unit, `db:test` (SQL + concurrency), build
 - [ ] Migration reviewed; rollback plan written (forward-fix migration preferred; restore-from-PITR for data incidents)

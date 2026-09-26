@@ -120,3 +120,34 @@ export async function changePassword(_prev: PasswordState, form: FormData): Prom
   await adminClient().rpc("svc_password_changed", { p_user: ctx.user.id });
   redirect("/os");
 }
+
+export async function setMfa(form: FormData) {
+  const ctx = await getContext();
+  const { error } = await ctx.supabase.rpc("admin_set_mfa", {
+    p_user: String(form.get("user_id")), p_required: form.get("required") === "true", p_reason: String(form.get("reason") ?? ""),
+  });
+  back(error, ctx.locale, "saved");
+}
+
+export type ResetState = { error?: string; tempPassword?: string } | undefined;
+
+// Lost phone: the database authorizes and records the reset, ends the user's sessions and requires a
+// new password; the server removes the Auth factors and sets a one-time password handed over in person.
+export async function resetMfa(_prev: ResetState, form: FormData): Promise<ResetState> {
+  const ctx = await getContext();
+  const ar = ctx.locale === "ar";
+  const user = String(form.get("user_id"));
+  const { error } = await ctx.supabase.rpc("admin_mfa_reset", { p_user: user, p_reason: String(form.get("reason") ?? "") });
+  if (error) return { error: friendlyError(error.message, ctx.locale) };
+  const db = adminClient();
+  const { data } = await db.auth.admin.mfa.listFactors({ userId: user });
+  for (const f of data?.factors ?? []) {
+    const del = await db.auth.admin.mfa.deleteFactor({ id: f.id, userId: user });
+    if (del.error) return { error: ar ? "تعذر حذف أحد عوامل التحقق. أعد المحاولة." : "Could not remove a factor. Please retry." };
+  }
+  const password = tempPassword();
+  const upd = await db.auth.admin.updateUserById(user, { password });
+  if (upd.error) return { error: ar ? "تعذر تعيين كلمة المرور المؤقتة. أعد المحاولة." : "Could not set the temporary password. Please retry." };
+  revalidatePath("/os/users");
+  return { tempPassword: password };
+}

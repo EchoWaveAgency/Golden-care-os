@@ -23,8 +23,12 @@ begin
   raise exception 'ASSERTION FAILED: expected error "%" but statement succeeded: %', p_expect, p_sql;
 end $$;
 
+-- Test sessions are two-factor (aal2) by default; test.login_aal simulates a password-only session.
 create or replace function test.login(p_user uuid) returns void language sql as $$
-  select set_config('request.jwt.claim.sub', coalesce(p_user::text, ''), false)
+  select set_config('request.jwt.claim.sub', coalesce(p_user::text, ''), false), set_config('request.jwt.claim.aal', 'aal2', false)
+$$;
+create or replace function test.login_aal(p_user uuid, p_aal text) returns void language sql as $$
+  select set_config('request.jwt.claim.sub', coalesce(p_user::text, ''), false), set_config('request.jwt.claim.aal', p_aal, false)
 $$;
 grant execute on all functions in schema test to authenticated, anon;
 

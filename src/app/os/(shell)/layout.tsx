@@ -11,6 +11,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const ctx = await getContext();
   // Accounts created by an administrator must set their own password first.
   if (ctx.profile?.must_change_password) redirect("/os/password");
+  // Two-factor sign-in (enforced by the database: no permissions until it is done).
+  if (ctx.needsMfa) redirect("/os/mfa");
   const { t, locale } = ctx;
   const items = navFor(ctx.perms);
   const sections = Array.from(new Set(items.map((i) => i.section)));

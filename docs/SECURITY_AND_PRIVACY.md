@@ -34,3 +34,9 @@
 | Consents | patient_consents | patient readers |
 | Financial | invoices, payments, journal_* | billing.read / accounting.read |
 | Copies of all the above | audit_events | audit.read |
+
+## Two-factor sign-in (session 5)
+- TOTP (authenticator app) through Supabase Auth. The database reads the session's assurance level (`aal` claim): an account with `mfa_required` gets no permission, no data and no doctor identity until the session is `aal2`. Required automatically for privileged roles.
+- Lost phone: an administrator resets it (audited); the user's sessions end, the factors are removed and a one-time password is handed over in person; the user sets a new password and enrolls again.
+- Break-glass (`scripts/break-glass-mfa-reset.mjs`) recovers the last administrator from a trusted terminal with the service key; it requires an operator name and a reason and is audited. Keep at least two all-branch administrators (the users screen warns otherwise).
+- Enable TOTP MFA in the Supabase project (Auth → Multi-factor) before go-live.

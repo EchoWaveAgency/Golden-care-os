@@ -525,7 +525,7 @@ begin
   -- The actor is re-checked here: the server passes the signed-in administrator's id.
   if not exists (select 1 from public.user_roles ur join public.role_permissions rp on rp.role_code = ur.role_code
                  join public.profiles pr on pr.user_id = ur.user_id and pr.is_active
-                 where ur.user_id = p_actor and rp.permission_code = 'users.manage'
+                 where ur.user_id = p_actor and rp.permission_code = 'users.manage' and ur.branch_id is null
                    and now() >= ur.valid_from and (ur.valid_to is null or now() < ur.valid_to)) then
     raise exception 'permission denied: users.manage' using errcode = '42501';
   end if;

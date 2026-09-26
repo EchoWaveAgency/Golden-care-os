@@ -2,6 +2,7 @@
 // Run on a freshly seeded local stack (PAYMENTS_MODE=dev, PORTAL_DEV_SHOW_OTP=true).
 import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
+import { passMfa } from "./mfa.mjs";
 
 const BASE = "http://localhost:3100";
 const OUT = process.env.E2E_OUT ?? "/tmp/";
@@ -24,6 +25,7 @@ async function staff(email, password = PASS) {
   await page.click("button[type=submit]");
   await page.waitForFunction(() => location.pathname !== "/os/login" || document.querySelector("[role=alert], .text-danger"), { timeout: 15000 }).catch(() => {});
   await page.waitForNetworkIdle({ idleTime: 400 }).catch(() => {});
+  await passMfa(page, email);
   return page;
 }
 async function clickButton(page, scopeSel, contains, label) {

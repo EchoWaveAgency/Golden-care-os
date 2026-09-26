@@ -74,7 +74,7 @@ select test.assert((select count(*) from public.patients where id = :'pid') = 0,
 
 -- Users cannot switch off their own account controls.
 select test.login(:'fd');
-select test.expect_error(format($q$update public.profiles set is_active = false where user_id = %L$q$, :'fd'), 'cannot change your own');
+select test.expect_error(format($q$update public.profiles set is_active = false where user_id = %L$q$, :'fd'), 'only through the administration screens');
 
 -- Anonymous role has no access at all.
 reset role;

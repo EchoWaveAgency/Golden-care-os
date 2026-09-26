@@ -1,6 +1,7 @@
 // End-to-end patient journey against the local stack, with screenshots.
 import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
+import { passMfa } from "./mfa.mjs";
 
 const BASE = "http://localhost:3100";
 const OUT = process.env.E2E_OUT ?? "/tmp/";
@@ -18,6 +19,7 @@ async function session(email) {
   await Promise.all([page.waitForNavigation({ waitUntil: "networkidle0" }), page.click("button[type=submit]")]);
   await page.waitForFunction(() => !["/os", "/os/login"].includes(location.pathname), { timeout: 15000 }).catch(() => {});
   await page.waitForNetworkIdle({ idleTime: 400 }).catch(() => {});
+  await passMfa(page, email);
   return page;
 }
 const shot = (p, n) => p.screenshot({ path: OUT + n + ".png" });

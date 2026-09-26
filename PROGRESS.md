@@ -109,3 +109,26 @@ Live Paymob sandbox test (needs the clinic's account), gateway settlement/fees e
 
 ### Next milestone (proposed)
 Doctor settlements (per-doctor revenue share from invoice lines, net of refunds and discounts, monthly statement + payable), MFA for privileged roles, patient deposits for bookings.
+
+## Session 5 — 2026-09-26: doctor settlements, two-factor sign-in
+
+### Delivered
+- **Doctor contracts** (migration 0014): effective-dated, one per doctor per day; default share of the net service value plus per-service terms (percent or fixed amount per unit). Changing terms = a new contract from a later date (the old one ends automatically); contracts used in an approved statement can never change retroactively. Screen: `/os/settlements/contracts/[doctor]`.
+- **Monthly statements** `/os/settlements`: computed from issued invoice lines net of line discounts, with catch-up (nothing issued before the period end is ever skipped), proportional deductions for refunds, reversal of invoices voided after settlement, and negative balances carried into the next statement. Lines are a frozen snapshot with invoice numbers. Lines without a contract block approval.
+- **Maker-checker ×3**: preparer ≠ approver, the person who entered the contract ≠ approver, approver ≠ payer. Approval posts Dr Doctor fees (5100) / Cr Doctor fees payable (2300); payment by bank transfer posts Dr 2300 / Cr bank. Drafts become "stale" when the contract changes.
+- **Doctors** see their own approved statements and current contract in `/os/my-settlements` (never drafts, never other doctors).
+- **Two-factor sign-in (TOTP)** enforced by the database: an account that requires it gets no permission, no data and no doctor identity from a password-only session. Required automatically for privileged roles (including existing ones); administrators can require it for anyone. Screens: enrollment with QR code / manual key and the sign-in code step at `/os/mfa`; admin reset for a lost phone (ends sessions, one-time password handed over in person, new enrollment). Break-glass script for the last administrator, audited.
+- Hardening: grants can only be ended, never rewritten; activation / MFA / password flags change only through audited admin functions; the local demo seeding uses temporary factors and removes them.
+
+### Independent review
+A separate reviewer audited settlements and MFA and reported 11 issues (MFA not applied to existing privileged users, flags writable by table update, doctor-identity paths bypassing MFA, lines lost when a current month was settled early, negative balances never recovered, reset allowing anyone with the password to enroll, possible lock-out of the only administrator, SoD gaps across contract/approve/pay, stale drafts, service-function scope, demo seeding left-overs). All 11 are fixed and covered by tests.
+
+### Verified
+- SQL suites 9/9 + concurrency ✅; unit 24/24; typecheck, lint, build ✅.
+- Browser (all with two-factor sign-in for privileged demo users): staff 27/27, portal 35/35, milestone-4 25/25, milestone-5 20/20 ✅.
+
+### Not built yet (honest scope)
+Withholding tax on doctor fees, collected-basis settlements, cash payouts to doctors, patient deposits, HR/payroll, inventory, laser device logs.
+
+### Next milestone (proposed)
+Inventory & consumables (stock per branch, receipts, issue to procedures, expiry/lot tracking) or HR/payroll — to be chosen by the clinic.
