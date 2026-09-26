@@ -38,3 +38,10 @@ No existing Golden Care OS code was available, so the system was started from sc
 7. Playwright E2E suite in CI; backup/restore runbook rehearsal on staging.
 
 Acceptance: each item has RLS tests, audit coverage, bilingual UI, and an E2E scenario.
+
+## Roadmap addition — 2026-09-26: website, landing pages, patient portal
+Scope added from master prompt v3 section 20 (`docs/specs/WEBSITE_PORTAL_SPEC.md`). Placement:
+- **Phase 3a** — public website on the same database (approved-only catalog views), CMS with medical review workflow, leads funnel into Patient Relations, landing-page engine, consent-gated analytics.
+- **Phase 3b** — online booking from real availability (schedules + rooms + devices), offers with price/terms snapshot.
+- **Phase 3c** — patient portal (separate patient auth context, release gate, family access grants, OTP adapter, financial account, online payments).
+Prerequisites from Phase 1 M2: settings screens (services/prices/schedules), refunds & credit notes, specialty templates + prescriptions (release source).
