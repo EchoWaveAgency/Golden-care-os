@@ -35,13 +35,13 @@ export default async function ExecutivePage() {
       <PageHeader title={t("nav.executive")} subtitle={`${t("exec.today")} · ${day}`} />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         {apts.data && <>
-          <Stat label={t("exec.appointments")} value={n((s) => !["canceled", "no_show"].includes(s))} href="/reception" />
-          <Stat label={t("exec.arrived")} value={n((s) => ["arrived", "waiting", "in_consultation", "procedure_in_progress", "awaiting_payment", "completed"].includes(s))} tone="teal" href="/reception" />
-          <Stat label={t("exec.completed")} value={n((s) => s === "completed")} href="/reception" />
-          <Stat label={t("exec.noShow")} value={n((s) => s === "no_show")} tone="danger" href="/reception" />
+          <Stat label={t("exec.appointments")} value={n((s) => !["canceled", "no_show"].includes(s))} href="/os/reception" />
+          <Stat label={t("exec.arrived")} value={n((s) => ["arrived", "waiting", "in_consultation", "procedure_in_progress", "awaiting_payment", "completed"].includes(s))} tone="teal" href="/os/reception" />
+          <Stat label={t("exec.completed")} value={n((s) => s === "completed")} href="/os/reception" />
+          <Stat label={t("exec.noShow")} value={n((s) => s === "no_show")} tone="danger" href="/os/reception" />
         </>}
-        {pays.data && <Stat label={t("exec.collections")} value={money(collections, locale)} tone="gold" href="/billing?status=paid" />}
-        {open.data && <Stat label={t("exec.outstanding")} value={money(outstanding, locale)} tone="navy" href="/billing?status=open" />}
+        {pays.data && <Stat label={t("exec.collections")} value={money(collections, locale)} tone="gold" href="/os/billing?status=paid" />}
+        {open.data && <Stat label={t("exec.outstanding")} value={money(outstanding, locale)} tone="navy" href="/os/billing?status=open" />}
       </div>
       <p className="mt-6 text-xs text-ink-300">{t("exec.drill")}</p>
     </>

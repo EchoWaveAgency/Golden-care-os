@@ -43,7 +43,7 @@ export default async function PatientPage({ params, searchParams }: { params: { 
         subtitle={`${p.mrn} · ${p.phone}`}
         actions={
           <>
-            {ctx.can("appointment.write") && <Link href={`/appointments/new?patient=${p.id}`} className="btn-primary">{t("apt.new")}</Link>}
+            {ctx.can("appointment.write") && <Link href={`/os/appointments/new?patient=${p.id}`} className="btn-primary">{t("apt.new")}</Link>}
             {ctx.can("billing.write") && (
               <form action={createInvoice}>
                 <input type="hidden" name="patient_id" value={p.id} />
@@ -104,7 +104,7 @@ export default async function PatientPage({ params, searchParams }: { params: { 
                 <tbody className="divide-y divide-ivory-200">
                   {invoices.map((i) => (
                     <tr key={i.id} className="hover:bg-ivory-50">
-                      <td className="td"><Link href={`/billing/${i.id}`} className="num text-navy-700 hover:underline">{i.invoice_no ?? t("bill.draft")}</Link></td>
+                      <td className="td"><Link href={`/os/billing/${i.id}`} className="num text-navy-700 hover:underline">{i.invoice_no ?? t("bill.draft")}</Link></td>
                       <td className="td text-ink-500 whitespace-nowrap">{dateTime(i.created_at, locale, { timeStyle: undefined })}</td>
                       <td className="td num">{money(i.total, locale)}</td>
                       <td className="td num text-ink-500">{t("bill.balance")}: {money(i.balance, locale)}</td>

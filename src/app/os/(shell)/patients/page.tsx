@@ -29,7 +29,7 @@ export default async function PatientsPage({ searchParams }: { searchParams: { q
     <>
       <PageHeader
         title={t("nav.patients")}
-        actions={ctx.can("patient.write") ? <Link href="/patients/new" className="btn-primary">{t("patient.new")}</Link> : null}
+        actions={ctx.can("patient.write") ? <Link href="/os/patients/new" className="btn-primary">{t("patient.new")}</Link> : null}
       />
       <form className="mb-5 flex gap-2">
         <input name="q" defaultValue={searchParams.q} placeholder={t("patient.searchHint")} className="input" autoFocus aria-label={t("common.search")} />
@@ -50,7 +50,7 @@ export default async function PatientsPage({ searchParams }: { searchParams: { q
               {rows.map((p) => (
                 <tr key={p.id} className="hover:bg-ivory-50">
                   <td className="td num text-ink-500">{p.mrn}</td>
-                  <td className="td"><Link href={`/patients/${p.id}`} className="font-medium text-navy-700 hover:underline">{patientName(p, locale)}</Link></td>
+                  <td className="td"><Link href={`/os/patients/${p.id}`} className="font-medium text-navy-700 hover:underline">{patientName(p, locale)}</Link></td>
                   <td className="td num">{p.phone}</td>
                   <td className="td num text-ink-500">{p.date_of_birth ?? "—"}</td>
                 </tr>

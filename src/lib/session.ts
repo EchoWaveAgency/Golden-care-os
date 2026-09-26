@@ -10,7 +10,7 @@ export type Ctx = Awaited<ReturnType<typeof loadContext>>;
 const loadContext = cache(async () => {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/os/login");
 
   const [{ data: profile }, { data: permRows }, { data: staff }] = await Promise.all([
     supabase.from("profiles").select("user_id, full_name_ar, full_name_en, locale").eq("user_id", user.id).maybeSingle(),
@@ -51,7 +51,7 @@ export async function getContext() {
 /** Server-side page guard: the database enforces access too, this just gives a clean page. */
 export async function requireAny(...permissions: string[]) {
   const ctx = await loadContext();
-  if (!permissions.some((p) => ctx.perms.has(p))) redirect("/?denied=1");
+  if (!permissions.some((p) => ctx.perms.has(p))) redirect("/os?denied=1");
   return ctx;
 }
 

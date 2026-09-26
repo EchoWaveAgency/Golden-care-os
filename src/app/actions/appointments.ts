@@ -43,8 +43,8 @@ export async function bookAppointment(_prev: FormState, form: FormData): Promise
   if (error && !/appointments_idempotency_key_key/.test(error.message)) {
     return { error: friendlyError(error.message, ctx.locale) };
   }
-  revalidatePath("/reception");
-  redirect(`/patients/${v.patient_id}?booked=1`);
+  revalidatePath("/os/reception");
+  redirect(`/os/patients/${v.patient_id}?booked=1`);
 }
 
 export async function transitionAppointment(form: FormData) {
@@ -52,7 +52,7 @@ export async function transitionAppointment(form: FormData) {
   const id = String(form.get("id") ?? "");
   const to = String(form.get("to") ?? "");
   const reason = String(form.get("reason") ?? "").trim() || null;
-  const back = String(form.get("back") ?? "/reception");
+  const back = String(form.get("back") ?? "/os/reception");
   if (!(APPOINTMENT_STATUSES as readonly string[]).includes(to)) return;
   const { error } = await ctx.supabase.rpc("transition_appointment", { p_id: id, p_to: to, p_reason: reason });
   revalidatePath(back);

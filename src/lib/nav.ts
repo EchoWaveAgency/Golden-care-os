@@ -6,15 +6,15 @@ import type { DictKey } from "./i18n";
 export type NavItem = { href: string; label: DictKey; section: DictKey; any: string[] };
 
 export const NAV: NavItem[] = [
-  { href: "/executive", label: "nav.executive", section: "nav.section.governance", any: ["dashboard.executive"] },
-  { href: "/reception", label: "nav.reception", section: "nav.section.front", any: ["appointment.write"] },
-  { href: "/patients", label: "nav.patients", section: "nav.section.front", any: ["patient.read"] },
-  { href: "/appointments/new", label: "nav.appointments", section: "nav.section.front", any: ["appointment.write"] },
-  { href: "/doctor", label: "nav.doctor", section: "nav.section.clinical", any: ["clinical.write.own"] },
-  { href: "/billing", label: "nav.billing", section: "nav.section.finance", any: ["billing.read"] },
-  { href: "/cashier", label: "nav.cashier", section: "nav.section.finance", any: ["cash.session", "cash.supervise"] },
-  { href: "/accounting", label: "nav.accounting", section: "nav.section.finance", any: ["accounting.read"] },
-  { href: "/audit", label: "nav.audit", section: "nav.section.governance", any: ["audit.read"] },
+  { href: "/os/executive", label: "nav.executive", section: "nav.section.governance", any: ["dashboard.executive"] },
+  { href: "/os/reception", label: "nav.reception", section: "nav.section.front", any: ["appointment.write"] },
+  { href: "/os/patients", label: "nav.patients", section: "nav.section.front", any: ["patient.read"] },
+  { href: "/os/appointments/new", label: "nav.appointments", section: "nav.section.front", any: ["appointment.write"] },
+  { href: "/os/doctor", label: "nav.doctor", section: "nav.section.clinical", any: ["clinical.write.own"] },
+  { href: "/os/billing", label: "nav.billing", section: "nav.section.finance", any: ["billing.read"] },
+  { href: "/os/cashier", label: "nav.cashier", section: "nav.section.finance", any: ["cash.session", "cash.supervise"] },
+  { href: "/os/accounting", label: "nav.accounting", section: "nav.section.finance", any: ["accounting.read"] },
+  { href: "/os/audit", label: "nav.audit", section: "nav.section.governance", any: ["audit.read"] },
 ];
 
 export function navFor(perms: Set<string>): NavItem[] {
@@ -23,7 +23,7 @@ export function navFor(perms: Set<string>): NavItem[] {
 
 /** Landing page for a user: the first workspace their permissions open. */
 export function homeFor(perms: Set<string>): string | null {
-  const order = ["/executive", "/reception", "/doctor", "/cashier", "/billing", "/accounting", "/patients", "/audit"];
+  const order = ["/os/executive", "/os/reception", "/os/doctor", "/os/cashier", "/os/billing", "/os/accounting", "/os/patients", "/os/audit"];
   const allowed = new Set(navFor(perms).map((i) => i.href));
   return order.find((h) => allowed.has(h)) ?? null;
 }

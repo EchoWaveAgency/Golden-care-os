@@ -46,8 +46,8 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
               <input type="date" name="day" defaultValue={day} className="input w-auto" aria-label={t("common.date")} />
               <button className="btn-ghost">{t("common.search")}</button>
             </form>
-            {canWrite && <Link href="/patients/new" className="btn-ghost">{t("patient.new")}</Link>}
-            {canWrite && <Link href="/patients" className="btn-primary">{t("apt.new")}</Link>}
+            {canWrite && <Link href="/os/patients/new" className="btn-ghost">{t("patient.new")}</Link>}
+            {canWrite && <Link href="/os/patients" className="btn-primary">{t("apt.new")}</Link>}
           </>
         }
       />
@@ -83,7 +83,7 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
                     <td className="td font-medium whitespace-nowrap">{timeOnly(rangeStart(a.slot), locale)}</td>
                     <td className="td num text-lg font-semibold text-gold-700">{a.queue_no ?? "—"}</td>
                     <td className="td">
-                      <Link href={`/patients/${a.patient_id}`} className="font-medium text-navy-700 hover:underline">{patientName(a.patient, locale)}</Link>
+                      <Link href={`/os/patients/${a.patient_id}`} className="font-medium text-navy-700 hover:underline">{patientName(a.patient, locale)}</Link>
                       <p className="num text-xs text-ink-300">{a.patient?.mrn} · {a.patient?.phone}</p>
                     </td>
                     <td className="td text-ink-500">{locale === "en" ? a.doctor?.full_name_en ?? a.doctor?.full_name_ar : a.doctor?.full_name_ar}</td>

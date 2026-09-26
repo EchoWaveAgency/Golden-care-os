@@ -21,8 +21,8 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
         <div className="card p-6 text-sm text-ink-500">
           {ar ? "ابحث عن المريض أولًا ثم اضغط «حجز موعد» من ملفه." : "Find the patient first, then choose “Book appointment” from their file."}
           <div className="mt-4 flex gap-2">
-            <Link href="/patients" className="btn-primary">{t("nav.patients")}</Link>
-            <Link href="/patients/new" className="btn-ghost">{t("patient.new")}</Link>
+            <Link href="/os/patients" className="btn-primary">{t("nav.patients")}</Link>
+            <Link href="/os/patients/new" className="btn-ghost">{t("patient.new")}</Link>
           </div>
         </div>
       </div>

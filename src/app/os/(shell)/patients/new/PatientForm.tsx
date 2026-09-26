@@ -49,7 +49,7 @@ export function PatientForm({ l }: { l: L }) {
             {dups.map((d) => (
               <li key={d.patient_id} className="flex items-center justify-between py-2 text-sm">
                 <span><span className="font-medium">{d.full_name}</span> <span className="num text-ink-500">· {d.mrn} · {d.phone}</span></span>
-                <Link href={`/patients/${d.patient_id}`} className="text-teal-700 hover:underline">{l.open}</Link>
+                <Link href={`/os/patients/${d.patient_id}`} className="text-teal-700 hover:underline">{l.open}</Link>
               </li>
             ))}
           </ul>
@@ -58,7 +58,7 @@ export function PatientForm({ l }: { l: L }) {
       )}
 
       <div className="flex justify-end gap-2">
-        <Link href="/patients" className="btn-ghost">{l.cancel}</Link>
+        <Link href="/os/patients" className="btn-ghost">{l.cancel}</Link>
         <SubmitButton pendingLabel={l.loading} className={dups.length ? "btn-gold" : "btn-primary"}>
           {dups.length ? l.registerAnyway : l.save}
         </SubmitButton>

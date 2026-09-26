@@ -1,11 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login"];
-
-// Refreshes the Supabase session on every request and sends signed-out users to /login.
+// Three contexts: public website (/ar, /en), staff system (/os), and later the patient portal.
+// Only the staff system requires a staff session here; the database enforces everything else.
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  const path = request.nextUrl.pathname;
+
+  if (path === "/") {
+    const to = request.nextUrl.clone();
+    to.pathname = request.headers.get("accept-language")?.toLowerCase().startsWith("en") ? "/en" : "/ar";
+    return NextResponse.redirect(to);
+  }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -13,6 +18,7 @@ export async function middleware(request: NextRequest) {
     return new NextResponse("Supabase environment variables are not configured.", { status: 503 });
   }
 
+  let response = NextResponse.next({ request });
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
@@ -24,19 +30,19 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const path = request.nextUrl.pathname;
-  const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
-
-  if (!user && !isPublic) {
-    const to = request.nextUrl.clone();
-    to.pathname = "/login";
-    to.search = "";
-    return NextResponse.redirect(to);
+  if (path.startsWith("/os") && !path.startsWith("/os/login")) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      const to = request.nextUrl.clone();
+      to.pathname = "/os/login";
+      to.search = "";
+      return NextResponse.redirect(to);
+    }
   }
   return response;
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|brand/).*)"],
+  // Public website pages skip the auth round-trip except for the session refresh on /os.
+  matcher: ["/", "/os/:path*"],
 };

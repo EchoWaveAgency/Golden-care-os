@@ -34,7 +34,7 @@ export default async function BillingPage({ searchParams }: { searchParams: { st
       <PageHeader title={t("nav.billing")} subtitle={status === "open" ? `${t("exec.outstanding")}: ${money(outstanding, locale)}` : undefined} />
       <nav className="mb-4 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
-          <Link key={f} href={`/billing?status=${f}`}
+          <Link key={f} href={`/os/billing?status=${f}`}
             className={`rounded-full px-3 py-1.5 text-sm ${f === status ? "bg-navy-700 text-white" : "bg-white text-ink-500 hover:bg-ivory-200"}`}>
             {f === "open" ? t("exec.outstanding") : t(`bill.status.${f}` as DictKey)}
           </Link>
@@ -56,7 +56,7 @@ export default async function BillingPage({ searchParams }: { searchParams: { st
             <tbody className="divide-y divide-ivory-200">
               {rows.map((i) => (
                 <tr key={i.id} className="hover:bg-ivory-50">
-                  <td className="td"><Link href={`/billing/${i.id}`} className="num font-medium text-navy-700 hover:underline">{i.invoice_no ?? t("bill.draft")}</Link></td>
+                  <td className="td"><Link href={`/os/billing/${i.id}`} className="num font-medium text-navy-700 hover:underline">{i.invoice_no ?? t("bill.draft")}</Link></td>
                   <td className="td">{names.get(i.patient_id)?.full_name_ar ?? "—"} <span className="num text-xs text-ink-300">{names.get(i.patient_id)?.mrn}</span></td>
                   <td className="td text-ink-500 whitespace-nowrap">{dateTime(i.issued_at ?? i.created_at, locale)}</td>
                   <td className="td num">{money(i.total, locale)}</td>

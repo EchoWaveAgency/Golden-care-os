@@ -44,14 +44,14 @@ describe("role workspaces", () => {
   it("front desk gets reception, not accounting", () => {
     const p = new Set(["patient.read", "patient.write", "appointment.write", "billing.read", "cash.session"]);
     const hrefs = navFor(p).map((i) => i.href);
-    expect(hrefs).toContain("/reception");
-    expect(hrefs).not.toContain("/accounting");
-    expect(homeFor(p)).toBe("/reception");
+    expect(hrefs).toContain("/os/reception");
+    expect(hrefs).not.toContain("/os/accounting");
+    expect(homeFor(p)).toBe("/os/reception");
   });
   it("doctor lands in own clinic and cannot open billing", () => {
     const p = new Set(["patient.read.assigned", "clinical.write.own"]);
-    expect(homeFor(p)).toBe("/doctor");
-    expect(canAccess("/billing/123", p)).toBe(false);
+    expect(homeFor(p)).toBe("/os/doctor");
+    expect(canAccess("/os/billing/123", p)).toBe(false);
   });
   it("no permissions → no home", () => expect(homeFor(new Set())).toBeNull());
 });

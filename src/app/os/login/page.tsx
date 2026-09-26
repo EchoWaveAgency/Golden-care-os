@@ -31,7 +31,7 @@ export default async function LoginPage() {
           <LoginForm labels={{ email: t("auth.email"), password: t("auth.password"), login: t("auth.login"), loading: t("common.loading") }} />
           <form action={setLocale} className="mt-8 text-center">
             <input type="hidden" name="locale" value={locale === "ar" ? "en" : "ar"} />
-            <input type="hidden" name="back" value="/login" />
+            <input type="hidden" name="back" value="/os/login" />
             <button className="text-sm text-teal-700 underline-offset-4 hover:underline">{t("common.switchLang")}</button>
           </form>
         </div>

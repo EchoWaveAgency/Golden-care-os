@@ -13,12 +13,12 @@ export async function signIn(_prev: FormState, form: FormData): Promise<FormStat
   if (!email || !password) return { error: t("auth.failed") };
   const { error } = await supabaseServer().auth.signInWithPassword({ email, password });
   if (error) return { error: t("auth.failed") };
-  redirect("/");
+  redirect("/os");
 }
 
 export async function signOut() {
   await supabaseServer().auth.signOut();
-  redirect("/login");
+  redirect("/os/login");
 }
 
 export async function setLocale(form: FormData) {

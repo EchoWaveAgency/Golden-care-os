@@ -53,6 +53,6 @@ export async function createPatient(_prev: PatientFormState, form: FormData): Pr
     .select("id")
     .single();
   if (error) return { error: friendlyError(error.message, ctx.locale) };
-  revalidatePath("/patients");
-  redirect(`/patients/${data.id}`);
+  revalidatePath("/os/patients");
+  redirect(`/os/patients/${data.id}`);
 }

@@ -21,7 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[250px_1fr]">
       <aside className="sticky top-0 hidden h-screen flex-col bg-navy-700 px-3 py-6 lg:flex">
-        <Link href="/" className="mb-8 flex items-center gap-3 px-3">
+        <Link href="/os" className="mb-8 flex items-center gap-3 px-3">
           <Image src="/brand/emblem.png" alt="" width={48} height={30} />
           <div>
             <p className="font-semibold text-gold-300">{t("app.name")}</p>
@@ -45,7 +45,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="min-w-0">
         <header className="sticky top-0 z-10 bg-navy-700 lg:hidden">
           <div className="flex items-center justify-between px-4 py-3">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/os" className="flex items-center gap-2">
               <Image src="/brand/emblem.png" alt="" width={36} height={23} />
               <span className="font-semibold text-gold-300">{t("app.name")}</span>
             </Link>

@@ -44,7 +44,7 @@ export default async function DoctorPage({ searchParams }: { searchParams: { err
                 <div className="flex items-center gap-4">
                   <span className="min-w-[5.5rem] text-lg font-semibold text-navy-700 whitespace-nowrap">{timeOnly(rangeStart(a.slot), locale)}</span>
                   <div>
-                    <Link href={`/patients/${a.patient_id}`} className="font-medium text-navy-700 hover:underline">{patientName(a.patient, locale)}</Link>
+                    <Link href={`/os/patients/${a.patient_id}`} className="font-medium text-navy-700 hover:underline">{patientName(a.patient, locale)}</Link>
                     <p className="num text-xs text-ink-300">{a.patient?.mrn}{a.queue_no ? ` · #${a.queue_no}` : ""}</p>
                   </div>
                 </div>
