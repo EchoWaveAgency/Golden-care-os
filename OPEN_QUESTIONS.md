@@ -82,3 +82,16 @@ Each item has a configurable mechanism already (or planned). Placeholders are cl
 57. Accepted risk (current design): the store keeper who created an order may also receive it; control relies on the approver of the order and the stock count. Should receiving require a second person?
 58. VAT on supplier invoices: are purchases recorded gross (current) or should input VAT be separated?
 59. Doctor share in the profitability report is an estimate from the contracts; confirm whether the report should show only approved settlements instead.
+
+## Devices, laser and packages (added session 8)
+60. The real device list (asset numbers, serials, agents, warranty) and the approved settings per device — to be signed off by the medical director.
+61. The final pre-treatment contraindication checklist and which items block treatment (defaults are loaded; medical director to confirm).
+62. Who may operate the laser (implemented: doctors, nurses, medical director) and who may override a contraindication (doctors, medical director).
+63. Counter resets after a part change: should a second person approve them?
+64. Maintenance costs: record them against the agent in suppliers payable, or keep them as memo only (current)?
+65. Package refunds and transfers: policy (unused value, admin fee, who approves). Currently a paid package cannot be refunded in the system.
+66. May sessions start before the package is fully paid (current: no)?
+67. Discount authority for packages (who may give what percentage).
+68. Expired packages: recognise the unused balance as revenue (current, account 4130), extend, or refund?
+69. A package used in another branch: current posting releases the deferred balance in the branch where the session happens; confirm, or post an inter-branch entry.
+70. Doctor fee on package sessions: current base is the net value per session and the contract rate for the service; confirm.

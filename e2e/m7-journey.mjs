@@ -36,6 +36,7 @@ const pickItem = async (page, row, code) => {
 // ---------- Store keeper creates and submits a purchase order
 const st = await login("inventory@demo.goldencare.local");
 await st.goto(`${BASE}/os/purchasing/new`, { waitUntil: "networkidle0" });
+await st.select("#supplier_id", await st.$$eval("#supplier_id option", (os) => os.find((o) => o.textContent.includes("المستلزمات الطبية"))?.value));
 await pickItem(st, 0, "GEL-US");
 await st.type("[data-row-qty='0']", "10");
 await st.type("[data-row-cost='0']", "85");
@@ -91,7 +92,8 @@ check((await text(st)).includes("تم إغلاق الأمر") && !(await text(st
 const acc = await login("accountant@demo.goldencare.local");
 await acc.goto(`${BASE}/os/suppliers`, { waitUntil: "networkidle0" });
 check((await text(acc)).includes("13,500.00"), "owed to suppliers: 12,640 demo receipt + 860 new receipt");
-await Promise.all([acc.waitForNavigation({ waitUntil: "networkidle0" }), acc.click("a[href^='/os/suppliers/']")]);
+const supHref = await acc.$$eval("a[href^='/os/suppliers/']", (as) => as.find((a) => a.innerText.includes("المستلزمات الطبية"))?.getAttribute("href"));
+await acc.goto(BASE + supHref, { waitUntil: "networkidle0" });
 const supUrl = acc.url().split("?")[0];
 check((await text(acc)).includes("غير مؤكد") && (await acc.$$("input[name^=pay_]")).length === 1, "receipt without an order is flagged and cannot be paid until confirmed");
 await dir.goto(supUrl, { waitUntil: "networkidle0" });

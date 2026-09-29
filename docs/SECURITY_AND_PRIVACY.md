@@ -33,6 +33,8 @@
 | Clinical notes | encounters, encounter_addenda | clinical.read / treating doctor |
 | Consents | patient_consents | patient readers |
 | Financial | invoices, payments, journal_* | billing.read / accounting.read |
+| Laser session records | laser_sessions, laser_session_areas, laser_session_notes | clinical.read / operator / appointment doctor |
+| Package balances | patient_packages, package_redemptions | package.read / laser.operate (branch) |
 | Copies of all the above | audit_events | audit.read |
 
 ## Two-factor sign-in (session 5)

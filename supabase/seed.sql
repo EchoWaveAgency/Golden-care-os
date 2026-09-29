@@ -39,6 +39,7 @@ select org.id, c, ar, en, t::public.account_type, p from org, (values
   ('4120', 'إيرادات الأسنان',                 'Dental revenue',              'revenue',   true),
   ('4900', 'خصومات مسموح بها',               'Discounts allowed',           'revenue',   true),
   ('4910', 'مردودات ومبالغ مستردة للمرضى',    'Patient refunds (contra revenue)', 'revenue', true),
+  ('4130', 'إيرادات باقات منتهية الصلاحية',     'Expired package revenue',     'revenue',   true),
   ('5000', 'المصروفات',                      'Expenses',                    'expense',   false),
   ('5100', 'أتعاب الأطباء',                  'Doctor fees',                 'expense',   true),
   ('5200', 'الرواتب والأجور',                'Salaries & wages',            'expense',   true),
@@ -56,7 +57,8 @@ select a.organization_id, k, a.id from public.accounts a join (values
   ('patient_advances', '2200'), ('revenue_services', '4100'), ('discounts_allowed', '4900'),
   ('cash_over_short', '5900'), ('gateway_clearing', '1150'), ('refunds', '4910'),
   ('doctor_fees', '5100'), ('doctor_fees_payable', '2300'),
-  ('inventory', '1300'), ('consumables_expense', '5300'), ('suppliers_payable', '2100'), ('inventory_adjustments', '5310')
+  ('inventory', '1300'), ('consumables_expense', '5300'), ('suppliers_payable', '2100'), ('inventory_adjustments', '5310'),
+  ('package_deferred', '2210'), ('package_breakage', '4130')
 ) m(k, code) on m.code = a.code
 where a.organization_id = '00000000-0000-4000-8000-000000000001'
 on conflict do nothing;

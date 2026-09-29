@@ -175,3 +175,25 @@ Returns to supplier, transfers between branches, approval thresholds by amount, 
 
 ### Next milestone (proposed)
 HR & payroll (needs the clinic's insurance, tax and labor rules first — see OPEN_QUESTIONS 54+), or laser device logs and shot counters.
+
+## Session 8 — 2026-09-29: devices & maintenance, laser sessions, packages
+
+### Delivered
+- **Device register** (migration 0017) `/os/devices`: asset number, model, serial, room, agent, purchase and warranty dates, cost, and the approved treatment settings (wavelengths, spot sizes, fluence range per wavelength, pulse width). Usage counter (pulses) that only moves forward: through signed sessions, manual readings (any jump is recorded as *pulses with no session*), or a reset after a part change (lower only, with a reason). Cynosure Elite+ is configured as data, not code.
+- **Maintenance** work orders: preventive, breakdown, calibration, safety check. A breakdown takes the device out of service; a failed calibration keeps it out until a passing one is recorded. Closing records the work, parts, costs and the next preventive / calibration dates. Alerts: device down, maintenance or calibration overdue / due in 14 days, counter reached the service limit, 90% of rated life, warranty ending, unlogged pulses. Monthly usage: sessions, pulses, downtime hours, maintenance cost.
+- **Laser session record** `/os/laser`: for a checked-in dermatology appointment — device, service, skin type (Fitzpatrick), pre-treatment contraindication checklist (a "yes" on a blocking item needs a doctor and a written reason), settings per area (checked against the device's approved range), test spot, counter before/after, reaction, outcome, follow-up. It is signed only when *pulses per area + test spot = counter difference* (shown live on screen). A signed record is immutable; addenda and adverse-event follow-ups are added below it. Refused on a device that is down or overdue for calibration. Photo consent is snapshotted.
+- **Packages** `/os/packages` and in the patient file: package catalogue (service, sessions, price, validity, branch); sale creates and issues the invoice with the patient's discount; the deferred balance is the net amount (2210). Sessions can be used only after the invoice is fully paid; each signed session redeems one unit (Dr 2210 / Cr service revenue) with the appointment doctor on the line. A session covered by a package cannot also be invoiced, and the reverse. Expiry of paid packages moves the unused balance to 4130; unpaid ones are voided instead. Voiding an unused package invoice cancels the package.
+- **Settlements** now include redeemed package sessions (base = recognised net value, contract rate of the service). **Profitability report** counts revenue when a session is used, not when a package is sold. **Consumables** for a package session are prefilled from the service template.
+
+### Independent review
+A separate reviewer reported 9 issues: expiring an unpaid package then voiding its invoice corrupted the ledger; the package discount was lost (gross value recognised, doctor paid on gross); a session could be redeemed from a package and invoiced too; device status could be wrong after a failed calibration (stuck down, or bypassed by closing another order); any doctor with laser rights could read every laser record in the branch; a counter "reset" could jump forwards and hide unlogged use; per-unit rounding could block the last sessions; branch-level 2210 balances when a package is used in another branch; and unchecked UI values (empty reading reset to 0, template toggle erasing terms, double-submitted sale, branch-scoped expiry). Fixed: the first seven and the UI items, all covered by tests; the cross-branch 2210 point is logged as an open question.
+
+### Verified
+- SQL suites 12/12 plus concurrency (5 sessions signed in parallel against a 2-session package → exactly 2 redemptions) ✅; unit 27/27; typecheck, lint, build ✅.
+- Browser journeys on fresh data: laser package 25/25, purchasing 18/18, inventory 17/17, settlements & MFA 20/20, staff 27/27, portal 35/35, milestone 4 25/25 ✅.
+
+### Not built yet (honest scope)
+Package refunds and transfers, patient wallet / loyalty / referrals, clinical photos upload, device booking conflicts in the scheduler, posting maintenance costs to suppliers payable, vendor device integration (adapter + manual import only), HR/payroll.
+
+### Next milestone (proposed)
+HR & payroll (needs the clinic's insurance, tax and labour rules — see OPEN_QUESTIONS), or patient wallet / deposits and package refunds once finance confirms the policy.

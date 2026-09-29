@@ -48,7 +48,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
           subtitle={patient ? `${patient.full_name_ar} · ${patient.mrn}` : undefined}
           actions={<><StatusBadge status={inv.status} label={t(`bill.status.${inv.status}` as DictKey)} />{!isDraft && <PrintButton label={t("common.print")} />}</>}
         />
-        <Banner error={searchParams.error} success={searchParams.paid ? (ar ? "تم تسجيل الدفعة وإصدار الإيصال." : "Payment recorded and receipt issued.") : searchParams.ok === "refund_requested" ? (ar ? "تم إرسال طلب الاسترداد للاعتماد." : "Refund request sent for approval.") : undefined} />
+        <Banner error={searchParams.error} success={searchParams.paid ? (ar ? "تم تسجيل الدفعة وإصدار الإيصال." : "Payment recorded and receipt issued.") : searchParams.ok === "refund_requested" ? (ar ? "تم إرسال طلب الاسترداد للاعتماد." : "Refund request sent for approval.") : searchParams.ok === "package" ? (ar ? "تم بيع الباقة وإصدار الفاتورة. حصّل المبلغ؛ الجلسات تُستخدم بعد السداد الكامل." : "Package sold and invoice issued. Collect payment; sessions can be used once it is fully paid.") : undefined} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

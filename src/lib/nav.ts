@@ -13,13 +13,16 @@ export const NAV: NavItem[] = [
   { href: "/os/patients", label: "nav.patients", section: "nav.section.front", any: ["patient.read"] },
   { href: "/os/appointments/new", label: "nav.appointments", section: "nav.section.front", any: ["appointment.write"] },
   { href: "/os/doctor", label: "nav.doctor", section: "nav.section.clinical", any: ["clinical.write.own"] },
+  { href: "/os/laser", label: "nav.laser", section: "nav.section.clinical", any: ["laser.operate"] },
   { href: "/os/my-settlements", label: "nav.mySettlements", section: "nav.section.clinical", any: ["clinical.write.own"] },
+  { href: "/os/packages", label: "nav.packages", section: "nav.section.front", any: ["package.read", "package.manage", "package.sell"] },
   { href: "/os/billing", label: "nav.billing", section: "nav.section.finance", any: ["billing.read"] },
   { href: "/os/cashier", label: "nav.cashier", section: "nav.section.finance", any: ["cash.session", "cash.supervise"] },
   { href: "/os/refunds", label: "nav.refunds", section: "nav.section.finance", any: ["refund.request", "refund.approve"] },
   { href: "/os/settlements", label: "nav.settlements", section: "nav.section.finance", any: ["settlement.prepare", "settlement.approve", "settlement.pay", "contract.manage"] },
   { href: "/os/accounting", label: "nav.accounting", section: "nav.section.finance", any: ["accounting.read"] },
   { href: "/os/inventory", label: "nav.inventory", section: "nav.section.operations", any: ["inventory.read", "inventory.issue", "inventory.receive", "inventory.count", "inventory.approve", "inventory.manage"] },
+  { href: "/os/devices", label: "nav.devices", section: "nav.section.operations", any: ["device.read", "device.manage", "device.maintain"] },
   { href: "/os/purchasing", label: "nav.purchasing", section: "nav.section.operations", any: ["purchase.read", "purchase.request", "purchase.approve"] },
   { href: "/os/suppliers", label: "nav.suppliers", section: "nav.section.finance", any: ["supplier.pay.request", "supplier.pay.approve"] },
   { href: "/os/reports/profitability", label: "nav.profitability", section: "nav.section.governance", any: ["reports.finance"] },
@@ -36,7 +39,7 @@ export function navFor(perms: Set<string>): NavItem[] {
 
 /** Landing page for a user: the first workspace their permissions open. */
 export function homeFor(perms: Set<string>): string | null {
-  const order = ["/os/executive", "/os/reception", "/os/doctor", "/os/cashier", "/os/billing", "/os/accounting", "/os/content", "/os/leads", "/os/patients", "/os/inventory", "/os/settings", "/os/audit"];
+  const order = ["/os/executive", "/os/reception", "/os/doctor", "/os/cashier", "/os/billing", "/os/accounting", "/os/content", "/os/leads", "/os/patients", "/os/laser", "/os/inventory", "/os/devices", "/os/settings", "/os/audit"];
   const allowed = new Set(navFor(perms).map((i) => i.href));
   // Patient Relations (inquiries, no cash handling) starts in the inquiry inbox, not reception.
   if (allowed.has("/os/leads") && perms.has("lead.write") && !perms.has("payment.collect") && !allowed.has("/os/executive")) return "/os/leads";

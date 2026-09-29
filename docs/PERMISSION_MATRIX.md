@@ -24,6 +24,7 @@ Deny by default. A user's effective permissions = union of active role grants (`
 | hr_manager | مدير الموارد البشرية | staff.read (HR module in Phase 2) |
 | inventory_controller | مراقب المخزون | — (Phase 2) |
 | security_auditor | مراجع أمن المعلومات | audit.read |
+| device_officer | مسؤول الأجهزة والصيانة | device.read, device.manage, device.maintain |
 | marketing | التسويق والمحتوى | content.edit, content.marketing_approve, content.publish, marketing.read, lead.read |
 
 Added in 0010: patient_relations and front_desk get lead.read/lead.write; medical_director gets content.edit and content.medical_approve; center_director gets content.publish, marketing.read, lead.read; operations_manager gets lead.read, marketing.read; owner gets marketing.read. Anonymous visitors: only the public website functions.
@@ -51,3 +52,5 @@ Added in 0015: `inventory.read` → inventory_controller, nurse, medical_assista
 `supabase/tests/01_identity_rls.sql`, `04_billing_accounting.sql`, `05_encounters.sql`.
 
 Added in 0016: `purchase.read` → inventory_controller, chief_accountant, accountant, operations_manager, center_director; `purchase.request` → inventory_controller; `purchase.approve` → chief_accountant, operations_manager, center_director (never an order they created; confirms receipts without an order, never one they recorded); `supplier.pay.request` → chief_accountant, accountant; `supplier.pay.approve` → chief_accountant, center_director (never a payment they requested). The profitability report uses `reports.finance`.
+
+Added in 0017: `device.read` → device_officer, operations_manager, center_director, medical_director, quality_manager, nurse; `device.maintain` → device_officer, operations_manager; `device.manage` (register, configure, counter reset) → device_officer; `laser.operate` → doctor, nurse, medical_director; `laser.override` (sign despite a contraindication, with a reason) → doctor, medical_director; `package.read` → front_desk, cashier, patient_relations, nurse, doctor, chief_accountant, accountant, center_director, financial_auditor; `package.sell` → front_desk; `package.manage` (catalogue, all-branch grant) → chief_accountant, center_director; `package.expire` → chief_accountant. Laser records are readable by clinical readers of the branch, the operator and the appointment doctor only.

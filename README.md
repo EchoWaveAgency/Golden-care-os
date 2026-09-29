@@ -40,7 +40,10 @@ A production-grade healthcare operating system for Golden Care Clinics, built on
 | **Inventory & consumables** — lots/expiry, FEFO issue to sessions, blind counts with approval, journals, alerts | ✅ |
 | **Purchasing & suppliers** — purchase orders with approval, receiving against orders, supplier statements & aging, payments with maker-checker | ✅ |
 | **Profitability report** per service and doctor (net revenue, doctor share, consumables, margin) with CSV export | ✅ |
-| HR/payroll, laser device logs, patient deposits, supplier returns | ⏳ next milestones |
+| **Devices & maintenance** — asset register, pulse counters, work orders, calibration, alerts, usage | ✅ |
+| **Laser session record** — settings per area, contraindication checklist, counter reconciliation, signed and immutable | ✅ |
+| **Packages** — sale with deferred revenue, redemption per session, expiry, settlement and report integration | ✅ |
+| HR/payroll, patient wallet & deposits, package refunds, supplier returns | ⏳ next milestones |
 
 Everything else in the master specification is planned in phases — see `PROGRESS.md`.
 

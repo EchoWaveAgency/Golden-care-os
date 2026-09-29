@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAny } from "@/lib/session";
@@ -11,6 +12,8 @@ import { Banner } from "@/components/Banner";
 import { Empty } from "@/components/Empty";
 import type { DictKey } from "@/lib/i18n";
 import { PortalCard } from "./PortalCard";
+import { PACKAGE_STATUS, label, type PackageBalance } from "@/lib/devices";
+import { sellPackage } from "@/app/actions/packages";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +38,13 @@ export default async function PatientPage({ params, searchParams }: { params: { 
       : Promise.resolve({ data: [] as InvoiceRow[] }),
   ]);
   const invoices = invoicesRes.data ?? [];
+  const showPackages = ctx.can("package.read") || ctx.can("package.sell") || ctx.can("laser.operate");
+  const [{ data: pkgData }, { data: tplData }] = await Promise.all([
+    showPackages ? ctx.supabase.rpc("patient_package_balances", { p_patient: p.id }) : Promise.resolve({ data: [] }),
+    ctx.can("package.sell") ? ctx.supabase.from("package_templates").select("id, name_ar, name_en, sessions, price").eq("is_active", true).order("code") : Promise.resolve({ data: [] }),
+  ]);
+  const pkgs = (pkgData ?? []) as PackageBalance[];
+  const tpls = (tplData ?? []) as { id: string; name_ar: string; name_en: string; sessions: number; price: number }[];
   const alerts = (flags ?? []) as { kind: string; severity: string; n: number }[];
 
   return (
@@ -114,6 +124,34 @@ export default async function PatientPage({ params, searchParams }: { params: { 
                   ))}
                 </tbody>
               </table>
+            )}
+          </section>
+        )}
+        {showPackages && (
+          <section className="card lg:col-span-3" data-packages>
+            <h2 className="border-b border-ivory-200 px-5 py-3 font-medium text-navy-700">{locale === "ar" ? "الباقات" : "Packages"}</h2>
+            {pkgs.length === 0 ? <Empty text={t("common.none")} /> : (
+              <table className="w-full text-sm"><tbody className="divide-y divide-ivory-200">
+                {pkgs.map((k) => (
+                  <tr key={k.id}>
+                    <td className="td"><span className="num font-medium">{k.ref}</span> · {locale === "ar" ? k.name_ar : k.name_en}</td>
+                    <td className="td num">{locale === "ar" ? "متبقي" : "Left"} {k.units_total - k.units_used}/{k.units_total}</td>
+                    <td className="td num text-ink-500">{locale === "ar" ? "تنتهي" : "Expires"} {k.expires_on}</td>
+                    <td className="td">{label(PACKAGE_STATUS, k.status, locale === "ar")}{!k.paid && k.status === "active" ? <span className="text-warn"> · {locale === "ar" ? "غير مسددة" : "unpaid"}</span> : null}</td>
+                    <td className="td">{ctx.can("billing.read") && <Link href={`/os/billing/${k.invoice_id}`} className="num text-navy-700 hover:underline">{k.invoice_no}</Link>}</td>
+                  </tr>))}
+              </tbody></table>
+            )}
+            {ctx.can("package.sell") && tpls.length > 0 && (
+              <form action={sellPackage} className="flex flex-wrap items-end gap-2 border-t border-ivory-200 p-4">
+                <input type="hidden" name="patient_id" value={p.id} />
+                <input type="hidden" name="idempotency_key" value={randomUUID()} />
+                <div><label className="label" htmlFor="template_id">{locale === "ar" ? "بيع باقة" : "Sell a package"}</label>
+                  <select id="template_id" name="template_id" className="input">
+                    {tpls.map((x) => <option key={x.id} value={x.id}>{locale === "ar" ? x.name_ar : x.name_en} · {x.sessions} · {money(x.price, locale)}</option>)}</select></div>
+                <div><label className="label" htmlFor="discount">{locale === "ar" ? "خصم" : "Discount"}</label><input id="discount" name="discount" type="number" min="0" step="0.01" defaultValue={0} className="input num w-28" /></div>
+                <SubmitButton pendingLabel="…" className="btn-gold">{locale === "ar" ? "بيع وإصدار الفاتورة" : "Sell and issue invoice"}</SubmitButton>
+              </form>
             )}
           </section>
         )}

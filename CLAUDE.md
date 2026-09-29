@@ -21,7 +21,7 @@ Next.js 14 (App Router, Server Components, Server Actions) · Supabase (Postgres
 10. Any new permission check must go through `app.has_permission` / `app.current_staff_id` (both enforce two-factor sign-in). Never check `user_roles` directly in new code.
 
 ## Module map
-Identity/permissions (0002) · Audit (0003) · Patients (0004) · Scheduling + encounters (0005) · Ledger (0006) · Billing + cashier (0007) · RLS/grants (0008) · Reference data (0009) · Website/CMS/leads (0010) · Prescriptions, release gate, portal API, messaging (0011) · Service-role wrappers (0012) · Refunds, online payments, user administration (0013) · Doctor settlements, two-factor enforcement (0014) · Inventory & consumables (0015) · Purchasing, supplier payments, profitability report (0016).
+Identity/permissions (0002) · Audit (0003) · Patients (0004) · Scheduling + encounters (0005) · Ledger (0006) · Billing + cashier (0007) · RLS/grants (0008) · Reference data (0009) · Website/CMS/leads (0010) · Prescriptions, release gate, portal API, messaging (0011) · Service-role wrappers (0012) · Refunds, online payments, user administration (0013) · Doctor settlements, two-factor enforcement (0014) · Inventory & consumables (0015) · Purchasing, supplier payments, profitability report (0016) · Devices, laser sessions, packages (0017).
 
 ## Current phase
-Phase 1 core + website + portal + payments + settlements + MFA + inventory + purchasing & reports (session 7). See `PROGRESS.md`.
+Phase 1 core + website + portal + payments + settlements + MFA + inventory + purchasing & reports + devices, laser & packages (session 8). See `PROGRESS.md`.

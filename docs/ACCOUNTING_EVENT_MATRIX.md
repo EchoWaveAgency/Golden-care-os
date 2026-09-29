@@ -15,6 +15,9 @@ All operational postings go through `app.post_journal()` using semantic account 
 | Doctor settlement paid | `pay_settlement()` | `doctor_fees_payable` (2300) | `bank_main` | Bank transfer with reference; payer ≠ approver |
 | Goods received | `receive_goods()` | `inventory` (1300) | `suppliers_payable` (2100) | Lot value = qty × unit cost; idempotent; one receipt per supplier invoice |
 | Supplier payment released | `decide_supplier_payment()` | `suppliers_payable` (2100) | `bank_main` (1110) | Requested by one person, released by another; only confirmed receipts; never above what is outstanding |
+| Package sold | `sell_package()` → `issue_invoice()` | `ar_patients` (net) · `discounts_allowed` (discount) | `package_deferred` (2210, gross) | Then a reclass Dr 2210 / Cr 4900 for the discount, so the deferred balance is the net price |
+| Package session redeemed | `sign_laser_session()` | `package_deferred` (2210) | Service revenue (e.g. 4110), with doctor | Equal share per session, last one takes the remainder; invoice must be fully paid |
+| Package expired | `expire_packages()` | `package_deferred` (2210) | `package_breakage` (4130) | Paid packages only; policy to be confirmed by finance |
 | Consumables issued | `issue_stock()` | `consumables_expense` (5300), with patient | `inventory` (1300) | FEFO lot costs; an emptied lot takes its exact remaining value |
 | Stock count approved | `approve_count()` | `inventory_adjustments` (5310) for losses / `inventory` for gains | `inventory` for losses / `inventory_adjustments` for gains | Approver ≠ counter; the store is frozen while counting |
 | Online payment (portal) | `svc_payment_confirm()` from the verified gateway callback | `gateway_clearing` (1150) | `ar_patients` | Idempotent per gateway transaction; amount mismatch or changed balance → *review*, nothing posted; unmatched captures → `payment_exceptions` |

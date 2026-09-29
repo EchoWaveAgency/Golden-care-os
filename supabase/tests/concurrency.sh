@@ -80,7 +80,40 @@ ISS=$("${PSQL[@]}" -c "select count(*) from public.stock_issues where location_i
 QOH=$("${PSQL[@]}" -c "select qty_on_hand from public.inv_lots where location_id='$LOC'")
 [ "$ISS" = "5" ] && [ "$QOH" = "0.000" ] || { echo "issues=$ISS on_hand=$QOH"; exit 1; }
 
-# 6) Whole ledger still balances.
+# 6) Five sessions signed in parallel against a 2-session package → exactly 2 redemptions, never over-used.
+NU=00000000-0000-4000-8000-000000001031
+"${PSQL[@]}" -c "insert into auth.users (id, email) values ('$NU', 'conc.nurse@test.local');
+  insert into public.profiles (user_id, full_name_ar) values ('$NU', 'تمريض');
+  insert into public.user_roles (user_id, role_code, branch_id) values ('$NU', 'nurse', '$B1');" >/dev/null
+as_nu() { echo "set role authenticated; select set_config('request.jwt.claim.sub', '$NU', false);"; }
+LSR=00000000-0000-4000-8000-000000004002
+TPL=$("${PSQL[@]}" -c "select set_config('app.package_rpc', 'on', false);
+  with s as (insert into public.services (specialty_id, code, name_ar, name_en, revenue_account_id, is_package)
+             values ('$DERM', 'PKG-CONC', 'باقة', 'Package', (select id from public.accounts where code = '2210'), true) returning id)
+  insert into public.package_templates (code, name_ar, name_en, service_id, sessions, price, validity_days, sale_service_id)
+  select 'CONC', 'باقة تزامن', 'Conc', '$LSR', 2, 1000, 30, id from s returning id;" | tail -1)
+PKG=$("${PSQL[@]}" -c "$(as_fd) select id from public.sell_package('$PID', '$TPL', '$B1');" | tail -1)
+PINV=$("${PSQL[@]}" -c "select invoice_id from public.patient_packages where id = '$PKG'")
+"${PSQL[@]}" -c "$(as_fd) select public.record_payment('$PINV', 1000, 'card', 'conc-pkg', 'POS-P');" >/dev/null
+CK='{"pregnancy":"no","isotretinoin":"no","photosensitizing":"no","recent_tan":"no","active_lesion":"no","herpes_history":"no","keloid":"no","light_epilepsy":"no","gold_therapy":"no"}'
+SESS=()
+for i in $(seq 1 5); do
+  DEV=$("${PSQL[@]}" -c "select set_config('app.device_rpc', 'on', false);
+    insert into public.devices (asset_no, branch_id, name_ar, name_en) values ('CONC-DEV-$i', '$B1', 'جهاز', 'Device') returning id;" | tail -1)
+  APT=$("${PSQL[@]}" -c "insert into public.appointments (branch_id, patient_id, doctor_id, specialty_id, slot)
+    values ('$B1','$PID','$DR','$DERM', tstzrange('2027-02-0$i 10:00+02','2027-02-0$i 10:15+02')) returning id;" | tail -1)
+  "${PSQL[@]}" -c "update public.appointments set status = 'arrived' where id = '$APT';" >/dev/null
+  SESS+=("$("${PSQL[@]}" -c "$(as_nu) select id from public.save_laser_session('$APT', '{\"device_id\":\"$DEV\",\"service_id\":\"$LSR\",\"patient_package_id\":\"$PKG\",\"fitzpatrick\":3,\"checklist\":$CK,\"areas\":[{\"area_code\":\"axilla\",\"wavelength_nm\":755,\"fluence\":18,\"spot_mm\":15,\"pulses\":100}]}');" | tail -1)")
+done
+for S in "${SESS[@]}"; do
+  "${PSQL[@]}" -c "$(as_nu) select public.sign_laser_session('$S');" >/dev/null 2>&1 &
+done
+wait
+RED=$("${PSQL[@]}" -c "select count(*) from public.package_redemptions where package_id = '$PKG'")
+USED=$("${PSQL[@]}" -c "select units_used || '/' || value_used from public.patient_packages where id = '$PKG'")
+[ "$RED" = "2" ] && [ "$USED" = "2/1000.00" ] || { echo "redemptions=$RED used=$USED"; exit 1; }
+
+# 7) Whole ledger still balances.
 BAL=$("${PSQL[@]}" -c "select sum(debit) - sum(credit) from public.journal_lines")
 [ "$BAL" = "0.00" ] || { echo "ledger imbalance $BAL"; exit 1; }
-echo "bookings=1 payments=1 split-paid=$PAID2 gateway-callbacks=1 stock-issues=$ISS/10 ledger-balance=$BAL"
+echo "bookings=1 payments=1 split-paid=$PAID2 gateway-callbacks=1 stock-issues=$ISS/10 package-redemptions=$RED/5 ledger-balance=$BAL"
