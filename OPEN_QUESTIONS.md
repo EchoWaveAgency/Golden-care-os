@@ -74,3 +74,11 @@ Each item has a configurable mechanism already (or planned). Placeholders are cl
 51. Count frequency (monthly? weekly for controlled items?) and who approves differences (implemented: chief accountant or operations manager).
 52. Purchasing: are purchase orders and approvals needed before receiving, and how are suppliers paid (terms, cheques/transfers)?
 53. Whether consumable cost is added to the patient invoice for any service, or only tracked as cost.
+
+## Purchasing (added session 7)
+54. Is a purchase order required for every purchase, or are direct receipts (confirmed afterwards) acceptable for small amounts? Above what amount?
+55. Approval thresholds: does a large order need the center director (or two approvals) instead of the operations manager?
+56. Supplier payment terms (30/60 days?), preferred method (transfer/cheque), and who signs cheques.
+57. Accepted risk (current design): the store keeper who created an order may also receive it; control relies on the approver of the order and the stock count. Should receiving require a second person?
+58. VAT on supplier invoices: are purchases recorded gross (current) or should input VAT be separated?
+59. Doctor share in the profitability report is an estimate from the contracts; confirm whether the report should show only approved settlements instead.

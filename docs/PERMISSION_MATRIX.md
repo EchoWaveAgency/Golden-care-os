@@ -49,3 +49,5 @@ Added in 0015: `inventory.read` → inventory_controller, nurse, medical_assista
 
 ## Tested
 `supabase/tests/01_identity_rls.sql`, `04_billing_accounting.sql`, `05_encounters.sql`.
+
+Added in 0016: `purchase.read` → inventory_controller, chief_accountant, accountant, operations_manager, center_director; `purchase.request` → inventory_controller; `purchase.approve` → chief_accountant, operations_manager, center_director (never an order they created; confirms receipts without an order, never one they recorded); `supplier.pay.request` → chief_accountant, accountant; `supplier.pay.approve` → chief_accountant, center_director (never a payment they requested). The profitability report uses `reports.finance`.

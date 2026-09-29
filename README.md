@@ -38,7 +38,9 @@ A production-grade healthcare operating system for Golden Care Clinics, built on
 | **Doctor settlements** — contracts, monthly statements net of discounts/refunds/voids, 3-way maker-checker, journals | ✅ |
 | **Two-factor sign-in** (authenticator app) enforced by the database for privileged roles | ✅ |
 | **Inventory & consumables** — lots/expiry, FEFO issue to sessions, blind counts with approval, journals, alerts | ✅ |
-| HR/payroll, purchasing & supplier payments, laser device logs, patient deposits | ⏳ next milestones |
+| **Purchasing & suppliers** — purchase orders with approval, receiving against orders, supplier statements & aging, payments with maker-checker | ✅ |
+| **Profitability report** per service and doctor (net revenue, doctor share, consumables, margin) with CSV export | ✅ |
+| HR/payroll, laser device logs, patient deposits, supplier returns | ⏳ next milestones |
 
 Everything else in the master specification is planned in phases — see `PROGRESS.md`.
 

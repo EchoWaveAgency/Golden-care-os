@@ -155,3 +155,23 @@ Purchase orders and approval before buying, supplier payments and statements, tr
 
 ### Next milestone (proposed)
 Either HR & payroll (attendance/biometric import, salaries, leave, KPIs), or purchasing & supplier payments plus the consumption and margin reports.
+
+## Session 7 — 2026-09-29: purchasing, supplier payments, profitability report
+
+### Delivered
+- **Purchase orders** (migration 0016) `/os/purchasing`: the store keeper creates an order (items, quantities, agreed unit cost > 0), submits it, and a different person approves it (operations manager, chief accountant or center director). Receiving against the order takes items and prices from the order and refuses more than the remainder; partial receipts are tracked. An order that will not be completed can be **closed short** with a reason (lines are kept; the undelivered quantity is recorded). Orders with nothing received can be cancelled.
+- **Supplier statements and payments** `/os/suppliers`: every supplier invoice with total, paid, pending and outstanding, plus aging buckets (0–30 / 31–60 / 61–90 / 90+). The accountant requests a payment (bank transfer or cheque) across one or more invoices; a different person releases it, which posts Dr Suppliers payable (2100) / Cr Bank (1110). A receipt recorded **without** a purchase order must first be confirmed by an approver who did not record it; receipts against an approved order are confirmed by the order's approval.
+- **Profitability report** `/os/reports/profitability`: per service and doctor for a period — units, gross, discounts, refunds, net revenue, estimated doctor share (from the contracts), consumables cost (from stock issued to the appointment, split across all invoices of that appointment) and margin; CSV export (Excel-friendly, formula-safe).
+
+### Independent review
+A separate reviewer audited the milestone and reported 9 issues: receipts without an order could be paid with no second person involved; zero-cost order lines; partly received orders could never be finished; lock-order deadlock risk in supplier payments; the report counted refunds paid after the period (past reports changed); consumables were counted twice when an appointment had more than one invoice; refunds above an invoice's total could push revenue negative; permission evaluated per row in the report; CSV formula injection. All 9 are fixed and tested. Found while testing: a generic "separation of duties" message was shown for every maker-checker refusal (now each has its own wording), and closing an order short originally deleted lines (now kept).
+
+### Verified
+- SQL suites 11/11 plus concurrency ✅; unit 27/27; typecheck, lint, build ✅.
+- Browser journeys on fresh data: purchasing 18/18, inventory 17/17, settlements & MFA 20/20, staff 27/27, portal 35/35, milestone 4 25/25 ✅.
+
+### Not built yet (honest scope)
+Returns to supplier, transfers between branches, approval thresholds by amount, supplier credit notes, VAT on purchases, HR/payroll, laser device logs, patient deposits.
+
+### Next milestone (proposed)
+HR & payroll (needs the clinic's insurance, tax and labor rules first — see OPEN_QUESTIONS 54+), or laser device logs and shot counters.
