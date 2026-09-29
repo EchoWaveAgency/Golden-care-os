@@ -89,9 +89,9 @@ select test.assert((select count(*) from public.content_revisions where record_i
 
 -- Online availability: real slots only, 2-hour lead time, 30-minute grid.
 set role anon;
-select slot_start as s1 from public.public_available_slots(:'dr', ((now() at time zone 'Africa/Cairo')::date + 2), 1) limit 1 \gset
+select slot_start as s1 from public.public_available_slots(:'dr', ((now() at time zone 'Africa/Cairo')::date + 500), 1) limit 1 \gset
 select test.assert(:'s1'::timestamptz > now() + interval '2 hours', 'slot respects lead time');
-select test.assert((select count(*) from public.public_available_slots(:'dr', ((now() at time zone 'Africa/Cairo')::date + 2), 1)) = 16, '09:00–17:00 at 30 min = 16 slots');
+select test.assert((select count(*) from public.public_available_slots(:'dr', ((now() at time zone 'Africa/Cairo')::date + 500), 1)) = 16, '09:00–17:00 at 30 min = 16 slots');
 
 -- Visitor submits a booking request for that slot.
 select public.submit_web_inquiry(jsonb_build_object(
@@ -130,7 +130,7 @@ insert into public.appointments (branch_id, patient_id, doctor_id, specialty_id,
 values (:'b1', :'pid', :'dr', :'derm', tstzrange(:'s1'::timestamptz, :'s1'::timestamptz + interval '30 minutes'), 'website') returning id as apt \gset
 select test.assert((select status from public.lead_link_appointment(:'lead', :'pid', :'apt')) = 'appointment_confirmed', 'lead converted');
 set role anon;
-select test.assert(not exists (select 1 from public.public_available_slots(:'dr', ((now() at time zone 'Africa/Cairo')::date + 2), 1) where slot_start = :'s1'::timestamptz),
+select test.assert(not exists (select 1 from public.public_available_slots(:'dr', ((now() at time zone 'Africa/Cairo')::date + 500), 1) where slot_start = :'s1'::timestamptz),
                    'booked slot disappears from the website');
 set role authenticated;
 select test.login(:'pr');

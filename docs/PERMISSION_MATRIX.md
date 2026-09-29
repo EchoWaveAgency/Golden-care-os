@@ -34,6 +34,8 @@ Added in 0013: `refund.request` → front_desk, cashier, patient_relations; `ref
 
 Added in 0014: `contract.manage` → chief_accountant, center_director; `settlement.prepare` → accountant, chief_accountant; `settlement.approve` → chief_accountant, center_director; `settlement.pay` → chief_accountant. The database refuses the same person preparing and approving, entering the contract and approving, or approving and paying. Doctors read only their own approved statements. Any account with `mfa_required` (automatic for privileged roles) has no permission at all until the session has passed two-factor sign-in (aal2).
 
+Added in 0015: `inventory.read` → inventory_controller, nurse, medical_assistant, medical_director, chief_accountant, accountant, operations_manager, center_director, financial_auditor; `inventory.manage`, `inventory.receive`, `inventory.count` → inventory_controller; `inventory.issue` → inventory_controller, nurse, medical_assistant, doctor, medical_director; `inventory.controlled` → medical_director; `inventory.approve` → chief_accountant, operations_manager (never for their own count). Catalog changes need an all-branch grant.
+
 **Patients (portal)** have no role and no table grants. A signed-in patient account can call only `portal_*` functions, each of which checks `app.portal_require(patient, level)`: the patient's own file, or a live family grant (`appointments` = appointments and requests; `full` = also released visits, prescriptions and invoices). Anything else answers "not found".
 
 ## Attribute rules (ABAC) enforced in the database

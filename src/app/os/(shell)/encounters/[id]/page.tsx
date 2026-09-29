@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAny } from "@/lib/session";
 import { dateTime } from "@/lib/format";
@@ -12,7 +13,7 @@ import { PrescriptionsPanel, ReleasePanel } from "./Panels";
 
 export const dynamic = "force-dynamic";
 
-type Enc = {
+type Enc = { appointment_id: string | null;
   id: string; ref: string; patient_id: string; status: "draft" | "signed" | "entered_in_error"; doctor_id: string;
   patient_summary: string | null; patient_instructions: string | null; summary_released_at: string | null;
   chief_complaint: string | null; assessment: string | null; plan: string | null; signed_at: string | null; created_at: string;
@@ -26,7 +27,7 @@ export default async function EncounterPage({ params, searchParams }: { params: 
 
   const { data: e } = await ctx.supabase
     .from("encounters")
-    .select("id, ref, patient_id, doctor_id, status, chief_complaint, assessment, plan, signed_at, created_at, patient_summary, patient_instructions, summary_released_at, patient:patients(mrn, first_name_ar, last_name_ar, first_name_en, last_name_en, date_of_birth, sex)")
+    .select("id, ref, patient_id, doctor_id, appointment_id, status, chief_complaint, assessment, plan, signed_at, created_at, patient_summary, patient_instructions, summary_released_at, patient:patients(mrn, first_name_ar, last_name_ar, first_name_en, last_name_en, date_of_birth, sex)")
     .eq("id", params.id)
     .maybeSingle<Enc>();
   if (!e) notFound();
@@ -43,7 +44,10 @@ export default async function EncounterPage({ params, searchParams }: { params: 
       <PageHeader
         title={patientName(e.patient, locale)}
         subtitle={`${e.patient?.mrn ?? ""} · ${e.ref}${e.patient?.date_of_birth ? ` · ${e.patient.date_of_birth}` : ""}`}
-        actions={<StatusBadge status={e.status} label={signed ? t("enc.signed") : t("enc.draft")} />}
+        actions={<>
+          {ctx.can("inventory.issue") && e.appointment_id && <Link href={`/os/inventory/issue?appointment=${e.appointment_id}`} className="btn-ghost text-sm">{ar ? "صرف مستهلكات" : "Issue consumables"}</Link>}
+          <StatusBadge status={e.status} label={signed ? t("enc.signed") : t("enc.draft")} />
+        </>}
       />
       <Banner error={searchParams.error} />
 

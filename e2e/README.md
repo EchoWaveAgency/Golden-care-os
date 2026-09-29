@@ -8,6 +8,7 @@ npm i --no-save puppeteer-core @sparticuz/chromium   # (or symlink an existing n
 node e2e/staff-journey.mjs    # 27 checks: reception → doctor → billing → cashier → accounting → executive
 node e2e/portal-journey.mjs   # 35 checks: prescription + allergy gate → release → patient portal → isolation → sharing
 node e2e/m4-journey.mjs       # 25 checks: users & roles → refunds maker-checker → online payment
+node e2e/m6-journey.mjs       # 17 checks: stock overview → receipt → FEFO issue → blind count → approval
 node e2e/m5-journey.mjs       # 20 checks: two-factor sign-in → contract → statement → approve → pay → doctor view → lost-phone reset
 ```
 Privileged demo users complete two-factor sign-in automatically through `e2e/mfa.mjs` (TOTP computed from the enrolled secret).

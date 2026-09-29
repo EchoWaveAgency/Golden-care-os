@@ -13,6 +13,9 @@ All operational postings go through `app.post_journal()` using semantic account 
 | Refund paid out | `pay_refund()` after `request_refund()` → `decide_refund()` | `refunds` (4910, contra revenue) | Method account (cash / card / InstaPay / wallet / bank) | Approver ≠ requester; cash needs an open session and reduces expected cash at closing; invoice `refunded_total` ≤ amount paid |
 | Doctor settlement approved | `approve_settlement()` | `doctor_fees` (5100) | `doctor_fees_payable` (2300) | Per doctor (`doctor_id`); amount excludes balances carried from earlier statements; negative statements post the reverse |
 | Doctor settlement paid | `pay_settlement()` | `doctor_fees_payable` (2300) | `bank_main` | Bank transfer with reference; payer ≠ approver |
+| Goods received | `receive_goods()` | `inventory` (1300) | `suppliers_payable` (2100) | Lot value = qty × unit cost; idempotent; one receipt per supplier invoice |
+| Consumables issued | `issue_stock()` | `consumables_expense` (5300), with patient | `inventory` (1300) | FEFO lot costs; an emptied lot takes its exact remaining value |
+| Stock count approved | `approve_count()` | `inventory_adjustments` (5310) for losses / `inventory` for gains | `inventory` for losses / `inventory_adjustments` for gains | Approver ≠ counter; the store is frozen while counting |
 | Online payment (portal) | `svc_payment_confirm()` from the verified gateway callback | `gateway_clearing` (1150) | `ar_patients` | Idempotent per gateway transaction; amount mismatch or changed balance → *review*, nothing posted; unmatched captures → `payment_exceptions` |
 
 ## Planned (Phase 1 M2 → Phase 2)
@@ -28,8 +31,7 @@ All operational postings go through `app.post_journal()` using semantic account 
 | Wallet top-up / use | Method account → wallet liability → A/R | |
 | Cash over/short at close | `cash_over_short` | `cash_on_hand` (or reverse) |
 | Card settlement | Bank + bank charges | `card_clearing` |
-| Supplier invoice / payment | Inventory or expense → Suppliers → Bank | |
-| Inventory consumption | Consumables expense | Inventory |
+| Supplier payment | Suppliers payable | Bank |
 | Payroll accrual / payment | Salaries expense → Salaries payable → Bank | |
 
 ## Controls

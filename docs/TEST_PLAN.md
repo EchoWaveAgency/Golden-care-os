@@ -40,3 +40,8 @@
 ## Session 5 additions — settlements and two-factor sign-in
 - `supabase/tests/09_settlements_mfa.sql`: aal1 sessions get no permission / menu / data / doctor identity when MFA is required; automatic MFA for privileged roles; admin require/reset rules; flags not writable directly; grants not rewritable; contracts (permissions, overlap, retroactive lock, automatic end); statement math (percent, fixed per unit, line discounts, proportional refund, other doctors excluded), duplicate/future refusal, drafts hidden from doctors, three maker-checker rules, journals, idempotent payment, no-contract block, cancel and redo, stale drafts, void reversal, negative carry with correct accrual, ledger balanced.
 - Browser `e2e/m5-journey.mjs` (20 checks) and all earlier journeys now run with real two-factor sign-in for privileged demo users (`e2e/mfa.mjs`).
+
+## Session 6 additions — inventory
+- `supabase/tests/10_inventory.sql`: catalog scope and controlled/category guard; store policies by branch; receipt rules (expiry required, expired refused, duplicate supplier invoice, idempotency, decimals, owner of the key); journals; stock changes only through RPCs; FEFO across lots; expired lots never issued; appointment link to patient; controlled items; template suggestion; visibility by permission; alerts; frozen store during counts; count flow with maker-checker; mixed gains and losses; inventory ledger = stock value; immutable moves.
+- `concurrency.sh`: 10 parallel issues of 1 unit from a lot of 5 → exactly 5 issued, stock 0.
+- Browser `e2e/m6-journey.mjs` (17 checks): overview and alerts → receipt with expiry rule → FEFO issue for today's appointment → shortage refused → blind count → approval by the chief accountant (MFA) → trial balance.

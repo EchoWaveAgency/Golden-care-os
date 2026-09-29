@@ -62,7 +62,25 @@ wait
 GP=$("${PSQL[@]}" -c "select count(*) from public.payments where invoice_id='$INV3'")
 [ "$GP" = "1" ] || { echo "gateway callbacks produced $GP payments"; exit 1; }
 
-# 5) Whole ledger still balances.
+# 5) Ten parallel issues of 1 unit from a lot of 5 → exactly 5 succeed, stock never negative.
+ST=00000000-0000-4000-8000-000000001030
+"${PSQL[@]}" -c "insert into auth.users (id, email) values ('$ST', 'conc.store@test.local');
+  insert into public.profiles (user_id, full_name_ar) values ('$ST', 'مخزن');
+  insert into public.user_roles (user_id, role_code, branch_id) values ('$ST', 'inventory_controller', '$B1');" >/dev/null
+LOC=$("${PSQL[@]}" -c "insert into public.inv_locations (branch_id, code, name_ar, name_en) values ('$B1', 'CONC', 'تزامن', 'Conc') returning id;" | tail -1)
+ITEM=$("${PSQL[@]}" -c "insert into public.inv_items (code, name_ar, name_en) values ('CONC-1', 'صنف', 'Item') returning id;" | tail -1)
+SUP=$("${PSQL[@]}" -c "insert into public.suppliers (name_ar) values ('مورد') returning id;" | tail -1)
+as_st() { echo "set role authenticated; select set_config('request.jwt.claim.sub', '$ST', false);"; }
+"${PSQL[@]}" -c "$(as_st) select public.receive_goods('$LOC', '$SUP', 'C-1', '[{\"item_id\": \"$ITEM\", \"lot_no\": \"C\", \"qty\": 5, \"unit_cost\": 10}]', 'conc-grn');" >/dev/null
+for i in $(seq 1 10); do
+  "${PSQL[@]}" -c "$(as_st) select public.issue_stock('$LOC', '[{\"item_id\": \"$ITEM\", \"qty\": 1}]', null, 'اختبار تزامن', 'conc-iss-$i');" >/dev/null 2>&1 &
+done
+wait
+ISS=$("${PSQL[@]}" -c "select count(*) from public.stock_issues where location_id='$LOC'")
+QOH=$("${PSQL[@]}" -c "select qty_on_hand from public.inv_lots where location_id='$LOC'")
+[ "$ISS" = "5" ] && [ "$QOH" = "0.000" ] || { echo "issues=$ISS on_hand=$QOH"; exit 1; }
+
+# 6) Whole ledger still balances.
 BAL=$("${PSQL[@]}" -c "select sum(debit) - sum(credit) from public.journal_lines")
 [ "$BAL" = "0.00" ] || { echo "ledger imbalance $BAL"; exit 1; }
-echo "bookings=1 payments=1 split-paid=$PAID2 gateway-callbacks=1 ledger-balance=$BAL"
+echo "bookings=1 payments=1 split-paid=$PAID2 gateway-callbacks=1 stock-issues=$ISS/10 ledger-balance=$BAL"

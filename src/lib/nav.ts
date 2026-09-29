@@ -19,6 +19,7 @@ export const NAV: NavItem[] = [
   { href: "/os/refunds", label: "nav.refunds", section: "nav.section.finance", any: ["refund.request", "refund.approve"] },
   { href: "/os/settlements", label: "nav.settlements", section: "nav.section.finance", any: ["settlement.prepare", "settlement.approve", "settlement.pay", "contract.manage"] },
   { href: "/os/accounting", label: "nav.accounting", section: "nav.section.finance", any: ["accounting.read"] },
+  { href: "/os/inventory", label: "nav.inventory", section: "nav.section.operations", any: ["inventory.read", "inventory.issue", "inventory.receive", "inventory.count", "inventory.approve", "inventory.manage"] },
   { href: "/os/audit", label: "nav.audit", section: "nav.section.governance", any: ["audit.read"] },
   { href: "/os/content", label: "nav.content", section: "nav.section.web", any: ["content.edit", "content.medical_approve", "content.marketing_approve", "content.publish"] },
   { href: "/os/settings", label: "nav.settings", section: "nav.section.admin", any: ["settings.manage"] },
@@ -32,7 +33,7 @@ export function navFor(perms: Set<string>): NavItem[] {
 
 /** Landing page for a user: the first workspace their permissions open. */
 export function homeFor(perms: Set<string>): string | null {
-  const order = ["/os/executive", "/os/reception", "/os/doctor", "/os/cashier", "/os/billing", "/os/accounting", "/os/content", "/os/leads", "/os/patients", "/os/settings", "/os/audit"];
+  const order = ["/os/executive", "/os/reception", "/os/doctor", "/os/cashier", "/os/billing", "/os/accounting", "/os/content", "/os/leads", "/os/patients", "/os/inventory", "/os/settings", "/os/audit"];
   const allowed = new Set(navFor(perms).map((i) => i.href));
   // Patient Relations (inquiries, no cash handling) starts in the inquiry inbox, not reception.
   if (allowed.has("/os/leads") && perms.has("lead.write") && !perms.has("payment.collect") && !allowed.has("/os/executive")) return "/os/leads";

@@ -132,3 +132,26 @@ Withholding tax on doctor fees, collected-basis settlements, cash payouts to doc
 
 ### Next milestone (proposed)
 Inventory & consumables (stock per branch, receipts, issue to procedures, expiry/lot tracking) or HR/payroll — to be chosen by the clinic.
+
+## Session 6 — 2026-09-29: inventory & consumables
+
+### Delivered
+- **Catalog** (migration 0015): items (category, unit, reorder level, controlled flag), stores per branch, suppliers, and consumables templates per service. The catalog is shared by all branches, so only an all-branch inventory manager can change it. Changing an item's category or controlled status needs the controlled-items authority (medical director).
+- **Goods receipts** `/os/inventory/receive`: every line becomes a lot with lot number, expiry and unit cost. Expiry is mandatory for medicines, cosmetics and dental materials; expired goods are refused; the same supplier invoice cannot be received twice; retries are idempotent. Journal: Dr Inventory (1300) / Cr Suppliers payable (2100).
+- **Issue to sessions** `/os/inventory/issue`: pick one of today's appointments (prefilled from the service templates) or give a purpose. Stock is taken first-expiry-first-out; expired lots are never issued; stock never goes negative (including under concurrency); controlled items need their authority. Cost is charged to the patient's session: Dr Consumables (5300) / Cr Inventory. There is a link from the encounter screen.
+- **Stock counts** `/os/inventory/counts`: the store is frozen while a count is open. The counter enters quantities without seeing the system figures, differences are shown after submission, and they post only after approval by a different person. Losses and gains are posted separately (5310 ↔ 1300).
+- **Overview** `/os/inventory`: stock value, usable vs expired quantities, next expiry, below-reorder and 60-day expiry alerts, and the latest movements.
+- Book value is tracked per lot, so the inventory account always equals the value of stock on hand, with no rounding leaks.
+
+### Independent review
+A separate reviewer found 8 issues: a count with both gains and losses could not be posted; a branch store keeper could change shared items (including the controlled flag); nobody could issue controlled items; issues during an open count were double-counted; rounding leaked cents; idempotency keys were not tied to their owner; possible deadlocks; a submitted count could be cancelled by anyone. All are fixed and tested. Remaining limitation: users who also have stock visibility can see system quantities while counting.
+
+### Verified
+- SQL suites 10/10 plus concurrency (10 parallel issues from a lot of 5 → exactly 5), unit tests 24/24, typecheck, lint and build ✅.
+- Browser journeys: inventory 17/17, settlements & MFA 20/20, staff 27/27, portal 35/35, milestone 4 25/25 ✅.
+
+### Not built yet (honest scope)
+Purchase orders and approval before buying, supplier payments and statements, transfers between branches, returns to supplier, laser device maintenance log and shot counters, and consumption reports per service/doctor (the data is recorded; the report screens are not built).
+
+### Next milestone (proposed)
+Either HR & payroll (attendance/biometric import, salaries, leave, KPIs), or purchasing & supplier payments plus the consumption and margin reports.

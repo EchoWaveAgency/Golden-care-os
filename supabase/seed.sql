@@ -44,6 +44,7 @@ select org.id, c, ar, en, t::public.account_type, p from org, (values
   ('5200', 'الرواتب والأجور',                'Salaries & wages',            'expense',   true),
   ('5300', 'مستهلكات طبية',                  'Medical consumables',         'expense',   true),
   ('5400', 'عمولات بنكية',                   'Bank charges',                'expense',   true),
+  ('5310', 'فروقات وتسويات المخزون',           'Inventory losses & adjustments', 'expense', true),
   ('5900', 'فروقات الخزينة',                 'Cash over/short',             'expense',   true)
 ) v(c, ar, en, t, p)
 on conflict (organization_id, code) do nothing;
@@ -54,7 +55,8 @@ select a.organization_id, k, a.id from public.accounts a join (values
   ('instapay_clearing', '1130'), ('wallet_clearing', '1140'), ('ar_patients', '1200'),
   ('patient_advances', '2200'), ('revenue_services', '4100'), ('discounts_allowed', '4900'),
   ('cash_over_short', '5900'), ('gateway_clearing', '1150'), ('refunds', '4910'),
-  ('doctor_fees', '5100'), ('doctor_fees_payable', '2300')
+  ('doctor_fees', '5100'), ('doctor_fees_payable', '2300'),
+  ('inventory', '1300'), ('consumables_expense', '5300'), ('suppliers_payable', '2100'), ('inventory_adjustments', '5310')
 ) m(k, code) on m.code = a.code
 where a.organization_id = '00000000-0000-4000-8000-000000000001'
 on conflict do nothing;

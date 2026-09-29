@@ -66,3 +66,11 @@ Each item has a configurable mechanism already (or planned). Placeholders are cl
 45. Negative statements (implemented: carried to the next statement) — or recovered another way?
 46. Which roles besides the privileged ones should require two-factor sign-in (e.g. cashiers, doctors).
 47. Who may run the break-glass procedure and where the record is kept.
+
+## Inventory (added session 6)
+48. The real item list, units, reorder levels and which items are controlled.
+49. Who may issue controlled items (implemented: the medical director only) and whether a second signature is required.
+50. Standard consumables per service (the templates), to be confirmed by the medical director.
+51. Count frequency (monthly? weekly for controlled items?) and who approves differences (implemented: chief accountant or operations manager).
+52. Purchasing: are purchase orders and approvals needed before receiving, and how are suppliers paid (terms, cheques/transfers)?
+53. Whether consumable cost is added to the patient invoice for any service, or only tracked as cost.
