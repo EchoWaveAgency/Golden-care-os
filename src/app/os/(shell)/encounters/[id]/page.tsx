@@ -10,6 +10,8 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { Banner } from "@/components/Banner";
 import type { DictKey } from "@/lib/i18n";
 import { PrescriptionsPanel, ReleasePanel } from "./Panels";
+import { savePlan } from "@/app/actions/dental";
+import { PLAN_STATUS, label as dlabel } from "@/lib/dental";
 
 export const dynamic = "force-dynamic";
 
@@ -32,9 +34,10 @@ export default async function EncounterPage({ params, searchParams }: { params: 
     .maybeSingle<Enc>();
   if (!e) notFound();
 
-  const [{ data: alerts }, { data: addenda }] = await Promise.all([
+  const [{ data: alerts }, { data: addenda }, { data: plans }] = await Promise.all([
     ctx.supabase.from("patient_alerts").select("id, kind, severity, label").eq("patient_id", e.patient_id).eq("is_active", true),
     ctx.supabase.from("encounter_addenda").select("id, body, created_at").eq("encounter_id", e.id).order("created_at"),
+    ctx.can("plan.write") ? ctx.supabase.from("treatment_plans").select("id, ref, title, status").eq("patient_id", e.patient_id).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
   ]);
   const signed = e.status !== "draft";
   const canWrite = ctx.can("clinical.write.own");
@@ -50,6 +53,21 @@ export default async function EncounterPage({ params, searchParams }: { params: 
         </>}
       />
       <Banner error={searchParams.error} />
+      {ctx.can("plan.write") && (
+        <section className="mb-5 rounded-xl border border-ivory-300 bg-white p-4" data-plans>
+          <p className="mb-2 text-sm font-medium text-navy-700">{ar ? "خطط العلاج" : "Treatment plans"}</p>
+          {(plans ?? []).length > 0 && (
+            <ul className="mb-3 space-y-1 text-sm">
+              {(plans ?? []).map((pl: { id: string; ref: string; title: string; status: string }) => (
+                <li key={pl.id}><Link href={`/os/plans/${pl.id}`} className="text-teal-700 hover:underline">{pl.title}</Link> <span className="num text-xs text-ink-300">{pl.ref}</span> · <span className="text-xs text-ink-500">{dlabel(PLAN_STATUS, pl.status, ar)}</span></li>))}
+            </ul>)}
+          <form action={savePlan} className="flex flex-wrap items-end gap-2">
+            <input type="hidden" name="patient_id" value={e.patient_id} /><input type="hidden" name="back" value={`/os/encounters/${e.id}`} />
+            <input id="plan_title" name="title" required placeholder={ar ? "عنوان خطة جديدة (مثال: حشو وتاج)" : "New plan title (e.g. filling and crown)"} className="input w-72" />
+            <SubmitButton pendingLabel="…" className="btn-primary">{ar ? "خطة علاج جديدة" : "New treatment plan"}</SubmitButton>
+          </form>
+        </section>
+      )}
 
       <section className={`mb-5 rounded-xl border p-4 ${(alerts ?? []).length ? "border-danger/30 bg-danger-50" : "border-ivory-300 bg-white"}`}>
         <p className="mb-2 text-sm font-medium text-danger">{t("patient.alerts")}</p>

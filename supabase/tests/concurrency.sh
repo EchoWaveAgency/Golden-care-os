@@ -113,7 +113,22 @@ RED=$("${PSQL[@]}" -c "select count(*) from public.package_redemptions where pac
 USED=$("${PSQL[@]}" -c "select units_used || '/' || value_used from public.patient_packages where id = '$PKG'")
 [ "$RED" = "2" ] && [ "$USED" = "2/1000.00" ] || { echo "redemptions=$RED used=$USED"; exit 1; }
 
-# 7) Whole ledger still balances.
+# 7) Ten parallel attempts to pay 800 from a 1,000 advance (two invoices) → exactly one succeeds, balance never negative.
+"${PSQL[@]}" -c "$(as_fd) select public.record_deposit('$PID', '$B1', 1000, 'card', 'conc-dep', 'POS-D');" >/dev/null
+AINV1=$("${PSQL[@]}" -c "$(as_fd) insert into public.invoices (branch_id, patient_id) values ('$B1','$PID') returning id;" | tail -1)
+"${PSQL[@]}" -c "$(as_fd) insert into public.invoice_lines (invoice_id, service_id, unit_price) values ('$AINV1', '00000000-0000-4000-8000-000000004001', 800); select public.issue_invoice('$AINV1');" >/dev/null
+AINV2=$("${PSQL[@]}" -c "$(as_fd) insert into public.invoices (branch_id, patient_id) values ('$B1','$PID') returning id;" | tail -1)
+"${PSQL[@]}" -c "$(as_fd) insert into public.invoice_lines (invoice_id, service_id, unit_price) values ('$AINV2', '00000000-0000-4000-8000-000000004001', 800); select public.issue_invoice('$AINV2');" >/dev/null
+for i in $(seq 1 10); do
+  if [ $((i % 2)) -eq 0 ]; then T=$AINV1; else T=$AINV2; fi
+  "${PSQL[@]}" -c "$(as_fd) select public.apply_advance('$T', 800, 'conc-apply-$i');" >/dev/null 2>&1 &
+done
+wait
+APPLIED=$("${PSQL[@]}" -c "select coalesce(sum(amount), 0) from public.patient_deposits where patient_id = '$PID' and kind = 'applied'")
+ADVBAL=$("${PSQL[@]}" -c "select app.advance_balance('$PID')")
+[ "$APPLIED" = "800.00" ] && [ "$ADVBAL" = "200.00" ] || { echo "advance applied=$APPLIED balance=$ADVBAL"; exit 1; }
+
+# 8) Whole ledger still balances.
 BAL=$("${PSQL[@]}" -c "select sum(debit) - sum(credit) from public.journal_lines")
 [ "$BAL" = "0.00" ] || { echo "ledger imbalance $BAL"; exit 1; }
-echo "bookings=1 payments=1 split-paid=$PAID2 gateway-callbacks=1 stock-issues=$ISS/10 package-redemptions=$RED/5 ledger-balance=$BAL"
+echo "bookings=1 payments=1 split-paid=$PAID2 gateway-callbacks=1 stock-issues=$ISS/10 package-redemptions=$RED/5 advance-applied=$APPLIED ledger-balance=$BAL"

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { esc, profitCsv, type ProfitRow } from "./reports";
 
 const row: ProfitRow = { service_id: "s", service_code: "DERM-CONS", service_ar: "كشف, جلدية", service_en: "Derm \"consult\"", doctor_id: "d", doctor_ar: "د. سارة", doctor_en: "Dr. Sara",
-  units: 2, gross: 1000, discounts: 100, refunds: 0, net_revenue: 900, doctor_share: 360, consumables: 40, margin: 500 };
+  units: 2, gross: 1000, discounts: 100, refunds: 0, net_revenue: 900, doctor_share: 360, consumables: 40, lab_costs: 0, margin: 500 };
 
 describe("profitability CSV", () => {
   it("starts with a BOM and escapes commas and quotes", () => {

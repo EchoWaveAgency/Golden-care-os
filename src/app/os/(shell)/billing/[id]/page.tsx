@@ -13,6 +13,7 @@ import { Empty } from "@/components/Empty";
 import { PrintButton } from "@/components/PrintButton";
 import { PaymentForm } from "./PaymentForm";
 import { requestRefund } from "@/app/actions/refunds";
+import { applyAdvance } from "@/app/actions/dental";
 import type { DictKey } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
     ctx.supabase.from("payments").select("id, receipt_no, method, amount, reference, received_at").eq("invoice_id", inv.id).order("received_at"),
     ctx.supabase.rpc("patient_directory", { p_ids: [inv.patient_id] }),
     inv.status === "draft" ? ctx.supabase.from("services").select("id, code, name_ar, name_en").eq("is_active", true).order("code") : Promise.resolve({ data: [] }),
-    ctx.supabase.from("payment_methods").select("code, name_ar, name_en, requires_reference").eq("is_active", true).neq("code", "online"),
+    ctx.supabase.from("payment_methods").select("code, name_ar, name_en, requires_reference").eq("is_active", true).not("code", "in", "(online,advance)"),
     inv.status === "draft" ? ctx.supabase.from("staff").select("id, full_name_ar, full_name_en").eq("kind", "doctor").eq("is_active", true) : Promise.resolve({ data: [] }),
   ]);
   const { data: refunds } = await ctx.supabase.from("refunds").select("id, ref, amount, status, reason, requested_at").eq("invoice_id", inv.id).order("requested_at");
@@ -39,6 +40,8 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
   const patient = ((dir ?? []) as { mrn: string; full_name_ar: string }[])[0];
   const isDraft = inv.status === "draft";
   const canPay = ["issued", "partially_paid"].includes(inv.status) && ctx.can("payment.collect");
+  const { data: advData } = canPay ? await ctx.supabase.rpc("patient_advance", { p_patient: inv.patient_id }) : { data: [] };
+  const advAvail = Number((((advData ?? []) as { available: number }[])[0]?.available) ?? 0);
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -48,7 +51,9 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
           subtitle={patient ? `${patient.full_name_ar} · ${patient.mrn}` : undefined}
           actions={<><StatusBadge status={inv.status} label={t(`bill.status.${inv.status}` as DictKey)} />{!isDraft && <PrintButton label={t("common.print")} />}</>}
         />
-        <Banner error={searchParams.error} success={searchParams.paid ? (ar ? "تم تسجيل الدفعة وإصدار الإيصال." : "Payment recorded and receipt issued.") : searchParams.ok === "refund_requested" ? (ar ? "تم إرسال طلب الاسترداد للاعتماد." : "Refund request sent for approval.") : searchParams.ok === "package" ? (ar ? "تم بيع الباقة وإصدار الفاتورة. حصّل المبلغ؛ الجلسات تُستخدم بعد السداد الكامل." : "Package sold and invoice issued. Collect payment; sessions can be used once it is fully paid.") : undefined} />
+        <Banner error={searchParams.error} success={searchParams.paid ? (ar ? "تم تسجيل الدفعة وإصدار الإيصال." : "Payment recorded and receipt issued.") : searchParams.ok === "refund_requested" ? (ar ? "تم إرسال طلب الاسترداد للاعتماد." : "Refund request sent for approval.") : searchParams.ok === "plan_billed" ? (ar ? "تمت فوترة البنود المنفذة وخصمها من الرصيد المقدم بقدر المتاح." : "Completed work billed; the advance balance was applied where available.")
+          : searchParams.ok === "advance_applied" ? (ar ? "تم الخصم من الرصيد المقدم." : "Paid from the advance balance.")
+          : searchParams.ok === "package" ? (ar ? "تم بيع الباقة وإصدار الفاتورة. حصّل المبلغ؛ الجلسات تُستخدم بعد السداد الكامل." : "Package sold and invoice issued. Collect payment; sessions can be used once it is fully paid.") : undefined} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -139,6 +144,15 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
             </div>
           )}
 
+          {canPay && advAvail > 0 && (
+            <form action={applyAdvance} className="card space-y-2 border-gold-300 p-5" data-apply-advance>
+              <h2 className="font-medium text-navy-700">{ar ? "الخصم من الرصيد المقدم" : "Pay from the advance balance"}</h2>
+              <p className="text-sm text-ink-500">{ar ? "المتاح للمريض:" : "Available:"} <span className="num font-medium">{money(advAvail, locale)}</span></p>
+              <input type="hidden" name="invoice_id" value={inv.id} /><input type="hidden" name="idempotency_key" value={randomUUID()} />
+              <input name="amount" type="number" min="0.01" step="0.01" max={Math.min(advAvail, Number(inv.balance))} defaultValue={Math.min(advAvail, Number(inv.balance))} className="input num" aria-label={t("bill.amount")} />
+              <SubmitButton pendingLabel="…" className="btn-gold">{ar ? "خصم" : "Apply"}</SubmitButton>
+            </form>
+          )}
           {canPay && (
             <div className="card p-5">
               <h2 className="mb-3 font-medium text-navy-700">{t("bill.pay")}</h2>

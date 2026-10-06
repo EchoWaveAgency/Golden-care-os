@@ -9,7 +9,7 @@ import { saveContract } from "@/app/actions/settlements";
 
 export const dynamic = "force-dynamic";
 
-type Contract = { id: string; valid: string; default_percent: number; notes: string | null; created_at: string;
+type Contract = { id: string; valid: string; default_percent: number; lab_cost_percent: number; notes: string | null; created_at: string;
   rates: { service_id: string; percent: number | null; fixed_amount: number | null }[] };
 
 export default async function ContractsPage({ params, searchParams }: { params: { doctor: string }; searchParams: { error?: string; ok?: string } }) {
@@ -18,7 +18,7 @@ export default async function ContractsPage({ params, searchParams }: { params: 
   const { data: doc } = await ctx.supabase.from("staff").select("id, full_name_ar, full_name_en, specialty_id").eq("id", params.doctor).eq("kind", "doctor").maybeSingle();
   if (!doc) notFound();
   const [{ data: contracts }, { data: services }] = await Promise.all([
-    ctx.supabase.from("doctor_contracts").select("id, valid, default_percent, notes, created_at, rates:doctor_contract_rates(service_id, percent, fixed_amount)")
+    ctx.supabase.from("doctor_contracts").select("id, valid, default_percent, lab_cost_percent, notes, created_at, rates:doctor_contract_rates(service_id, percent, fixed_amount)")
       .eq("doctor_id", doc.id).order("valid", { ascending: false }).returns<Contract[]>(),
     ctx.supabase.from("services").select("id, code, name_ar, name_en, specialty_id").eq("is_active", true).order("code"),
   ]);
@@ -43,6 +43,8 @@ export default async function ContractsPage({ params, searchParams }: { params: 
               <div><label className="label" htmlFor="from">{ar ? "يبدأ من" : "Starts on"}</label><input id="from" name="from" type="date" required defaultValue={today} className="input" /></div>
               <div><label className="label" htmlFor="dp">{ar ? "النسبة الأساسية من صافي الخدمة (%)" : "Default share of net service (%)"}</label>
                 <input id="dp" name="default_percent" type="number" min={0} max={100} step="0.01" required defaultValue={current ? Number(current.default_percent) : undefined} className="input num" /></div>
+              <div><label className="label" htmlFor="lab_pct">{ar ? "نصيب الطبيب من تكلفة المعمل (%)" : "Doctor's share of lab costs (%)"}</label>
+                <input id="lab_pct" name="lab_cost_percent" type="number" min={0} max={100} step="0.01" defaultValue={current ? Number(current.lab_cost_percent) : 0} className="input num" /></div>
             </div>
             <div>
               <p className="label">{ar ? "استثناءات لخدمات محددة (اتركها فارغة لتطبيق النسبة الأساسية)" : "Service-specific terms (leave empty to use the default share)"}</p>
@@ -71,7 +73,7 @@ export default async function ContractsPage({ params, searchParams }: { params: 
             <ul className="space-y-3 text-sm">
               {(contracts ?? []).map((c) => (
                 <li key={c.id} className="rounded-lg bg-ivory-50 p-3">
-                  <p className="num font-medium">{range(c.valid)} · {Number(c.default_percent)}%</p>
+                  <p className="num font-medium">{range(c.valid)} · {Number(c.default_percent)}%{Number(c.lab_cost_percent) > 0 ? ` · ${ar ? "معمل" : "lab"} ${Number(c.lab_cost_percent)}%` : ""}</p>
                   {c.rates.map((r) => { const s = svc.get(r.service_id); return <p key={r.service_id} className="text-xs text-ink-500">{ar ? s?.name_ar : s?.name_en}: <span className="num">{r.fixed_amount != null ? money(r.fixed_amount, ctx.locale) : `${Number(r.percent)}%`}</span></p>; })}
                   {c.notes && <p className="text-xs text-ink-300">{c.notes}</p>}
                 </li>

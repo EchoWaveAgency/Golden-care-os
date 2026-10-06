@@ -53,7 +53,7 @@ export async function saveContract(form: FormData) {
   }
   const { error } = await ctx.supabase.rpc("save_doctor_contract", {
     p_doctor: doctor, p_from: String(form.get("from")), p_default_percent: Number(form.get("default_percent")),
-    p_rates: rates, p_notes: String(form.get("notes") ?? "") || null,
+    p_rates: rates, p_notes: String(form.get("notes") ?? "") || null, p_lab_cost_percent: Number(form.get("lab_cost_percent") || 0),
   });
   go(`/os/settlements/contracts/${doctor}`, error, ctx.locale, "saved");
 }

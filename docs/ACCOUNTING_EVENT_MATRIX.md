@@ -18,6 +18,12 @@ All operational postings go through `app.post_journal()` using semantic account 
 | Package sold | `sell_package()` → `issue_invoice()` | `ar_patients` (net) · `discounts_allowed` (discount) | `package_deferred` (2210, gross) | Then a reclass Dr 2210 / Cr 4900 for the discount, so the deferred balance is the net price |
 | Package session redeemed | `sign_laser_session()` | `package_deferred` (2210) | Service revenue (e.g. 4110), with doctor | Equal share per session, last one takes the remainder; invoice must be fully paid |
 | Package expired | `expire_packages()` | `package_deferred` (2210) | `package_breakage` (4130) | Paid packages only; policy to be confirmed by finance |
+| Advance / installment received | `record_deposit()` | Method account (cash 1100 / bank 1110) | `patient_advances` (2200) | Allocated to installments in order; cash needs an open cashier session; idempotent |
+| Advance applied to an invoice | `apply_advance()` (also automatic in `bill_plan_items()`) | `patient_advances` (2200) | `ar_patients` (1200) | Internal payment method 'advance'; never above the available balance (pending refunds reserved) |
+| Advance refunded | `pay_deposit_refund()` | `patient_advances` (2200) | Method account | Requested → approved by someone else → paid |
+| Plan work billed | `bill_plan_items()` → `issue_invoice()` | `ar_patients` (1200) | Service revenue (e.g. 4120 dental), with doctor | Only items marked done; revenue recognised when work is done |
+| Lab bill / maintenance bill | `record_supplier_bill()` | `lab_costs` (5500) / `maintenance_expense` (5600) | `suppliers_payable` (2100) | Payable only after confirmation by another approver |
+| Supplier bill voided | `void_supplier_bill()` | Reversal of the bill journal | | Unpaid bills only; settled doctor share reversed in the next settlement |
 | Consumables issued | `issue_stock()` | `consumables_expense` (5300), with patient | `inventory` (1300) | FEFO lot costs; an emptied lot takes its exact remaining value |
 | Stock count approved | `approve_count()` | `inventory_adjustments` (5310) for losses / `inventory` for gains | `inventory` for losses / `inventory_adjustments` for gains | Approver ≠ counter; the store is frozen while counting |
 | Online payment (portal) | `svc_payment_confirm()` from the verified gateway callback | `gateway_clearing` (1150) | `ar_patients` | Idempotent per gateway transaction; amount mismatch or changed balance → *review*, nothing posted; unmatched captures → `payment_exceptions` |

@@ -61,6 +61,7 @@ const services = [
   ["DENT-CONS", "dental", "كشف أسنان", "Dental consultation", 400, "4120"],
   ["DENT-SCALE", "dental", "تنظيف جير", "Scaling & polishing", 800, "4120"],
   ["DENT-FILL", "dental", "حشو كومبوزيت", "Composite filling", 1200, "4120"],
+  ["DENT-CROWN", "dental", "تاج زيركون", "Zirconia crown", 6000, "4120"],
   ["OBGYN-CONS", "obgyn", "كشف نساء وتوليد", "OB/GYN consultation", 600, null],
   ["OBGYN-US", "obgyn", "سونار", "Ultrasound", 700, null],
 ];

@@ -95,3 +95,17 @@ Each item has a configurable mechanism already (or planned). Placeholders are cl
 68. Expired packages: recognise the unused balance as revenue (current, account 4130), extend, or refund?
 69. A package used in another branch: current posting releases the deferred balance in the branch where the session happens; confirm, or post an inter-branch entry.
 70. Doctor fee on package sessions: current base is the net value per session and the contract rate for the service; confirm.
+
+## Dental plans, advances and lab (added session 9)
+71. Installment policy: maximum number of installments (system allows 1–36), minimum down payment, late fees (none implemented), and whether work may continue while an installment is overdue.
+72. Advance refunds: allowed at any time? Admin fee? Who approves (implemented with the existing refund permissions: `refund.request` requests, `refund.approve` approves — never the requester — and the cashier pays)?
+73. Refunding an invoice paid from the advance: return the money to the advance balance, or pay it out (current: paid out by the normal refund flow)?
+74. Advances are kept per branch. Should a deposit taken in one branch be usable in another (needs inter-branch entries)?
+75. Doctor's share of lab costs: percentage of the lab bill (current), fixed amounts per work type, or none? Is it agreed per doctor contract?
+76. Who sees plans and lab cases (implemented: the plan's doctor, clinical readers, front desk for acceptance, finance for billing; lab cases: the case doctor, assistants, nurses, front desk, finance)?
+77. Discount authority on treatment plans (current: the doctor may discount any line up to its value).
+78. Quotation validity default (current 30 days) and whether expired quotations need re-pricing from the new price list (current: yes, revise and re-issue).
+79. Maintenance bills: expense directly (5600, current) or capitalise major repairs?
+80. Lab remakes: who pays (clinic, lab, patient)? The system records remakes and any lab bill, but no automatic charge.
+81. Should the patient sign the quotation (printed signature or portal acceptance with OTP)?
+82. Installment reminders: WhatsApp message timing and wording (template approval needed).

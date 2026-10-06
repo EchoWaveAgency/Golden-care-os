@@ -49,8 +49,9 @@ export async function receivePo(form: FormData) {
 export async function requestSupplierPayment(form: FormData) {
   const ctx = await getContext();
   const sup = String(form.get("supplier_id"));
-  const allocations = Array.from(form.entries()).filter(([k, v]) => k.startsWith("pay_") && Number(v) > 0)
-    .map(([k, v]) => ({ receipt_id: k.slice(4), amount: Number(v) }));
+  // pay_<receipt id> = goods receipt, payb_<bill id> = supplier bill (lab work, maintenance)
+  const allocations = Array.from(form.entries()).filter(([k, v]) => /^payb?_/.test(k) && Number(v) > 0)
+    .map(([k, v]) => (k.startsWith("payb_") ? { bill_id: k.slice(5), amount: Number(v) } : { receipt_id: k.slice(4), amount: Number(v) }));
   const { error } = await ctx.supabase.rpc("request_supplier_payment", {
     p_supplier: sup, p_allocations: allocations, p_method: String(form.get("method")), p_reference: String(form.get("reference") ?? ""),
   });

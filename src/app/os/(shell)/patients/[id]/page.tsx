@@ -14,10 +14,12 @@ import type { DictKey } from "@/lib/i18n";
 import { PortalCard } from "./PortalCard";
 import { PACKAGE_STATUS, label, type PackageBalance } from "@/lib/devices";
 import { sellPackage } from "@/app/actions/packages";
+import { PLAN_STATUS, label as dlabel } from "@/lib/dental";
+import { recordDeposit, requestDepositRefund, savePlan } from "@/app/actions/dental";
 
 export const dynamic = "force-dynamic";
 
-export default async function PatientPage({ params, searchParams }: { params: { id: string }; searchParams: { error?: string; booked?: string } }) {
+export default async function PatientPage({ params, searchParams }: { params: { id: string }; searchParams: { error?: string; booked?: string; ok?: string } }) {
   const ctx = await requireAny("patient.read", "patient.read.assigned");
   const { t, locale } = ctx;
 
@@ -45,6 +47,17 @@ export default async function PatientPage({ params, searchParams }: { params: { 
   ]);
   const pkgs = (pkgData ?? []) as PackageBalance[];
   const tpls = (tplData ?? []) as { id: string; name_ar: string; name_en: string; sessions: number; price: number }[];
+  const showPlans = ctx.can("plan.write") || ctx.can("plan.accept") || ctx.can("billing.read");
+  const showAdvance = ctx.can("payment.collect") || ctx.can("billing.read") || ctx.can("plan.accept");
+  const [{ data: plans }, { data: advData }, { data: depHist }, { data: depMethods }] = await Promise.all([
+    showPlans ? ctx.supabase.from("treatment_plans").select("id, ref, title, status, total, created_at").eq("patient_id", p.id).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
+    showAdvance ? ctx.supabase.rpc("patient_advance", { p_patient: p.id }) : Promise.resolve({ data: [] }),
+    showAdvance ? ctx.supabase.from("patient_deposits").select("id, ref, kind, amount, method, created_at").eq("patient_id", p.id).order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
+    ctx.can("payment.collect") || ctx.can("refund.request") ? ctx.supabase.from("payment_methods").select("code, name_ar, name_en").eq("is_active", true).not("code", "in", "(advance,online)") : Promise.resolve({ data: [] }),
+  ]);
+  const adv = ((advData ?? []) as { balance: number; available: number }[])[0];
+  const methodsList = (depMethods ?? []) as { code: string; name_ar: string; name_en: string }[];
+  const kindLabel = (k: string) => ({ deposit: locale === "ar" ? "دفعة مقدمة" : "Advance", applied: locale === "ar" ? "خُصم على فاتورة" : "Applied to invoice", refund: locale === "ar" ? "مُسترد" : "Refunded" }[k] ?? k);
   const alerts = (flags ?? []) as { kind: string; severity: string; n: number }[];
 
   return (
@@ -64,7 +77,9 @@ export default async function PatientPage({ params, searchParams }: { params: { 
           </>
         }
       />
-      <Banner error={searchParams.error} success={searchParams.booked ? (locale === "ar" ? "تم حجز الموعد." : "Appointment booked.") : undefined} />
+      <Banner error={searchParams.error} success={searchParams.booked ? (locale === "ar" ? "تم حجز الموعد." : "Appointment booked.")
+        : searchParams.ok === "deposit" ? (locale === "ar" ? "تم تحصيل الدفعة المقدمة." : "Advance received.")
+        : searchParams.ok === "refund_requested" ? (locale === "ar" ? "تم إرسال طلب الاسترداد للاعتماد." : "Refund request sent for approval.") : undefined} />
 
       {alerts.length > 0 && (
         <div role="note" className="mb-5 flex flex-wrap items-center gap-2 rounded-xl border border-danger/20 bg-danger-50 px-4 py-3">
@@ -125,6 +140,54 @@ export default async function PatientPage({ params, searchParams }: { params: { 
                 </tbody>
               </table>
             )}
+          </section>
+        )}
+        {showPlans && (
+          <section className="card lg:col-span-3" data-plans>
+            <h2 className="border-b border-ivory-200 px-5 py-3 font-medium text-navy-700">{locale === "ar" ? "خطط العلاج" : "Treatment plans"}</h2>
+            {(plans ?? []).length === 0 ? <Empty text={t("common.none")} /> : (
+              <ul className="divide-y divide-ivory-200 text-sm">
+                {(plans ?? []).map((pl: { id: string; ref: string; title: string; status: string; total: number }) => (
+                  <li key={pl.id} className="flex justify-between px-5 py-2"><Link href={`/os/plans/${pl.id}`} className="text-navy-700 hover:underline">{pl.title} <span className="num text-xs text-ink-300">{pl.ref}</span></Link>
+                    <span className="num">{money(pl.total, locale)} <span className="text-xs text-ink-500">{dlabel(PLAN_STATUS, pl.status, locale === "ar")}</span></span></li>))}
+              </ul>)}
+            {ctx.can("plan.write") && ctx.staff?.kind === "doctor" && (
+              <form action={savePlan} className="flex flex-wrap items-end gap-2 border-t border-ivory-200 p-4">
+                <input type="hidden" name="patient_id" value={p.id} />
+                <div><label className="label" htmlFor="plan_title">{locale === "ar" ? "خطة علاج جديدة" : "New treatment plan"}</label>
+                  <input id="plan_title" name="title" required placeholder={locale === "ar" ? "مثال: حشو وتاج" : "e.g. filling and crown"} className="input w-64" /></div>
+                <SubmitButton pendingLabel="…" className="btn-primary">{locale === "ar" ? "إنشاء" : "Create"}</SubmitButton>
+              </form>)}
+          </section>
+        )}
+        {showAdvance && adv && (
+          <section className="card lg:col-span-3" data-advance>
+            <h2 className="flex justify-between border-b border-ivory-200 px-5 py-3 font-medium text-navy-700"><span>{locale === "ar" ? "الرصيد المقدم" : "Advance balance"}</span>
+              <span className="num" data-advance-balance>{money(adv.available, locale)}</span></h2>
+            {(depHist ?? []).length > 0 && (
+              <ul className="divide-y divide-ivory-200 text-xs">
+                {(depHist ?? []).map((d: { id: string; ref: string; kind: string; amount: number; method: string; created_at: string }) => (
+                  <li key={d.id} className="flex justify-between px-5 py-2"><span><span className="num">{d.ref}</span> · {kindLabel(d.kind)}</span>
+                    <span className="num">{d.kind === "deposit" ? "+" : "−"}{money(d.amount, locale)} <span className="text-ink-300">{dateTime(d.created_at, locale)}</span></span></li>))}
+              </ul>)}
+            <div className="flex flex-wrap gap-6 border-t border-ivory-200 p-4">
+              {ctx.can("payment.collect") && (
+                <form action={recordDeposit} className="flex flex-wrap items-end gap-2">
+                  <input type="hidden" name="patient_id" value={p.id} /><input type="hidden" name="idempotency_key" value={randomUUID()} />
+                  <div><label className="label" htmlFor="dep_amount">{locale === "ar" ? "دفعة مقدمة" : "Receive an advance"}</label><input id="dep_amount" name="amount" type="number" min="0.01" step="0.01" required className="input num w-28" /></div>
+                  <select name="method" className="input w-36" aria-label={locale === "ar" ? "الطريقة" : "Method"}>{methodsList.map((m) => <option key={m.code} value={m.code}>{locale === "ar" ? m.name_ar : m.name_en}</option>)}</select>
+                  <input name="reference" placeholder={locale === "ar" ? "مرجع" : "Reference"} className="input w-28" dir="ltr" />
+                  <SubmitButton pendingLabel="…" className="btn-gold">{locale === "ar" ? "تحصيل" : "Receive"}</SubmitButton>
+                </form>)}
+              {ctx.can("refund.request") && Number(adv.available) > 0 && (
+                <form action={requestDepositRefund} className="flex flex-wrap items-end gap-2">
+                  <input type="hidden" name="patient_id" value={p.id} />
+                  <div><label className="label" htmlFor="ref_amount">{locale === "ar" ? "طلب استرداد من الرصيد" : "Request a refund"}</label><input id="ref_amount" name="amount" type="number" min="0.01" max={Number(adv.available)} step="0.01" required className="input num w-28" /></div>
+                  <select name="method" className="input w-36" aria-label={locale === "ar" ? "الطريقة" : "Method"}>{methodsList.map((m) => <option key={m.code} value={m.code}>{locale === "ar" ? m.name_ar : m.name_en}</option>)}</select>
+                  <input name="reason" required placeholder={locale === "ar" ? "السبب" : "Reason"} className="input w-40" />
+                  <SubmitButton pendingLabel="…" className="btn-ghost">{locale === "ar" ? "إرسال للاعتماد" : "Send for approval"}</SubmitButton>
+                </form>)}
+            </div>
           </section>
         )}
         {showPackages && (

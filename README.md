@@ -43,7 +43,10 @@ A production-grade healthcare operating system for Golden Care Clinics, built on
 | **Devices & maintenance** — asset register, pulse counters, work orders, calibration, alerts, usage | ✅ |
 | **Laser session record** — settings per area, contraindication checklist, counter reconciliation, signed and immutable | ✅ |
 | **Packages** — sale with deferred revenue, redemption per session, expiry, settlement and report integration | ✅ |
-| HR/payroll, patient wallet & deposits, package refunds, supplier returns | ⏳ next milestones |
+| **Dental treatment plans** — FDI teeth and surfaces, quotation with validity, patient acceptance, installment schedule, billed as work is done | ✅ |
+| **Patient advances (deposits)** — down payments and installments held as a liability, applied to invoices, refunds with approval | ✅ |
+| **Dental lab cases** — ordered → sent → returned → delivered, remakes, due dates; lab and maintenance bills to suppliers payable; doctor's lab cost share in settlements | ✅ |
+| HR/payroll, package refunds, supplier returns, patient wallet / loyalty | ⏳ next milestones |
 
 Everything else in the master specification is planned in phases — see `PROGRESS.md`.
 

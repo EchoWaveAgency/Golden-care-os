@@ -42,3 +42,8 @@
 - Lost phone: an administrator resets it (audited); the user's sessions end, the factors are removed and a one-time password is handed over in person; the user sets a new password and enrolls again.
 - Break-glass (`scripts/break-glass-mfa-reset.mjs`) recovers the last administrator from a trusted terminal with the service key; it requires an operator name and a reason and is audited. Keep at least two all-branch administrators (the users screen warns otherwise).
 - Enable TOTP MFA in the Supabase project (Auth → Multi-factor) before go-live.
+
+## Dental plans, advances and lab cases (session 9)
+- Plans are readable by their doctor, clinical readers of the branch, front desk (acceptance) and finance (billing) — not by other doctors. A doctor can start a plan only for a patient under their care.
+- Lab cases are readable by the case doctor and non-doctor lab staff of the branch; a doctor cannot open a case in another doctor's name.
+- Advance balances are read through `patient_advance()` (branch-scoped). The 'advance' payment method cannot be used directly; refunds into the advance are refused. Every money step is idempotent and posted as a balanced journal.

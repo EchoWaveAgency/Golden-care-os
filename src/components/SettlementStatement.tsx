@@ -35,7 +35,7 @@ export async function SettlementStatement({ ctx, id, error, ok, manage }: { ctx:
     .eq("run_id", id).order("on_date").returns<Line[]>();
   const st = SETTLEMENT_STATUS[run.status];
   const doc = run.doctor;
-  const kind = (k: string) => (k === "carry" ? (ar ? "رصيد سالب مُرحّل من كشف سابق" : "Negative balance carried from an earlier statement") : k === "refund" ? (ar ? "خصم استرداد" : "Refund deduction") : k === "void_reversal" ? (ar ? "عكس فاتورة ملغاة" : "Voided invoice reversal") : k === "package_session" ? (ar ? "جلسة من باقة (القيمة المعترف بها)" : "Package session (recognised value)") : "");
+  const kind = (k: string) => (k === "carry" ? (ar ? "رصيد سالب مُرحّل من كشف سابق" : "Negative balance carried from an earlier statement") : k === "refund" ? (ar ? "خصم استرداد" : "Refund deduction") : k === "void_reversal" ? (ar ? "عكس فاتورة ملغاة" : "Voided invoice reversal") : k === "package_session" ? (ar ? "جلسة من باقة (القيمة المعترف بها)" : "Package session (recognised value)") : k === "lab_cost" ? (ar ? "نصيب الطبيب من فاتورة المعمل" : "Doctor's share of the lab bill") : "");
   const okMsg = ok === "approved" ? (ar ? "تم اعتماد الكشف وتسجيل القيد." : "Approved and posted.") : ok === "paid" ? (ar ? "تم تسجيل الصرف." : "Payment recorded.") : ok === "cancelled" ? (ar ? "تم إلغاء الكشف." : "Statement cancelled.") : undefined;
 
   return (

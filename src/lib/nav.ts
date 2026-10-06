@@ -13,6 +13,8 @@ export const NAV: NavItem[] = [
   { href: "/os/patients", label: "nav.patients", section: "nav.section.front", any: ["patient.read"] },
   { href: "/os/appointments/new", label: "nav.appointments", section: "nav.section.front", any: ["appointment.write"] },
   { href: "/os/doctor", label: "nav.doctor", section: "nav.section.clinical", any: ["clinical.write.own"] },
+  { href: "/os/plans", label: "nav.plans", section: "nav.section.clinical", any: ["plan.write", "plan.accept", "billing.read"] },
+  { href: "/os/lab", label: "nav.lab", section: "nav.section.clinical", any: ["lab.read", "lab.manage"] },
   { href: "/os/laser", label: "nav.laser", section: "nav.section.clinical", any: ["laser.operate"] },
   { href: "/os/my-settlements", label: "nav.mySettlements", section: "nav.section.clinical", any: ["clinical.write.own"] },
   { href: "/os/packages", label: "nav.packages", section: "nav.section.front", any: ["package.read", "package.manage", "package.sell"] },

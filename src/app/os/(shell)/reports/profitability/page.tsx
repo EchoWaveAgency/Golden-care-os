@@ -25,7 +25,7 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
     const k = key(r);
     const g = grouped.get(k);
     if (!g) grouped.set(k, { ...r, ...(by === "doctor" ? { service_ar: "", service_en: "", service_code: "" } : {}), ...(by === "service" ? { doctor_ar: null, doctor_en: null } : {}) });
-    else for (const f of ["units", "gross", "discounts", "refunds", "net_revenue", "doctor_share", "consumables", "margin"] as const) g[f] = Number(g[f]) + Number(r[f]);
+    else for (const f of ["units", "gross", "discounts", "refunds", "net_revenue", "doctor_share", "consumables", "lab_costs", "margin"] as const) g[f] = Number(g[f]) + Number(r[f]);
   }
   const rows = Array.from(grouped.values()).sort((a, b) => Number(b.margin) - Number(a.margin));
   const sum = (f: keyof ProfitRow) => raw.reduce((a, r) => a + Number(r[f]), 0);
@@ -35,7 +35,7 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
 
   return (
     <>
-      <PageHeader title={ctx.t("nav.profitability")} subtitle={ar ? "على أساس الفواتير الصادرة: صافي الإيراد بعد الخصومات والمرتجعات، ناقص نصيب الطبيب (تقديري من العقود)، ناقص تكلفة المستهلكات المصروفة على مواعيد الفواتير." : "Invoiced basis: net revenue after discounts and refunds, minus doctor share (estimated from contracts), minus consumables issued to the invoices' appointments."}
+      <PageHeader title={ctx.t("nav.profitability")} subtitle={ar ? "على أساس الفواتير الصادرة: صافي الإيراد بعد الخصومات والمرتجعات، ناقص نصيب الطبيب (تقديري من العقود)، ناقص تكلفة المستهلكات المصروفة على مواعيد الفواتير، ناقص فواتير معامل الأسنان." : "Invoiced basis: net revenue after discounts and refunds, minus doctor share (estimated from contracts), minus consumables issued to the invoices' appointments, minus dental lab bills."}
         actions={<a href={`/os/reports/profitability/export?${qs({ lang: ctx.locale })}`} className="btn-ghost">{ar ? "تصدير Excel (CSV)" : "Export Excel (CSV)"}</a>} />
       <form className="mb-4 flex flex-wrap items-end gap-2">
         <div><label className="label" htmlFor="from">{ar ? "من" : "From"}</label><input id="from" name="from" type="date" defaultValue={from} className="input" /></div>
@@ -56,7 +56,7 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
             <thead className="border-b border-ivory-200 bg-ivory-50">
               <tr>{by !== "doctor" && <th className="th">{ar ? "الخدمة" : "Service"}</th>}{by !== "service" && <th className="th">{ar ? "الطبيب" : "Doctor"}</th>}
                 <th className="th">{ar ? "العدد" : "Units"}</th><th className="th">{ar ? "صافي الإيراد" : "Net revenue"}</th><th className="th">{ar ? "المرتجعات" : "Refunds"}</th>
-                <th className="th">{ar ? "نصيب الطبيب" : "Doctor share"}</th><th className="th">{ar ? "المستهلكات" : "Consumables"}</th><th className="th">{ar ? "الهامش" : "Margin"}</th><th className="th w-40" /></tr>
+                <th className="th">{ar ? "نصيب الطبيب" : "Doctor share"}</th><th className="th">{ar ? "المستهلكات" : "Consumables"}</th><th className="th">{ar ? "المعمل" : "Lab"}</th><th className="th">{ar ? "الهامش" : "Margin"}</th><th className="th w-40" /></tr>
             </thead>
             <tbody className="divide-y divide-ivory-200">
               {rows.map((r) => (
@@ -68,6 +68,7 @@ export default async function ProfitabilityPage({ searchParams }: { searchParams
                   <td className="td num text-ink-500">{money(r.refunds, ctx.locale)}</td>
                   <td className="td num text-ink-500">{money(r.doctor_share, ctx.locale)}</td>
                   <td className="td num text-ink-500">{money(r.consumables, ctx.locale)}</td>
+                  <td className="td num text-ink-500">{money(r.lab_costs ?? 0, ctx.locale)}</td>
                   <td className={`td num font-medium ${Number(r.margin) < 0 ? "text-danger" : ""}`}>{money(r.margin, ctx.locale)} <span className="text-xs text-ink-300">{pct(r)}</span></td>
                   <td className="td"><div className="h-2 rounded-full bg-ivory-200" aria-hidden><div className={`h-2 rounded-full ${Number(r.margin) < 0 ? "bg-danger" : "bg-teal-700"}`} style={{ width: `${(Math.abs(Number(r.margin)) / maxAbs) * 100}%` }} /></div></td>
                 </tr>

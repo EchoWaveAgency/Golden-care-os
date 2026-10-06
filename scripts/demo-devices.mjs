@@ -24,6 +24,10 @@ export async function seedDevices({ db, url, PASSWORD, BRANCH }) {
     let agent = must(await db.from("suppliers").select("id").eq("name_ar", "الوكيل المعتمد لأجهزة الليزر (تجريبي)"), "agent")[0];
     if (!agent) agent = must(await db.from("suppliers").insert({ name_ar: "الوكيل المعتمد لأجهزة الليزر (تجريبي)", name_en: "Authorised laser agent (demo)", phone: "0221111111" }).select("id").single(), "agent");
 
+    // A dental laboratory supplier (synthetic).
+    const lab = must(await db.from("suppliers").select("id").eq("name_ar", "معمل الأسنان (تجريبي)"), "lab")[0];
+    if (!lab) must(await db.from("suppliers").insert({ name_ar: "معمل الأسنان (تجريبي)", name_en: "Dental lab (demo)", phone: "0222222222", is_lab: true }), "lab");
+
     const already = must(await db.from("devices").select("id").eq("asset_no", "LSR-ELITE-01"), "device check");
     if (!already.length) {
       const dev = await login("devices@demo.goldencare.local");

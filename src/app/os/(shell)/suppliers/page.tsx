@@ -13,11 +13,11 @@ export default async function SuppliersPage() {
   const ar = ctx.locale === "ar";
   const [{ data: sups }, { data: grs }, { data: pend }] = await Promise.all([
     ctx.supabase.from("suppliers").select("id, name_ar, name_en, phone").order("name_ar"),
-    ctx.supabase.from("goods_receipts").select("supplier_id, total, amount_paid"),
+    ctx.supabase.rpc("supplier_balances"),
     ctx.supabase.from("supplier_payments").select("supplier_id, amount").eq("status", "requested"),
   ]);
   const owed = new Map<string, number>();
-  for (const g of grs ?? []) owed.set(g.supplier_id, (owed.get(g.supplier_id) ?? 0) + Number(g.total) - Number(g.amount_paid));
+  for (const g of (grs ?? []) as { supplier_id: string; total: number; paid: number }[]) owed.set(g.supplier_id, (owed.get(g.supplier_id) ?? 0) + Number(g.total) - Number(g.paid));
   const pending = new Map<string, number>();
   for (const p of pend ?? []) pending.set(p.supplier_id, (pending.get(p.supplier_id) ?? 0) + Number(p.amount));
   const totalOwed = Array.from(owed.values()).reduce((a, b) => a + b, 0);

@@ -197,3 +197,29 @@ Package refunds and transfers, patient wallet / loyalty / referrals, clinical ph
 
 ### Next milestone (proposed)
 HR & payroll (needs the clinic's insurance, tax and labour rules — see OPEN_QUESTIONS), or patient wallet / deposits and package refunds once finance confirms the policy.
+
+## Session 9 — 2026-10-06: dental treatment plans, installments, patient advances, lab cases
+
+### Delivered
+- **Treatment plans** (migration 0018) `/os/plans`, started by the dentist from the visit: lines per tooth (FDI 11–48 / 51–85) and surfaces (M O D B L I F P), prices always from the branch price list (the screen's price is ignored), line discounts. The doctor issues a **quotation** (number QT-…, validity 1–180 days); reception records the patient's **acceptance** (in person, signed paper, or portal) and the **installment schedule** (down payment + monthly installments, built on screen to the piaster and checked by the database to equal the total). Plans can be revised before acceptance and cancelled with a reason (work done stays). Overdue installments are listed for follow-up.
+- **Patient advances (deposits)**: down payments and installments are received into a liability (2200), allocated to installments in order, and **applied** to invoices only when work is billed. The 'advance' payment method can only be used by that step. Advance refunds: requested (`refund.request`), approved by someone else (`refund.approve`), then paid (Dr 2200 / Cr method). A pending refund reserves its amount. Cash deposits require an open cashier session and are part of the expected cash at closing.
+- **Billing as work is done**: the doctor marks items done; reception bills all done, unbilled items into one invoice, and the available advance is applied automatically. Voiding that invoice releases the items for re-billing.
+- **Lab cases** `/os/lab`: created from a plan item (or directly), lab, work type, shade, teeth, due date; statuses ordered → sent → in lab → returned → delivered, remake (with a note, counted), cancel. Late cases highlighted. A doctor sees only their own cases.
+- **Supplier bills** for lab work and maintenance (Dr 5500 lab costs / 5600 maintenance — Cr 2100 suppliers payable): one bill number per supplier, confirmed by an approver who did not record it, then paid through the existing supplier payment maker-checker. A bill entered by mistake is voided (unpaid only), its journal reversed.
+- **Doctor contracts** carry a lab cost share %: settlements deduct the doctor's share of confirmed lab bills (and reverse it if a settled bill is later voided). **Profitability** shows lab costs per service and doctor; the doctor's share of the lab bill lowers the doctor share instead of being counted twice.
+
+### Independent review
+A separate reviewer reported 11 issues: a doctor could open lab cases in another doctor's name; settlements counted unconfirmed lab bills; there was no way to correct a wrong bill; voiding a plan invoice left items marked as billed; cancelling an item left installments above the new total; plans and lab cases were readable too widely, and plans could be started for patients the doctor does not treat; profitability counted the doctor's lab share twice; a deposit idempotency key could collide with an apply key; the patient advance read was not branch-scoped; plan and item locks were taken in different orders; a bill could be recorded before the case was sent, or from a vendor other than the work order's. All 11 fixed and covered by tests.
+
+### Verified
+- SQL suites 13/13 plus concurrency (10 parallel applications of 800 against a 1,000 advance → exactly 800 applied, balance 200) ✅; unit 32/32; typecheck, lint, build ✅.
+- Browser journeys on fresh data: dental 26/26, laser package 25/25, purchasing 18/18, inventory 17/17, settlements & MFA 20/20, staff 27/27, portal 35/35, milestone 4 25/25 ✅.
+
+### Known limits (logged in OPEN_QUESTIONS 71–82)
+Advances are branch balances (a deposit in one branch is not usable in another); refunding an invoice that was paid from the advance pays out by cash/card rather than returning to the advance; installment "paid" amounts are not reduced by a later advance refund; tooth chart is a table, not a graphic odontogram; no patient-portal acceptance screen yet.
+
+### Not built yet (honest scope)
+HR & payroll, package refunds and transfers, supplier returns, graphic dental chart, portal plan acceptance and installment payment online, SMS/WhatsApp reminders for due installments.
+
+### Next milestone (proposed)
+HR & payroll once the clinic's insurance, tax and labour rules are confirmed (OPEN_QUESTIONS 54+); otherwise installment reminders on WhatsApp and portal plan acceptance.

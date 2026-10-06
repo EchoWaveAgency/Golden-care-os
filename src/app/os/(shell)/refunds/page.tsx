@@ -8,6 +8,7 @@ import { Stat } from "@/components/Stat";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SubmitButton } from "@/components/SubmitButton";
 import { decideRefund, payRefund } from "@/app/actions/refunds";
+import { decideDepositRefund, payDepositRefund } from "@/app/actions/dental";
 
 export const metadata = { title: "Refunds" };
 export const dynamic = "force-dynamic";
@@ -40,8 +41,12 @@ export default async function RefundsPage({ searchParams }: { searchParams: { er
       : Promise.resolve({ data: [] as { id: string; provider: string; txn_id: string; amount: number; reason: string; created_at: string }[] }),
   ]);
   const exceptions = excRes.data ?? [];
+  const { data: depRef } = await ctx.supabase.from("deposit_refunds").select("id, ref, patient_id, amount, method, reason, status, requested_by, requested_at, decision_note")
+    .order("requested_at", { ascending: false }).limit(50);
+  const depRows = (depRef ?? []) as { id: string; ref: string; patient_id: string; amount: number; method: string; reason: string; status: string; requested_by: string; requested_at: string; decision_note: string | null }[];
   const rows = data ?? [];
-  const { data: dir } = rows.length ? await ctx.supabase.rpc("patient_directory", { p_ids: Array.from(new Set(rows.map((r) => r.patient_id))) }) : { data: [] };
+  const pids = Array.from(new Set([...rows.map((r) => r.patient_id), ...depRows.map((r) => r.patient_id)]));
+  const { data: dir } = pids.length ? await ctx.supabase.rpc("patient_directory", { p_ids: pids }) : { data: [] };
   const names = new Map(((dir ?? []) as { id: string; mrn: string; full_name_ar: string }[]).map((p) => [p.id, p]));
   const method = new Map((methods ?? []).map((m) => [m.code, m]));
   const pending = rows.filter((r) => r.status === "requested");
@@ -102,6 +107,39 @@ export default async function RefundsPage({ searchParams }: { searchParams: { er
           );
         })}
       </div>
+
+      {depRows.length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-3 font-medium text-navy-700">{ar ? "استرداد من الرصيد المقدم" : "Refunds of advance balances"}</h2>
+          <div className="space-y-3">
+            {depRows.map((r) => {
+              const pt = names.get(r.patient_id);
+              const st = REFUND_STATUS[r.status];
+              const m = method.get(r.method);
+              const mineReq = r.requested_by === ctx.user.id;
+              return (
+                <article key={r.id} className="card p-4" data-deposit-refund={r.ref}>
+                  <div className="flex flex-wrap items-start justify-between gap-3 text-sm">
+                    <div><p><span className="num font-medium text-navy-700">{r.ref}</span> · <Link href={`/os/patients/${r.patient_id}`} className="text-teal-700 hover:underline">{pt?.full_name_ar ?? ""}</Link></p>
+                      <p className="mt-1 font-semibold"><span className="num">{money(r.amount, locale)}</span> <span className="text-sm font-normal text-ink-500">· {ar ? m?.name_ar : m?.name_en}</span></p>
+                      <p>{r.reason}</p><p className="text-xs text-ink-300">{dateTime(r.requested_at, locale)}{r.decision_note ? ` · ${r.decision_note}` : ""}</p></div>
+                    <StatusBadge status={st?.[2] ?? "draft"} label={(ar ? st?.[0] : st?.[1]) ?? r.status} />
+                  </div>
+                  {r.status === "requested" && canApprove && (mineReq
+                    ? <p className="mt-2 text-xs text-ink-500">{ar ? "قدّمت هذا الطلب بنفسك — يلزم اعتماد مسؤول آخر." : "You requested this — another approver is required."}</p>
+                    : <form action={decideDepositRefund} className="mt-3 flex flex-wrap items-end gap-2"><input type="hidden" name="id" value={r.id} />
+                        <input name="note" placeholder={ar ? "ملاحظة (مطلوبة عند الرفض)" : "Note (required to reject)"} className="input w-56" />
+                        <SubmitButton name="decision" value="approve" pendingLabel="…" className="btn-primary">{ar ? "اعتماد" : "Approve"}</SubmitButton>
+                        <SubmitButton name="decision" value="reject" pendingLabel="…" className="btn-danger">{ar ? "رفض" : "Reject"}</SubmitButton></form>)}
+                  {r.status === "approved" && canPay && (
+                    <form action={payDepositRefund} className="mt-3 flex flex-wrap items-end gap-2"><input type="hidden" name="id" value={r.id} />
+                      {m?.requires_reference && <input name="reference" required placeholder={ar ? "رقم مرجع التحويل" : "Transfer reference"} className="input" dir="ltr" />}
+                      <SubmitButton pendingLabel="…" className="btn-gold">{ar ? "صرف المبلغ" : "Pay out"}</SubmitButton></form>)}
+                </article>);
+            })}
+          </div>
+        </section>
+      )}
 
       {exceptions.length > 0 && (
         <section className="mt-8">

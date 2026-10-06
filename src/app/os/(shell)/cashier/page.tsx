@@ -26,11 +26,18 @@ export default async function CashierPage({ searchParams }: { searchParams: { er
   let cashIn = 0;
   let byMethod: Record<string, number> = {};
   if (mine) {
-    const { data: pays } = await ctx.supabase.from("payments").select("method, amount").eq("cashier_session_id", mine.id);
+    const [{ data: pays }, { data: refs }, { data: deps }] = await Promise.all([
+      ctx.supabase.from("payments").select("method, amount").eq("cashier_session_id", mine.id),
+      ctx.supabase.from("refunds").select("amount").eq("cashier_session_id", mine.id).eq("status", "paid"),
+      ctx.supabase.from("patient_deposits").select("kind, amount").eq("cashier_session_id", mine.id),
+    ]);
     (pays ?? []).forEach((p: { method: string; amount: string }) => {
       byMethod[p.method] = (byMethod[p.method] ?? 0) + Number(p.amount);
       if (p.method === "cash") cashIn += Number(p.amount);
     });
+    // Same rule as the closing in the database: + cash advances received − cash refunds paid (invoice and advance refunds).
+    (deps ?? []).forEach((d: { kind: string; amount: string }) => { cashIn += d.kind === "deposit" ? Number(d.amount) : d.kind === "refund" ? -Number(d.amount) : 0; });
+    (refs ?? []).forEach((r: { amount: string }) => { cashIn -= Number(r.amount); });
   }
 
   return (
@@ -42,7 +49,7 @@ export default async function CashierPage({ searchParams }: { searchParams: { er
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="grid gap-3 sm:grid-cols-3 lg:col-span-2">
             <Stat label={t("cash.float")} value={money(mine.opening_float, locale)} />
-            <Stat label={ar ? "نقدية مستلمة" : "Cash received"} value={money(cashIn, locale)} tone="teal" />
+            <Stat label={ar ? "صافي حركة النقدية" : "Net cash movement"} value={money(cashIn, locale)} tone="teal" />
             <Stat label={t("cash.expected")} value={money(Number(mine.opening_float) + cashIn, locale)} tone="gold" />
             <div className="card p-4 sm:col-span-3 text-sm text-ink-500">
               {t("cash.openSince")}: <span className="whitespace-nowrap">{dateTime(mine.opened_at, locale)}</span>

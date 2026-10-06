@@ -8,11 +8,12 @@ import { Banner } from "@/components/Banner";
 import { Stat } from "@/components/Stat";
 import { SubmitButton } from "@/components/SubmitButton";
 import { cancelWorkOrder, closeWorkOrder, openWorkOrder, recordReading, retireDevice } from "@/app/actions/devices";
+import { recordSupplierBill } from "@/app/actions/dental";
 import { DeviceForm, type DeviceRow } from "../DeviceForm";
 
 export const dynamic = "force-dynamic";
 
-type WO = { id: string; ref: string; kind: string; status: string; device_down: boolean; problem: string; reported_at: string; technician: string | null;
+type WO = { id: string; ref: string; vendor_id: string | null; kind: string; status: string; device_down: boolean; problem: string; reported_at: string; technician: string | null;
   parts: string | null; parts_cost: number; labor_cost: number; result: string | null; passed: boolean | null; closed_at: string | null; cancel_reason: string | null };
 type Reading = { id: string; reading: number; delta: number; gap: number; source: string; note: string | null; recorded_at: string; session_id: string | null };
 
@@ -37,7 +38,7 @@ export default async function DevicePage({ params, searchParams }: { params: { i
   const ok = {
     created: ar ? "تم تسجيل الجهاز." : "Device registered.", saved: ar ? "تم حفظ التعديلات." : "Changes saved.", retired: ar ? "تم استبعاد الجهاز." : "Device retired.",
     reading: ar ? "تم تسجيل قراءة العداد." : "Counter reading recorded.", opened: ar ? "تم فتح أمر الصيانة." : "Work order opened.",
-    closed: ar ? "تم إغلاق أمر الصيانة." : "Work order closed.", cancelled: ar ? "تم إلغاء أمر الصيانة." : "Work order cancelled.",
+    closed: ar ? "تم إغلاق أمر الصيانة." : "Work order closed.", bill: ar ? "تم تسجيل فاتورة الصيانة على المورد." : "Maintenance bill recorded against the vendor.", cancelled: ar ? "تم إلغاء أمر الصيانة." : "Work order cancelled.",
   }[searchParams.ok ?? ""];
   const life = d.expected_life ? Math.round((Number(d.counter_value) * 100) / Number(d.expected_life)) : null;
   const src = (s: string) => ({ initial: ar ? "عند التسجيل" : "Registration", session: ar ? "جلسة" : "Session", manual: ar ? "قراءة يدوية" : "Manual reading", service_reset: ar ? "تصفير بعد صيانة" : "Service reset" }[s] ?? s);
@@ -114,6 +115,15 @@ export default async function DevicePage({ params, searchParams }: { params: { i
                 <span className="block text-ink-500">{o.problem}{o.result ? ` → ${o.result}` : ""}{o.cancel_reason ? ` → ${o.cancel_reason}` : ""}</span>
                 <span className="block text-xs text-ink-300">{dateTime(o.reported_at, ctx.locale)}{o.closed_at ? ` → ${dateTime(o.closed_at, ctx.locale)}` : ""}
                   {Number(o.parts_cost) + Number(o.labor_cost) > 0 ? <> · <span className="num">{money(Number(o.parts_cost) + Number(o.labor_cost), ctx.locale)}</span></> : null}</span>
+                {o.status === "closed" && o.vendor_id && ctx.can("supplier.bill.record") && (
+                  <details className="mt-1"><summary className="cursor-pointer text-xs text-teal-700">{ar ? "تسجيل فاتورة الوكيل (مستحق للمورد)" : "Record the vendor's bill (supplier payable)"}</summary>
+                    <form action={recordSupplierBill} className="mt-2 flex flex-wrap items-end gap-2">
+                      <input type="hidden" name="kind" value="maintenance" /><input type="hidden" name="maintenance_order_id" value={o.id} />
+                      <input type="hidden" name="supplier_id" value={o.vendor_id} /><input type="hidden" name="back" value={`/os/devices/${d.id}`} />
+                      <input name="bill_no" required placeholder={ar ? "رقم الفاتورة" : "Invoice no."} className="input w-32 py-1 text-xs" dir="ltr" />
+                      <input name="amount" type="number" min="0.01" step="0.01" required defaultValue={Number(o.parts_cost) + Number(o.labor_cost) || undefined} className="input num w-28 py-1 text-xs" />
+                      <SubmitButton pendingLabel="…" className="btn-gold px-2 py-1 text-xs">{ar ? "تسجيل" : "Record"}</SubmitButton>
+                    </form></details>)}
               </li>
             ))}
           </ul>
