@@ -30,6 +30,7 @@ const people = [
   { email: "marketing@demo.goldencare.local", ar: "فريق التسويق", en: "Marketing Team", role: "marketing", branch: null },
   { email: "inventory@demo.goldencare.local", ar: "أمين المخزن", en: "Store Keeper", role: "inventory_controller", branch: null, kind: "other" },
   { email: "devices@demo.goldencare.local", ar: "مسؤول الأجهزة", en: "Device Officer", role: "device_officer", branch: BRANCH, kind: "maintenance" },
+  { email: "hr@demo.goldencare.local", ar: "مدير الموارد البشرية", en: "HR Manager", role: "hr_manager", branch: BRANCH, kind: "hr" },
   { email: "meddir@demo.goldencare.local", ar: "د. المدير الطبي", en: "Medical Director", role: "medical_director", branch: null, kind: "management" },
 ];
 
@@ -111,6 +112,7 @@ if (!hasAllergy.length) must(await db.from("patient_alerts").insert({ patient_id
 
 await import("./demo-inventory.mjs").then((m) => m.seedInventory({ db, url, PASSWORD, BRANCH }));
 await import("./demo-devices.mjs").then((m) => m.seedDevices({ db, url, PASSWORD, BRANCH }));
+await import("./demo-hr.mjs").then((m) => m.seedHr({ db, url, PASSWORD, BRANCH }));
 await import("./demo-website.mjs").then((m) => m.seedWebsite({ db, url, PASSWORD, BRANCH }));
 console.log(`Demo ready. ${people.length} users (password: ${PASSWORD}), ${patients.length} patients, today's schedule created.`);
 for (const p of people) console.log(`  ${p.role.padEnd(18)} ${p.email}`);

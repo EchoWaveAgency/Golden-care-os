@@ -702,6 +702,20 @@ begin
   return app.import_punches(d.branch_id, p_rows, 'device', 'device:' || d.serial_no, d.id);
 end $$;
 
+create or replace function public.save_attendance_device(p_branch uuid, p_serial text, p_name text, p_active boolean default true)
+returns public.attendance_devices language plpgsql security definer set search_path = public, app, pg_temp as $$
+declare d public.attendance_devices;
+begin
+  perform app.require_permission('hr.manage', p_branch);
+  if coalesce(trim(p_serial), '') = '' or coalesce(trim(p_name), '') = '' then raise exception 'serial number and name are required' using errcode = '22023'; end if;
+  insert into public.attendance_devices (branch_id, serial_no, name, is_active) values (p_branch, trim(p_serial), trim(p_name), coalesce(p_active, true))
+  on conflict (serial_no) do update set name = excluded.name, is_active = excluded.is_active
+  where public.attendance_devices.branch_id = p_branch
+  returning * into d;
+  if d.id is null then raise exception 'this device is registered to another branch' using errcode = '23505'; end if;
+  return d;
+end $$;
+
 create or replace function public.add_manual_punch(p_employee uuid, p_at timestamptz, p_reason text)
 returns public.attendance_punches language plpgsql security definer set search_path = public, app, pg_temp as $$
 declare e public.employees; r public.attendance_punches;
@@ -1313,7 +1327,9 @@ create policy leave_read on public.leave_requests for select to authenticated
   using (exists (select 1 from public.employees e where e.id = employee_id and (app.can_read_employee(e.id, e.branch_id) or app.has_permission('leave.approve', e.branch_id))));
 create policy loans_read on public.employee_loans for select to authenticated
   using (exists (select 1 from public.employees e where e.id = employee_id and (e.id = app.my_employee_id() or app.has_permission('payroll.read', e.branch_id))));
-create policy runs_read on public.payroll_runs for select to authenticated using (app.has_permission('payroll.read', branch_id));
+create policy runs_read on public.payroll_runs for select to authenticated
+  using (app.has_permission('payroll.read', branch_id)
+         or (status in ('approved', 'paid') and exists (select 1 from public.payroll_slips s where s.run_id = id and s.employee_id = app.my_employee_id())));
 -- Payroll staff see every slip; an employee sees their own once the run is approved.
 create or replace function app.can_read_slip(p_run uuid, p_employee uuid)
 returns boolean language sql stable security definer set search_path = public, app, pg_temp as $$
@@ -1343,6 +1359,8 @@ revoke execute on function app.payroll_setting(text), app.shift_for(uuid, date),
   app.leave_entitlement(uuid, text), app.leave_used(uuid, text, int), app.monthly_income_tax(numeric, date)
   from public, anon, authenticated;
 
+revoke execute on function public.save_attendance_device(uuid, text, text, boolean) from public, anon;
+grant execute on function public.save_attendance_device(uuid, text, text, boolean) to authenticated;
 revoke execute on function public.save_employee(jsonb), public.end_employment(uuid, date, text), public.save_shift(jsonb),
   public.set_roster(uuid, date, uuid, text), public.import_attendance(uuid, jsonb, text), public.add_manual_punch(uuid, timestamptz, text),
   public.decide_manual_punch(uuid, boolean), public.approve_overtime(uuid, date, int), public.recompute_attendance(uuid, date, date),

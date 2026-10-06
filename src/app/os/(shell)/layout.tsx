@@ -35,7 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </Link>
         <nav className="flex-1 overflow-y-auto"><NavLinks groups={groups} /></nav>
         <div className="border-t border-white/10 px-3 pt-4 text-sm">
-          <p className="truncate text-ivory-100">{name}</p>
+          <Link href="/os/me" className="block truncate text-ivory-100 hover:text-gold-300" data-my-file>{name}</Link>
           <div className="mt-3 flex items-center justify-between">
             <form action={setLocale}>
               <input type="hidden" name="locale" value={locale === "ar" ? "en" : "ar"} />
@@ -55,6 +55,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               <span className="font-semibold text-gold-300">{t("app.name")}</span>
             </Link>
             <div className="flex items-center gap-4 text-xs">
+              <Link href="/os/me" className="text-ivory-100">{locale === "ar" ? "بياناتي" : "My file"}</Link>
               <form action={setLocale}>
                 <input type="hidden" name="locale" value={locale === "ar" ? "en" : "ar"} />
                 <BackField />

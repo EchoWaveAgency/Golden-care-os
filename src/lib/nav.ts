@@ -23,6 +23,8 @@ export const NAV: NavItem[] = [
   { href: "/os/cashier", label: "nav.cashier", section: "nav.section.finance", any: ["cash.session", "cash.supervise"] },
   { href: "/os/refunds", label: "nav.refunds", section: "nav.section.finance", any: ["refund.request", "refund.approve"] },
   { href: "/os/settlements", label: "nav.settlements", section: "nav.section.finance", any: ["settlement.prepare", "settlement.approve", "settlement.pay", "contract.manage"] },
+  { href: "/os/hr", label: "nav.hr", section: "nav.section.people", any: ["hr.read", "hr.manage", "attendance.manage", "leave.approve"] },
+  { href: "/os/payroll", label: "nav.payroll", section: "nav.section.people", any: ["payroll.read", "payroll.prepare", "payroll.settings"] },
   { href: "/os/accounting", label: "nav.accounting", section: "nav.section.finance", any: ["accounting.read"] },
   { href: "/os/inventory", label: "nav.inventory", section: "nav.section.operations", any: ["inventory.read", "inventory.issue", "inventory.receive", "inventory.count", "inventory.approve", "inventory.manage"] },
   { href: "/os/devices", label: "nav.devices", section: "nav.section.operations", any: ["device.read", "device.manage", "device.maintain"] },
@@ -42,7 +44,7 @@ export function navFor(perms: Set<string>): NavItem[] {
 
 /** Landing page for a user: the first workspace their permissions open. */
 export function homeFor(perms: Set<string>): string | null {
-  const order = ["/os/executive", "/os/reception", "/os/doctor", "/os/cashier", "/os/billing", "/os/accounting", "/os/content", "/os/leads", "/os/patients", "/os/laser", "/os/inventory", "/os/devices", "/os/settings", "/os/audit"];
+  const order = ["/os/executive", "/os/reception", "/os/doctor", "/os/cashier", "/os/billing", "/os/accounting", "/os/hr", "/os/payroll", "/os/content", "/os/leads", "/os/patients", "/os/laser", "/os/inventory", "/os/devices", "/os/settings", "/os/audit"];
   const allowed = new Set(navFor(perms).map((i) => i.href));
   // Patient Relations (inquiries, no cash handling) starts in the inquiry inbox, not reception.
   if (allowed.has("/os/leads") && perms.has("lead.write") && !perms.has("payment.collect") && !allowed.has("/os/executive")) return "/os/leads";

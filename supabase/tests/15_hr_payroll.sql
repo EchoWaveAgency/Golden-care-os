@@ -43,6 +43,15 @@ select test.assert((select status = 'late' and late_minutes = 30 from public.att
 select test.assert((select status = 'absent' from public.attendance_days where employee_id = :'emp' and day = :'pm'::date + 2), 'no punches → absent');
 select test.assert((select status = 'present' and worked_minutes = 460 and overtime_minutes = 5 from public.attendance_days where employee_id = :'emp' and day = :'pm'), 'worked minutes net of the break');
 
+-- Device push: only a registered device; its branch is used
+select public.save_attendance_device(:'b1', 'ZK-TEST-1', 'بوابة الاختبار') is not null as x \gset
+reset role;
+select test.expect_error($q$select public.svc_device_punches('UNKNOWN', '[{"biometric_id": "77", "at": "2026-01-01 08:00"}]')$q$, 'unknown attendance device');
+select (public.svc_device_punches('ZK-TEST-1', jsonb_build_array(jsonb_build_object('biometric_id', '77', 'at', to_char(now() at time zone 'Africa/Cairo' - interval '1 hour', 'YYYY-MM-DD HH24:MI')))))->>'inserted' as dev \gset
+select test.assert(:'dev' = '1' and (select last_seen_at is not null from public.attendance_devices where serial_no = 'ZK-TEST-1'), 'registered device accepted');
+set role authenticated;
+select test.login(:'hr');
+
 -- Manual punch needs another person's approval
 select id as mp from public.add_manual_punch(:'emp', now() - interval '2 hours', 'نسيت البصمة') \gset
 select test.expect_error(format($q$select public.decide_manual_punch(%L, true)$q$, :'mp'), 'cannot approve a punch you entered');
