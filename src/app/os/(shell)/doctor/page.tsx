@@ -10,6 +10,8 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { Banner } from "@/components/Banner";
 import { Empty } from "@/components/Empty";
 import type { DictKey } from "@/lib/i18n";
+import { patientNames } from "@/lib/care/people";
+import { pick } from "@/lib/care/labels";
 
 export const metadata = { title: "My clinic" };
 export const dynamic = "force-dynamic";
@@ -31,11 +33,30 @@ export default async function DoctorPage({ searchParams }: { searchParams: { err
         .returns<AppointmentRow[]>()
     : { data: [] as AppointmentRow[] };
   const rows = (data ?? []).filter((a) => isActive(a.status));
+  // Care assistant escalations about this doctor's patients (RLS: the doctor's own only).
+  const { data: escs } = ctx.staff
+    ? await ctx.supabase.from("care_escalations").select("id, ref, severity, category, summary, patient_text, due_at, journey_id, patient_id")
+        .eq("doctor_id", ctx.staff.id).neq("status", "resolved").order("due_at").limit(20)
+    : { data: [] };
+  const escNames = (escs ?? []).length ? await patientNames(ctx, Array.from(new Set((escs ?? []).map((x) => x.patient_id)))) : new Map();
+  const ar = locale === "ar";
 
   return (
     <>
       <PageHeader title={t("nav.doctor")} subtitle={`${t("apt.today")} · ${day}`} />
       <Banner error={searchParams.error} />
+      {(escs ?? []).length > 0 && (
+        <section className="mb-5 rounded-xl border border-gold-300 bg-gold-50 p-4" data-doctor-escalations>
+          <p className="mb-2 text-sm font-medium text-navy-700">{ar ? "متابعات مرضاك من مساعد المتابعة" : "Your patients — from the care assistant"}</p>
+          <ul className="space-y-2 text-sm">
+            {(escs ?? []).map((x) => (
+              <li key={x.id} className={x.severity === "urgent" ? "font-medium text-danger" : ""}>
+                <Link href={x.journey_id ? `/os/care/${x.journey_id}` : "/os/care"} className="hover:underline">
+                  {escNames.get(x.patient_id)?.name ?? ""} · {pick(x.summary, ar)}{x.patient_text ? ` — «${x.patient_text}»` : ""}</Link>
+                <span className="num text-xs text-ink-500"> {x.ref}</span>
+              </li>))}
+          </ul>
+        </section>)}
       <div className="card">
         {rows.length === 0 ? <Empty text={t("common.none")} /> : (
           <ul className="divide-y divide-ivory-200">

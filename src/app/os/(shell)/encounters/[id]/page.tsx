@@ -12,6 +12,7 @@ import type { DictKey } from "@/lib/i18n";
 import { PrescriptionsPanel, ReleasePanel } from "./Panels";
 import { savePlan } from "@/app/actions/dental";
 import { PLAN_STATUS, label as dlabel } from "@/lib/dental";
+import { setFollowup, cancelFollowup } from "@/app/actions/care";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ type Enc = { appointment_id: string | null;
   patient: { mrn: string; first_name_ar: string; last_name_ar: string; first_name_en: string | null; last_name_en: string | null; date_of_birth: string | null; sex: string } | null;
 };
 
-export default async function EncounterPage({ params, searchParams }: { params: { id: string }; searchParams: { error?: string } }) {
+export default async function EncounterPage({ params, searchParams }: { params: { id: string }; searchParams: { error?: string; ok?: string } }) {
   const ctx = await requireAny("clinical.write.own", "clinical.read");
   const { t, locale } = ctx;
   const ar = locale === "ar";
@@ -34,11 +35,13 @@ export default async function EncounterPage({ params, searchParams }: { params: 
     .maybeSingle<Enc>();
   if (!e) notFound();
 
-  const [{ data: alerts }, { data: addenda }, { data: plans }] = await Promise.all([
+  const [{ data: alerts }, { data: addenda }, { data: plans }, { data: followup }] = await Promise.all([
     ctx.supabase.from("patient_alerts").select("id, kind, severity, label").eq("patient_id", e.patient_id).eq("is_active", true),
     ctx.supabase.from("encounter_addenda").select("id, body, created_at").eq("encounter_id", e.id).order("created_at"),
     ctx.can("plan.write") ? ctx.supabase.from("treatment_plans").select("id, ref, title, status").eq("patient_id", e.patient_id).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
+    ctx.supabase.from("care_followup_requests").select("due_on, note, status").eq("encounter_id", params.id).maybeSingle(),
   ]);
+  const tomorrow = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Cairo" }).format(new Date(Date.now() + 86400_000));
   const signed = e.status !== "draft";
   const canWrite = ctx.can("clinical.write.own");
 
@@ -52,7 +55,26 @@ export default async function EncounterPage({ params, searchParams }: { params: 
           <StatusBadge status={e.status} label={signed ? t("enc.signed") : t("enc.draft")} />
         </>}
       />
-      <Banner error={searchParams.error} />
+      <Banner error={searchParams.error} success={searchParams.ok === "followup_set" ? (ar ? "تم تحديد موعد المتابعة؛ المساعد هيفكّر المريض." : "Follow-up set; the care assistant will remind the patient.")
+        : searchParams.ok === "followup_cancelled" ? (ar ? "تم إلغاء المتابعة." : "Follow-up cancelled.") : undefined} />
+      {canWrite && e.doctor_id === ctx.staff?.id && e.status !== "entered_in_error" && (
+        <section className="mb-5 rounded-xl border border-ivory-300 bg-white p-4" data-followup>
+          <p className="mb-2 text-sm font-medium text-navy-700">{ar ? "موعد المتابعة (الاستشارة)" : "Follow-up visit"}</p>
+          {followup?.status === "open" && <p className="mb-2 text-sm">{ar ? "مطلوب يوم " : "Requested for "}<span className="num font-medium">{followup.due_on}</span>{followup.note ? ` · ${followup.note}` : ""}</p>}
+          <div className="flex flex-wrap items-end gap-3">
+            <form action={setFollowup} className="flex flex-wrap items-end gap-2">
+              <input type="hidden" name="encounter_id" value={e.id} />
+              <label><span className="label">{ar ? "التاريخ" : "Date"}</span><input id="followup_due" name="due_on" type="date" min={tomorrow} required defaultValue={followup?.status === "open" ? followup.due_on : ""} className="input" /></label>
+              <label><span className="label">{ar ? "ملاحظة داخلية (لا تُرسل للمريض)" : "Internal note (not sent to the patient)"}</span><input name="note" defaultValue={followup?.note ?? ""} className="input w-64" /></label>
+              <SubmitButton pendingLabel="…" className="btn-primary">{followup?.status === "open" ? (ar ? "تعديل" : "Update") : (ar ? "طلب متابعة" : "Request follow-up")}</SubmitButton>
+            </form>
+            {followup?.status === "open" && (
+              <form action={cancelFollowup} className="flex items-end gap-2"><input type="hidden" name="encounter_id" value={e.id} />
+                <input name="reason" required placeholder={ar ? "سبب الإلغاء" : "Reason"} className="input w-40" />
+                <SubmitButton pendingLabel="…" className="btn-ghost">{ar ? "إلغاء المتابعة" : "Cancel follow-up"}</SubmitButton></form>)}
+          </div>
+        </section>
+      )}
       {ctx.can("plan.write") && (
         <section className="mb-5 rounded-xl border border-ivory-300 bg-white p-4" data-plans>
           <p className="mb-2 text-sm font-medium text-navy-700">{ar ? "خطط العلاج" : "Treatment plans"}</p>

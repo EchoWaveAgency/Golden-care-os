@@ -46,6 +46,7 @@ A production-grade healthcare operating system for Golden Care Clinics, built on
 | **Dental treatment plans** — FDI teeth and surfaces, quotation with validity, patient acceptance, installment schedule, billed as work is done | ✅ |
 | **Patient advances (deposits)** — down payments and installments held as a liability, applied to invoices, refunds with approval | ✅ |
 | **Dental lab cases** — ordered → sent → returned → delivered, remakes, due dates; lab and maintenance bills to suppliers payable; doctor's lab cost share in settlements | ✅ |
+| **Patient care assistant** — automated WhatsApp (and voice-call) assistant: confirms bookings, reminds, follows up after the visit (treatment, improvement, problems, rating), reminds about the follow-up visit; danger signs escalate urgently to the care team | ✅ (needs Meta template approval; voice needs a telephony provider) |
 | HR/payroll, package refunds, supplier returns, patient wallet / loyalty | ⏳ next milestones |
 
 Everything else in the master specification is planned in phases — see `PROGRESS.md`.

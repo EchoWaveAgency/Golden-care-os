@@ -128,7 +128,32 @@ APPLIED=$("${PSQL[@]}" -c "select coalesce(sum(amount), 0) from public.patient_d
 ADVBAL=$("${PSQL[@]}" -c "select app.advance_balance('$PID')")
 [ "$APPLIED" = "800.00" ] && [ "$ADVBAL" = "200.00" ] || { echo "advance applied=$APPLIED balance=$ADVBAL"; exit 1; }
 
-# 8) Whole ledger still balances.
+# 8) Care assistant: six job runs in parallel never open the same conversation twice; ten parallel replies to the
+#    same conversation step apply exactly once (optimistic version check).
+"${PSQL[@]}" -c "insert into public.care_agent_settings (branch_id, enabled, contact_from, contact_to) values ('$B1', true, '00:00', '23:59')
+  on conflict (branch_id) do update set enabled = true, contact_from = '00:00', contact_to = '23:59';
+  insert into public.patients (branch_id, first_name_ar, last_name_ar, phone_raw)
+  select '$B1', 'تزامن', 'رعاية ' || g, '0100000077' || g from generate_series(1, 5) g;
+  insert into public.care_journeys (branch_id, patient_id, kind, to_phone, scheduled_at)
+  select '$B1', p.id, 'followup', p.phone, now() - interval '1 minute' from public.patients p where p.phone like '+20100000077%';" >/dev/null
+CLAIMS=$(mktemp)
+for i in $(seq 1 6); do
+  "${PSQL[@]}" -c "select c->>'id' from public.svc_care_claim(5) c where (c->>'phone') like '+20100000077%';" >>"$CLAIMS" 2>/dev/null &
+done
+wait
+CLAIMED=$(grep -c . "$CLAIMS" || true); UNIQUE=$(sort -u "$CLAIMS" | grep -c . || true); rm -f "$CLAIMS"
+[ "$CLAIMED" = "5" ] && [ "$UNIQUE" = "5" ] || { echo "care claims=$CLAIMED unique=$UNIQUE"; exit 1; }
+CJ=$("${PSQL[@]}" -c "select id from public.care_journeys where to_phone = '+201000000771'")
+CV=$("${PSQL[@]}" -c "select version from public.care_journeys where id = '$CJ'")
+for i in $(seq 1 10); do
+  "${PSQL[@]}" -c "select public.svc_care_apply('$CJ', $CV, '{\"state\": \"followup_q\", \"status\": \"waiting\", \"opened\": true, \"next_action_at\": \"2099-01-01T00:00:00Z\", \"messages\": [{\"body\": \"step $i\"}]}');" >/dev/null 2>&1 &
+done
+wait
+CMSG=$("${PSQL[@]}" -c "select count(*) from public.care_messages where journey_id = '$CJ'")
+CV2=$("${PSQL[@]}" -c "select version from public.care_journeys where id = '$CJ'")
+[ "$CMSG" = "1" ] && [ "$CV2" = "$((CV + 1))" ] || { echo "care step applied $CMSG times"; exit 1; }
+
+# 9) Whole ledger still balances.
 BAL=$("${PSQL[@]}" -c "select sum(debit) - sum(credit) from public.journal_lines")
 [ "$BAL" = "0.00" ] || { echo "ledger imbalance $BAL"; exit 1; }
-echo "bookings=1 payments=1 split-paid=$PAID2 gateway-callbacks=1 stock-issues=$ISS/10 package-redemptions=$RED/5 advance-applied=$APPLIED ledger-balance=$BAL"
+echo "bookings=1 payments=1 split-paid=$PAID2 gateway-callbacks=1 stock-issues=$ISS/10 package-redemptions=$RED/5 advance-applied=$APPLIED care-claims=$UNIQUE/5 care-step=$CMSG ledger-balance=$BAL"

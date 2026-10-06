@@ -47,3 +47,11 @@
 - Plans are readable by their doctor, clinical readers of the branch, front desk (acceptance) and finance (billing) — not by other doctors. A doctor can start a plan only for a patient under their care.
 - Lab cases are readable by the case doctor and non-doctor lab staff of the branch; a doctor cannot open a case in another doctor's name.
 - Advance balances are read through `patient_advance()` (branch-scoped). The 'advance' payment method cannot be used directly; refunds into the advance are refused. Every money step is idempotent and posted as a balanced journal.
+
+## Patient care assistant (session 10)
+- Minimum data: messages use the first name, the doctor's name and the appointment time; diagnoses and medicines are never named. Voice calls confirm identity before anything about the visit.
+- Conversation text is health data: readable by patient relations, the medical director, nurses and quality of the branch, and by the patient's own doctor — never by finance or the desk. On-call alerts carry only the escalation reference.
+- Webhooks: WhatsApp requests are signature-checked (app secret); voice callbacks need both a per-conversation token and Twilio's request signature over the public URL.
+- All state changes go through service-role `svc_care_*` wrappers (not callable by signed-in users); internal `app.care_*` functions are revoked from users.
+- Opt-out is honoured everywhere (planning, claiming, waiting conversations, voice) and recorded as consent. The AI classifier is off by default; when on, only the reply text is sent.
+- `CARE_SIMULATOR=on` is for local development only and is refused unless messaging is in development mode. Never set it in production.

@@ -43,6 +43,30 @@ async function sendWhatsApp(m: SendInput): Promise<SendResult> {
   }
 }
 
+/** Free-text reply inside WhatsApp's 24-hour customer-service window (the patient wrote to us first). */
+export async function sendText(to: string, body: string): Promise<SendResult> {
+  const mode = messagingMode();
+  if (mode === "dev") {
+    console.info(`[messaging:dev] to=${to} text :: ${body}`);
+    return { ok: true, provider: "dev", id: `dev-${randomUUID()}` };
+  }
+  if (mode !== "whatsapp") return { ok: false, provider: "none", error: "no messaging provider configured" };
+  const version = process.env.WHATSAPP_API_VERSION ?? "v21.0";
+  try {
+    const res = await fetch(`https://graph.facebook.com/${version}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ messaging_product: "whatsapp", to: waNumber(to), type: "text", text: { preview_url: false, body } }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    const json = (await res.json().catch(() => ({}))) as { messages?: { id: string }[]; error?: { message?: string } };
+    if (!res.ok) return { ok: false, provider: "whatsapp", error: json.error?.message ?? `HTTP ${res.status}` };
+    return { ok: true, provider: "whatsapp", id: json.messages?.[0]?.id };
+  } catch (e) {
+    return { ok: false, provider: "whatsapp", error: e instanceof Error ? e.message : "network error" };
+  }
+}
+
 export async function sendMessage(m: SendInput): Promise<SendResult> {
   const mode = messagingMode();
   if (mode === "whatsapp") return sendWhatsApp(m);

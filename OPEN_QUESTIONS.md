@@ -109,3 +109,14 @@ Each item has a configurable mechanism already (or planned). Placeholders are cl
 80. Lab remakes: who pays (clinic, lab, patient)? The system records remakes and any lab bill, but no automatic charge.
 81. Should the patient sign the quotation (printed signature or portal acceptance with OTP)?
 82. Installment reminders: WhatsApp message timing and wording (template approval needed).
+
+## Patient care assistant (added session 10)
+83. Wording of every assistant message (`src/lib/care/scripts.ts`) — sign-off by the medical director and patient relations; then submit the five `gc_care_*` WhatsApp templates (plus `gc_care_oncall_alert`) to Meta.
+84. Legal basis / consent for follow-up messages about a visit (Egypt Personal Data Protection Law 151/2020): is the treatment consent enough, or is a specific consent at registration needed? Current: contacted unless the patient refused WhatsApp messages or follow-ups.
+85. The AI classifier sends the patient's free-text reply to Anthropic: approve or keep it off (current: off; rules only). If on, a data processing agreement is needed.
+86. Voice calls: provider (Twilio or an Egyptian provider), caller ID, budget per minute, and whether to call only patients who prefer calls or also as a fallback. No audio is recorded (transcripts only) — confirm.
+87. On-call rota for urgent escalations: which number(s), and who covers nights and Fridays.
+88. Contact hours (current 10:00–21:00 Cairo) and timings (confirmation 5 minutes after booking, follow-up 20 hours after the visit, follow-up reminder 2 days before, one nudge after 4 hours).
+89. Crisis line in the self-harm message: 16328 (Ministry of Health psychological support, reported 24 hours in April 2026) — the medical director to confirm the number to use.
+90. Should the assistant be allowed to cancel (outside the cancellation window), or only pass requests to reception?
+91. Which specialties/visits get the after-visit follow-up (current: every signed visit, at most one every 2 days per patient)?

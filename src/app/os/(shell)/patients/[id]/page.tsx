@@ -16,6 +16,7 @@ import { PACKAGE_STATUS, label, type PackageBalance } from "@/lib/devices";
 import { sellPackage } from "@/app/actions/packages";
 import { PLAN_STATUS, label as dlabel } from "@/lib/dental";
 import { recordDeposit, requestDepositRefund, savePlan } from "@/app/actions/dental";
+import { CARE_KIND, CARE_OUTCOME, CARE_STATUS, lbl } from "@/lib/care/labels";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,9 @@ export default async function PatientPage({ params, searchParams }: { params: { 
     ctx.can("payment.collect") || ctx.can("refund.request") ? ctx.supabase.from("payment_methods").select("code, name_ar, name_en").eq("is_active", true).not("code", "in", "(advance,online)") : Promise.resolve({ data: [] }),
   ]);
   const adv = ((advData ?? []) as { balance: number; available: number }[])[0];
+  const { data: careRows } = ctx.can("care.read")
+    ? await ctx.supabase.from("care_journeys").select("id, ref, kind, status, outcome, channel, scheduled_at, closed_at").eq("patient_id", p.id).order("created_at", { ascending: false }).limit(10)
+    : { data: [] };
   const methodsList = (depMethods ?? []) as { code: string; name_ar: string; name_en: string }[];
   const kindLabel = (k: string) => ({ deposit: locale === "ar" ? "دفعة مقدمة" : "Advance", applied: locale === "ar" ? "خُصم على فاتورة" : "Applied to invoice", refund: locale === "ar" ? "مُسترد" : "Refunded" }[k] ?? k);
   const alerts = (flags ?? []) as { kind: string; severity: string; n: number }[];
@@ -140,6 +144,18 @@ export default async function PatientPage({ params, searchParams }: { params: { 
                 </tbody>
               </table>
             )}
+          </section>
+        )}
+        {(careRows ?? []).length > 0 && (
+          <section className="card lg:col-span-3" data-care>
+            <h2 className="border-b border-ivory-200 px-5 py-3 font-medium text-navy-700">{locale === "ar" ? "مساعد المتابعة" : "Care assistant"}</h2>
+            <ul className="divide-y divide-ivory-200 text-sm">
+              {(careRows ?? []).map((c) => (
+                <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-2">
+                  <Link href={`/os/care/${c.id}`} className="text-teal-700 hover:underline">{lbl(CARE_KIND, c.kind, locale === "ar")} <span className="num text-xs text-ink-300">{c.ref}</span></Link>
+                  <span className="text-xs text-ink-500">{lbl(CARE_STATUS, c.status, locale === "ar")}{c.outcome ? ` · ${lbl(CARE_OUTCOME, c.outcome, locale === "ar")}` : ""} · {dateTime(c.closed_at ?? c.scheduled_at, locale)}</span>
+                </li>))}
+            </ul>
           </section>
         )}
         {showPlans && (

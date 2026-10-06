@@ -11,6 +11,7 @@ node e2e/m4-journey.mjs       # 25 checks: users & roles → refunds maker-check
 node e2e/m6-journey.mjs       # 17 checks: stock overview → receipt → FEFO issue → blind count → approval
 node e2e/m5-journey.mjs       # 20 checks: two-factor sign-in → contract → statement → approve → pay → doctor view → lost-phone reset
 node e2e/m8-journey.mjs       # 25 checks: devices & repair → package sale → check-in → laser session (pulse reconciliation) → consumables → settlement → report
+node e2e/m10-journey.mjs      # 25 checks: care assistant (simulator): settings → booking confirmation → follow-up date → after-visit follow-up → doctor alert → danger sign → staff takeover → outcome figures
 node e2e/m9-journey.mjs       # 26 checks: dental plan from the visit → quotation → installments → advance → work billed from the advance → lab case and bill (void a wrong one) → settlement with lab share → profitability
 node e2e/m7-journey.mjs       # 18 checks: purchase order → approval → partial receipt → close short → confirm direct receipt → supplier payment → profitability + CSV
 ```

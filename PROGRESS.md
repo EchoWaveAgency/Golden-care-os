@@ -223,3 +223,28 @@ HR & payroll, package refunds and transfers, supplier returns, graphic dental ch
 
 ### Next milestone (proposed)
 HR & payroll once the clinic's insurance, tax and labour rules are confirmed (OPEN_QUESTIONS 54+); otherwise installment reminders on WhatsApp and portal plan acceptance.
+
+## Session 10 — 2026-10-06: patient care assistant
+
+### Delivered
+- **Care assistant** (migrations 0019–0020, `src/lib/care`): an automated assistant that introduces itself as automated and talks to patients on WhatsApp — and by phone call once a telephony provider is connected (Twilio adapter; speech recognition ar-EG; identity check before anything about the visit). It:
+  - **confirms new bookings** (confirm / change / cancel; change requests and questions become tickets for the desk; cancellation inside the clinic's cancellation window becomes a request, same rule as online cancellation);
+  - **reminds the day before** (replaces the plain reminder for that branch);
+  - **follows up after the visit** (asked only if the patient agrees): taking the treatment (asked only if a prescription was signed) and why not (side effects → doctor, high; cost/availability → doctor for an alternative; forgot → a friendly tip), improvement (worse → doctor, high; same → doctor, for information), anything else (complaints → ticket; anything else → the doctor), a 1–5 rating (stored as the visit's satisfaction; 1–2 → complaint ticket), then offers to book the follow-up the doctor asked for;
+  - **reminds about the follow-up visit** the doctor set on the visit (unless already booked with that doctor).
+- **Safety**: danger signs (Egyptian Arabic and English, prefix-tolerant, two-part signs like chest + pain, fever ≥ 39) are escalated in the same transaction that stores the message, from any state and even outside a conversation or during staff takeover; the patient gets emergency advice (123; the psychological support line 16328 for self-harm; after-hours wording does not promise an immediate call); every open or planned conversation of that patient pauses for a person. Urgent/high escalations alert an on-call number (reference only, no patient details). Opt-out ("stop", "مش عايز رسايل") applies to everyone on the number and closes their conversations. Asking for a person hands over immediately. Voice notes and images go to a person.
+- **Shared family phones**: one conversation per phone at a time (also within one job run); messages from a number shared by several patients are never attributed automatically — a person identifies who wrote.
+- **Reliability**: each step is applied atomically with an optimistic version check; jobs lease conversations; duplicate webhook deliveries are ignored; a stored message that was not processed (crash) is handed to a person by a sweep; delivery failures retry with backoff, then fall back to a call (if enabled) or to a person, and booking confirmations/reminders fall back to the plain template.
+- **Staff screens** `/os/care`: outcome figures (reply rate, confirmed, treatment adherence, average rating), escalations queue (urgent first, due times, acknowledge/resolve with a note), conversations by status; conversation view with answers summary, take over / hand back / close, staff reply inside WhatsApp's 24-hour window; settings per branch (kinds, contact hours, timings, voice, clinic and on-call numbers). Doctors see their patients' escalations in their workspace and set the follow-up date on the visit. Patient file shows the care history.
+- **Optional AI understanding** of free-text replies (Anthropic Claude, off unless `CARE_LLM=on`): it can only pick one of the allowed answers or raise urgency; it never writes what the assistant says and never lowers urgency.
+- **Local simulator** (development messaging only): play the patient on WhatsApp or a call.
+
+### Independent review
+A separate reviewer reported 18 issues, 8 on patient safety: danger signs missed when Arabic prefixes are attached ("بنزف", "هنتحر") or phrased in two parts ("صدري بيوجعني"); "the pain won't stop" read as an opt-out; negations read as yes ("مش تمام" confirmed a booking); a cancelled appointment could be "confirmed" to the patient; wrong-patient actions on shared family phones; a patient message could be lost if processing failed; urgent escalations alerted nobody after hours; danger signs from unknown numbers became sales leads; the side-effects reply told patients not to stop treatment; opt-out not applied to conversations already waiting or sent outside a conversation; a late delivery failure could un-pause a conversation staff had taken over; double calls on lease expiry; cancellation inside the clinic's window; plain confirmations suppressed even when the assistant would not send; a "tomorrow" reminder on the day itself; internal functions executable by signed-in users; raw text to the AI; voice notes lost. All fixed and covered by tests (unit 82 care tests, SQL suite 14, concurrency check 8).
+
+### Verified
+- SQL suites 14/14 plus concurrency (6 parallel job runs → 5/5 conversations opened once; 10 parallel replies → one step applied) ✅; unit 114/114; typecheck, lint, build ✅.
+- Browser journeys on fresh data: care assistant 25/25, dental 26/26, laser package 25/25, purchasing 18/18, inventory 17/17, settlements & MFA 20/20, staff 27/27, portal 35/35, milestone 4 25/25 ✅.
+
+### Not verified here (needs the clinic's accounts)
+Real WhatsApp delivery of the new templates (Meta approval of `gc_care_*`), real voice calls (Twilio account, Egyptian caller ID, Arabic voice quality), the AI classifier against the live API (network blocked in this workspace).

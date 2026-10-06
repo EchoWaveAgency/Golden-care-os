@@ -24,6 +24,14 @@ Never point staging or local at production. Never run `demo-data.mjs` against pr
 - Create at least two all-branch system administrators; each enrolls an authenticator at first sign-in.
 - Store the break-glass procedure (`scripts/break-glass-mfa-reset.mjs`) with the owner; it needs the service key and must be run with two people present.
 
+## Care assistant (session 10)
+- WhatsApp: subscribe the app webhook to **messages** (not only statuses) at `/api/webhooks/whatsapp`; submit templates `gc_care_booking_confirm`, `gc_care_pre_visit`, `gc_care_post_visit`, `gc_care_followup`, `gc_care_nudge`, `gc_care_oncall_alert` with the wording in `message_templates`.
+- Voice (optional): `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`, `PUBLIC_BASE_URL` (the public https URL Twilio calls back), `CARE_VOICE_SECRET` (random), optional `TWILIO_VOICE`, `TWILIO_LANGUAGE` (default ar-EG).
+- AI understanding (optional, needs approval): `ANTHROPIC_API_KEY` + `CARE_LLM=on`, optional `CARE_LLM_MODEL`.
+- `CARE_CRISIS_LINE` (default 16328) once confirmed by the medical director.
+- The dispatcher job (`/api/jobs/dispatch`, every 5 minutes) also runs the assistant.
+- Never set `CARE_SIMULATOR` in production.
+
 ## Release checklist
 - [ ] CI green: typecheck, lint, unit, `db:test` (SQL + concurrency), build
 - [ ] Migration reviewed; rollback plan written (forward-fix migration preferred; restore-from-PITR for data incidents)
