@@ -24,6 +24,10 @@ All operational postings go through `app.post_journal()` using semantic account 
 | Plan work billed | `bill_plan_items()` → `issue_invoice()` | `ar_patients` (1200) | Service revenue (e.g. 4120 dental), with doctor | Only items marked done; revenue recognised when work is done |
 | Lab bill / maintenance bill | `record_supplier_bill()` | `lab_costs` (5500) / `maintenance_expense` (5600) | `suppliers_payable` (2100) | Payable only after confirmation by another approver |
 | Supplier bill voided | `void_supplier_bill()` | Reversal of the bill journal | | Unpaid bills only; settled doctor share reversed in the next settlement |
+| Employee loan paid out | `disburse_loan()` | `employee_advances` (1160) | Bank / cash | Requested → approved → paid by three people |
+| Payroll approved (accrual) | `approve_payroll()` | Salaries expense (5200) for earnings; employer insurance (5210) | Salaries payable (2400) net; insurance payable (2410); payroll tax payable (2420); employee advances (1160) for loan installments; attendance deductions reduce 5200 | Dated the last day of the month |
+| Payroll paid | `pay_payroll()` | Salaries payable (2400) | Bank / cash | Payer ≠ preparer ≠ approver |
+| Insurance / tax paid | `pay_payroll_liability()` | 2410 / 2420 | Bank | With reference |
 | Consumables issued | `issue_stock()` | `consumables_expense` (5300), with patient | `inventory` (1300) | FEFO lot costs; an emptied lot takes its exact remaining value |
 | Stock count approved | `approve_count()` | `inventory_adjustments` (5310) for losses / `inventory` for gains | `inventory` for losses / `inventory_adjustments` for gains | Approver ≠ counter; the store is frozen while counting |
 | Online payment (portal) | `svc_payment_confirm()` from the verified gateway callback | `gateway_clearing` (1150) | `ar_patients` | Idempotent per gateway transaction; amount mismatch or changed balance → *review*, nothing posted; unmatched captures → `payment_exceptions` |

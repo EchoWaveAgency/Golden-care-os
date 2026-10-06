@@ -248,3 +248,13 @@ A separate reviewer reported 18 issues, 8 on patient safety: danger signs missed
 
 ### Not verified here (needs the clinic's accounts)
 Real WhatsApp delivery of the new templates (Meta approval of `gc_care_*`), real voice calls (Twilio account, Egyptian caller ID, Arabic voice quality), the AI classifier against the live API (network blocked in this workspace).
+
+## Session 11 — 2026-10-07: HR and payroll (database layer)
+
+### Delivered
+- Migration 0021: employees (linked to staff; national id, insurance number, insured wage, bank, biometric id, shift), salary and allowance history with effective dates, shifts and day rosters, attendance devices, punches (file import, device push, manual punch with a second person's approval), daily attendance computation (late after grace, early leave, worked minutes net of breaks, overtime, absent, incomplete, leave, holiday, day off), leave types / requests / balances (own requests, approval by someone else), employee loans (request → approval → payout with journal → installments through payroll), payroll components and settings, progressive income-tax brackets, payroll runs (pro-rating for partial months, absences, unpaid leave, lateness, approved overtime, bonuses / penalties, social insurance employee and employer within min / max, income tax, loan installments), accrual journal on approval, payment journal, insurance / tax payments, cancellation and reversal, payslips visible to the employee once approved. Prepared, approved and paid by three different people; months lock once approved.
+- Policy values are deliberately empty: the payroll refuses to run until the chief accountant sets the insurance rates, overtime / lateness multipliers and tax brackets (or switches a component off).
+- SQL suite 15: setup refusal, import (duplicates, unknown ids, bad rows), attendance statuses and minutes, manual punch approval, leave rules, loan separation of duties, full payslip math checked line by line, journals balanced, separation of duties, locked month, self-service payslip, privacy (doctors / desk see nothing).
+
+### Not built yet
+HR and payroll screens (employees, attendance, leave, loans, payroll run, payslip print), device push endpoint, demo data, browser journey. End-of-service, annual increments and other policy items are open questions.

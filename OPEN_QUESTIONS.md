@@ -120,3 +120,12 @@ Each item has a configurable mechanism already (or planned). Placeholders are cl
 89. Crisis line in the self-harm message: 16328 (Ministry of Health psychological support, reported 24 hours in April 2026) — the medical director to confirm the number to use.
 90. Should the assistant be allowed to cancel (outside the cancellation window), or only pass requests to reception?
 91. Which specialties/visits get the after-visit follow-up (current: every signed visit, at most one every 2 days per patient)?
+
+## HR and payroll (added session 11)
+92. Social insurance rates (employee / employer), minimum and maximum insurable wage, and whether insurance is pro-rated for partial months (current: full month on the declared insured wage).
+93. Income tax: brackets, personal exemption and which allowances are taxable (current: every earning taxable except where switched off).
+94. Daily rate divisor (current 30) and hours per day (current 8); overtime multiplier; lateness rule (current: minutes after the shift's grace × minute rate × multiplier, or none if switched off).
+95. Leave entitlements per type and years of service; carry-over; sick leave pay rules.
+96. Which staff are on payroll (doctors on settlements are excluded by default) and how part-timers are paid.
+97. Loan policy: maximum amount and number of installments, who approves.
+98. End-of-service and resignation settlements.
