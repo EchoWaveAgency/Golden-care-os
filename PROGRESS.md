@@ -277,7 +277,7 @@ End-of-service, annual increments and other policy items are open questions (92�
 
 ### Verified
 - SQL suites 17/17 plus concurrency ✅ (16: refund math, fee bounds, redemption hold, separation of duties, cash session, journals, transfer, supplier return lot / payable effects and refusals; 17: off by default, blocked reasons, permissions, claim once, retry with backoff, returns, cancellations, receipt id visible to the cashier but not the tax queue).
-- Browser journey m12 21/21 ✅ (see TEST_PLAN). Typecheck, lint, build ✅.
+- Browser journey m12 21/21 ✅ (see TEST_PLAN). All 13 journeys re-run on the final code, each on a freshly seeded stack: staff 27, portal 35, m4 25, m5 20, m6 17, m7 18, m8 25, m9 26, m10 25, m11 18, m12 21 — all passing. Unit 121/121. Typecheck, lint, build ✅.
 
 ### Not verified here
 Real Tax Authority submission (credentials, signing, certification); printing on a physical thermal printer (layout checked in the browser at 80 mm).
