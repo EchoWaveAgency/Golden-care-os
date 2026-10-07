@@ -72,6 +72,26 @@ export default async function ContentEditor({ params, searchParams }: { params: 
                 case "date": return <div key={f.name}>{label}<input id={f.name} name={f.name} type="date" defaultValue={String(val ?? "")} className="input" /></div>;
                 case "specialty": case "staff": case "service": case "offer":
                   return <div key={f.name}>{label}<select id={f.name} name={f.name} defaultValue={String(val ?? "")} className="input"><option value="">—</option>{options(f.type).map(([id, n]) => <option key={id} value={id}>{n}</option>)}</select></div>;
+                case "choice": return <div key={f.name}>{label}<select id={f.name} name={f.name} defaultValue={String(val ?? f.options?.[0]?.[0] ?? "")} className="input">{(f.options ?? []).map((o) => <option key={o[0]} value={o[0]}>{ar ? o[1] : o[2]}</option>)}</select></div>;
+                case "services": return (
+                  <div key={f.name}>{label}<div className="grid max-h-48 gap-1 overflow-y-auto rounded-lg border border-ivory-200 p-2 text-sm sm:grid-cols-2">
+                    {(services ?? []).map((sv) => <label key={sv.id} className="flex items-center gap-2"><input type="checkbox" name={f.name} value={sv.id} defaultChecked={((val as string[]) ?? []).includes(sv.id)} />{sv.code} — {ar ? sv.name_ar : sv.name_en}</label>)}</div></div>);
+                case "patient_mrn": return <div key={f.name}>{label}<input id={f.name} name={f.name} required={f.required && isNew} placeholder={isNew ? "P-000123" : (ar ? "محفوظ — اتركه فارغًا" : "Saved — leave empty")} className="input" dir="ltr" /></div>;
+                case "variant": {
+                  const b = ((val as { weight?: number; title_ar?: string; title_en?: string; hero_ar?: string; hero_en?: string }[]) ?? [])[0] ?? {};
+                  return (
+                    <fieldset key={f.name} className="space-y-2 rounded-lg border border-ivory-200 p-3" data-variant-b>
+                      <legend className="px-1 text-sm font-medium text-navy-700">{ar ? f.ar : f.en}</legend>
+                      <p className="text-xs text-ink-500">{ar ? f.help_ar : f.help_en}</p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <input name={`${f.name}_title_ar`} defaultValue={b.title_ar ?? ""} placeholder={ar ? "عنوان النسخة B (عربي)" : "Version B title (Arabic)"} className="input" />
+                        <input name={`${f.name}_title_en`} defaultValue={b.title_en ?? ""} placeholder={ar ? "عنوان النسخة B (إنجليزي)" : "Version B title (English)"} className="input" dir="ltr" />
+                        <textarea name={`${f.name}_hero_ar`} defaultValue={b.hero_ar ?? ""} rows={2} placeholder={ar ? "الجملة الرئيسية B (عربي)" : "Version B hero (Arabic)"} className="input" />
+                        <textarea name={`${f.name}_hero_en`} defaultValue={b.hero_en ?? ""} rows={2} placeholder={ar ? "الجملة الرئيسية B (إنجليزي)" : "Version B hero (English)"} className="input" dir="ltr" />
+                        <label className="text-xs">{ar ? "نسبة الزوار للنسخة B %" : "Share of visitors for B %"} <input name={`${f.name}_weight`} type="number" min="1" max="99" defaultValue={b.weight ?? 50} className="input num w-24" /></label>
+                      </div>
+                    </fieldset>);
+                }
                 case "faq": return (
                   <div key={f.name} className="grid gap-3 sm:grid-cols-2">
                     <div><label className="label">{ar ? "الأسئلة الشائعة (عربي)" : "FAQ (Arabic)"}</label><textarea name={`${f.name}_ar`} rows={6} defaultValue={faqToText(val as Faq[], "ar")} className="input" /></div>

@@ -7,7 +7,7 @@ import { Empty } from "@/components/Empty";
 import { Stat } from "@/components/Stat";
 import { Banner } from "@/components/Banner";
 import { SubmitButton } from "@/components/SubmitButton";
-import { retryMessage } from "@/app/actions/support";
+import { retryMessage, saveMessagingSettings } from "@/app/actions/support";
 
 export const metadata = { title: "Patient messages" };
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ const STATUS: Record<string, [string, string, string]> = {
 // Masks the phone: staff here manage delivery, they do not need full numbers.
 const mask = (p: string) => (p.length > 6 ? `${p.slice(0, 6)}*****${p.slice(-2)}` : p);
 
-export default async function MessagesPage({ searchParams }: { searchParams: { view?: string; error?: string } }) {
+export default async function MessagesPage({ searchParams }: { searchParams: { view?: string; error?: string; ok?: string } }) {
   const ctx = await requireAny("messages.manage");
   const { locale } = ctx;
   const ar = locale === "ar";
@@ -42,10 +42,17 @@ export default async function MessagesPage({ searchParams }: { searchParams: { v
   const rows = data ?? [];
   const count = (s: string[]) => rows.filter((r) => s.includes(r.status)).length;
 
+  const { data: msgSettings } = await ctx.supabase.from("messaging_settings").select("sms_fallback").maybeSingle();
   return (
     <>
       <PageHeader title={ctx.t("nav.messages")} subtitle={ar ? "رسائل واتساب للمرضى: التأكيد والتذكير والإلغاء ورموز الدخول. الرسائل الفاشلة تُعاد تلقائيًا ثم تتوقف بعد 5 محاولات." : "WhatsApp messages to patients. Failed messages retry automatically and stop after 5 attempts."} />
-      <Banner error={searchParams.error} />
+      <Banner error={searchParams.error} success={searchParams.ok ? (ar ? "تم حفظ إعدادات الرسائل." : "Messaging settings saved.") : undefined} />
+      <form action={saveMessagingSettings} className="card mb-5 flex flex-wrap items-center gap-3 p-4 text-sm" data-messaging-settings>
+        <label className="flex items-center gap-2"><input type="checkbox" name="sms_fallback" defaultChecked={Boolean(msgSettings?.sms_fallback)} />
+          {ar ? "لو فشل الواتساب نهائيًا، ابعت الرسالة SMS (بتكلفة لكل رسالة)" : "If WhatsApp fails for good, send the message by SMS (costs per message)"}</label>
+        <span className="text-xs text-ink-500">{ar ? "المرضى اللي اختاروا SMS كوسيلة تواصل بتوصلهم الرسائل SMS دايمًا." : "Patients whose preferred channel is SMS always get SMS."}</span>
+        <SubmitButton pendingLabel="…" className="btn-ghost ms-auto">{ar ? "حفظ" : "Save"}</SubmitButton>
+      </form>
       <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={ar ? "في الانتظار" : "Queued"} value={count(["queued", "sending"])} />
         <Stat label={ar ? "أُرسلت / وصلت" : "Sent / delivered"} value={count(["sent", "delivered", "read"])} tone="teal" />

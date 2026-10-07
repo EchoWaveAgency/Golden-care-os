@@ -37,7 +37,8 @@ export default async function LeadsPage({ searchParams }: { searchParams: { view
   const views: [string, string, string][] = [["open", "مفتوحة", "Open"], ["mine", "المسندة لي", "Assigned to me"], ["converted", "تحولت لمواعيد", "Converted"], ["closed", "مغلقة", "Closed"], ["all", "الكل", "All"]];
   return (
     <>
-      <PageHeader title={ctx.t("nav.leads")} subtitle={ar ? "استفسارات الموقع والحملات والمكالمات وواتساب في صندوق واحد" : "Website, campaign, call and WhatsApp inquiries in one queue"} />
+      <PageHeader title={ctx.t("nav.leads")} subtitle={ar ? "استفسارات الموقع والحملات والمكالمات وواتساب في صندوق واحد" : "Website, campaign, call and WhatsApp inquiries in one queue"}
+        actions={<Link href="/os/leads/funnel" className="btn-ghost" data-funnel-link>{ar ? "قمع التسويق وتجارب أ/ب" : "Funnel & A/B tests"}</Link>} />
       <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={ar ? "مفتوحة" : "Open"} value={rows.filter((r) => OPEN.includes(r.status)).length} />
         <Stat label={ar ? "لم يتم الرد في الوقت المحدد" : "Past response SLA"} value={overdue} tone={overdue ? "danger" : "navy"} />

@@ -77,3 +77,34 @@ export async function sendMessage(m: SendInput): Promise<SendResult> {
   }
   return { ok: false, provider: "none", error: "no messaging provider configured" };
 }
+
+// ---------- SMS (for patients who prefer SMS, and the optional WhatsApp fallback)
+export function smsMode(): "twilio" | "dev" | "disabled" {
+  if (process.env.SMS_PROVIDER === "twilio" && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_SMS_FROM) return "twilio";
+  if (process.env.MESSAGING_MODE === "dev") return "dev";
+  return "disabled";
+}
+
+export async function sendSms(to: string, body: string, template: string): Promise<SendResult> {
+  const mode = smsMode();
+  if (mode === "dev") {
+    console.info(`[sms:dev] to=${to} template=${template} :: ${template === "portal_otp" ? "(code hidden)" : body}`);
+    return { ok: true, provider: "sms-dev", id: `sms-dev-${randomUUID()}` };
+  }
+  if (mode !== "twilio") return { ok: false, provider: "none", error: "no SMS provider configured" };
+  const sid = process.env.TWILIO_ACCOUNT_SID!;
+  try {
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: "POST",
+      headers: { Authorization: "Basic " + Buffer.from(`${sid}:${process.env.TWILIO_AUTH_TOKEN}`).toString("base64"), "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ To: to, From: process.env.TWILIO_SMS_FROM!, Body: body.slice(0, 1500) }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    const json = (await res.json().catch(() => ({}))) as { sid?: string; message?: string };
+    if (!res.ok) return { ok: false, provider: "twilio-sms", error: json.message ?? `HTTP ${res.status}` };
+    return { ok: true, provider: "twilio-sms", id: json.sid };
+  } catch (e) {
+    return { ok: false, provider: "twilio-sms", error: e instanceof Error ? e.message : "network error" };
+  }
+}
+

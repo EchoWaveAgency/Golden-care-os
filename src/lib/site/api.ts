@@ -35,6 +35,7 @@ export type Landing = {
   body_ar: string | null; body_en: string | null; benefits: { ar: string; en: string }[]; faq: Faq[];
   cta_variant: "book" | "callback" | "whatsapp"; show_countdown: boolean; starts_at: string; ends_at: string | null;
   offer: Offer | null; doctors: Doctor[]; specialty_slug: string | null;
+  variants?: { code: string; weight?: number; title_ar: string; title_en?: string; hero_ar?: string | null; hero_en?: string | null }[];
 };
 
 async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
@@ -50,6 +51,12 @@ export const getSpecialty = unstable_cache((slug: string) => rpc<Specialty | nul
 export const getDoctors = unstable_cache((slug?: string) => rpc<Doctor[]>("public_doctors", { p_specialty_slug: slug ?? null }), ["public_doctors"], TTL);
 export const getDoctor = unstable_cache((slug: string) => rpc<Doctor | null>("public_doctor", { p_slug: slug }), ["public_doctor"], TTL);
 export const getOffers = unstable_cache(() => rpc<Offer[]>("public_offers", { p_specialty_slug: null }), ["public_offers"], TTL);
+export type ArticleCard = { slug: string; title_ar: string; title_en: string; summary_ar: string | null; summary_en: string | null; reading_minutes: number | null; published_at: string };
+export type Article = ArticleCard & { kind: string; body_ar: string; body_en: string | null; sources: string | null; author: Doctor | null };
+export type Testimonial = { name_ar: string; name_en: string; quote_ar: string; quote_en: string; rating: number | null };
+export const getArticles = unstable_cache((kind: string = "article") => rpc<ArticleCard[]>("public_articles", { p_kind: kind, p_specialty_slug: null }), ["public_articles"], TTL);
+export const getArticle = unstable_cache((slug: string) => rpc<Article | null>("public_article", { p_slug: slug }), ["public_article"], TTL);
+export const getTestimonials = unstable_cache((specialty?: string) => rpc<Testimonial[]>("public_testimonials", { p_specialty_slug: specialty ?? null, p_limit: 6 }), ["public_testimonials"], TTL);
 export const getLanding = unstable_cache((slug: string) => rpc<Landing | null>("public_landing", { p_slug: slug }), ["public_landing"], TTL);
 
 /** Availability is never cached: it must reflect bookings made seconds ago. */

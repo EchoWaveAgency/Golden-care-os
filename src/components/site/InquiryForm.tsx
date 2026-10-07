@@ -9,7 +9,7 @@ import { trackConversion } from "./Consent";
 
 type Props = {
   lang: Lang; kind: "booking" | "callback" | "inquiry"; specialtySlug?: string; doctorSlug?: string; offerSlug?: string;
-  landingSlug?: string; preferredStart?: string; submitLabel?: string; showMessage?: boolean; compact?: boolean;
+  landingSlug?: string; abVariant?: string; preferredStart?: string; submitLabel?: string; showMessage?: boolean; compact?: boolean;
 };
 
 export function InquiryForm(p: Props) {
@@ -42,6 +42,7 @@ export function InquiryForm(p: Props) {
       {p.doctorSlug && <input type="hidden" name="doctor_slug" value={p.doctorSlug} />}
       {p.offerSlug && <input type="hidden" name="offer_slug" value={p.offerSlug} />}
       {p.landingSlug && <input type="hidden" name="landing_slug" value={p.landingSlug} />}
+      {p.abVariant && <input type="hidden" name="ab_variant" value={p.abVariant} />}
       {p.preferredStart && <input type="hidden" name="preferred_start" value={p.preferredStart} />}
       {["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"].map((k) => <input key={k} type="hidden" name={k} value={utm(k)} />)}
       {/* Honeypot for bots — hidden from people and assistive tech */}

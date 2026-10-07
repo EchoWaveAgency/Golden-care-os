@@ -1,11 +1,11 @@
 import "server-only";
 import { adminClient } from "@/lib/server/admin";
-import { messagingMode, sendMessage } from "./provider";
+import { messagingMode, sendMessage, sendSms, smsMode } from "./provider";
 import { renderTemplate } from "./render";
 import { processDue } from "@/lib/care/runner";
 import { processEinvoices } from "@/lib/einvoice/connector";
 
-type OutboxRow = { id: string; to_phone: string; lang: "ar" | "en"; template_code: string; vars: Record<string, unknown> };
+type OutboxRow = { id: string; channel: "whatsapp" | "sms"; to_phone: string; lang: "ar" | "en"; template_code: string; vars: Record<string, unknown> };
 
 /** One dispatcher run: queue due reminders, then send a batch with retry/backoff handled in the database. */
 export async function dispatchOnce(limit = 20) {
@@ -14,7 +14,7 @@ export async function dispatchOnce(limit = 20) {
   const care = await processDue().catch((e) => ({ error: e instanceof Error ? e.message : "care run failed" }));
   const einvoice = await processEinvoices().catch((e) => ({ error: e instanceof Error ? e.message : "e-invoice run failed" }));
   const { data: loyaltyExpired } = await db.rpc("svc_loyalty_expire");
-  if (messagingMode() === "disabled") return { reminders: reminders ?? 0, sent: 0, failed: 0, care, einvoice, loyaltyExpired, skipped: "no provider configured" };
+  if (messagingMode() === "disabled" && smsMode() === "disabled") return { reminders: reminders ?? 0, sent: 0, failed: 0, care, einvoice, loyaltyExpired, skipped: "no provider configured" };
 
   const { data: batch, error } = await db.rpc("svc_outbox_claim", { p_limit: limit });
   if (error) throw new Error(error.message);
@@ -26,10 +26,14 @@ export async function dispatchOnce(limit = 20) {
       await db.rpc("svc_outbox_result", { p_id: m.id, p_ok: false, p_provider: "none", p_provider_id: null, p_error: "template missing or inactive" });
       failed++; continue;
     }
-    const r = await sendMessage({ to: m.to_phone, template: m.template_code, providerTemplate: t.provider_template, lang: m.lang, vars: m.vars,
-                                  body: renderTemplate(t.body, m.vars, m.lang) });
-    await db.rpc("svc_outbox_result", { p_id: m.id, p_ok: r.ok, p_provider: r.provider, p_provider_id: r.id ?? null, p_error: r.error ?? null });
+    const body = renderTemplate(t.body, m.vars, m.lang);
+    // A channel without a configured provider fails the row (normal retry/backoff; a failed WhatsApp row falls back to SMS when enabled).
+    const r = m.channel === "sms"
+      ? (smsMode() === "disabled" ? { ok: false, provider: "none", error: "SMS provider not configured" } as const : await sendSms(m.to_phone, body, m.template_code))
+      : (messagingMode() === "disabled" ? { ok: false, provider: "none", error: "WhatsApp provider not configured" } as const
+        : await sendMessage({ to: m.to_phone, template: m.template_code, providerTemplate: t.provider_template, lang: m.lang, vars: m.vars, body }));
+    await db.rpc("svc_outbox_result", { p_id: m.id, p_ok: r.ok, p_provider: r.provider, p_provider_id: "id" in r ? r.id ?? null : null, p_error: r.error ?? null });
     if (r.ok) sent++; else failed++;
   }
-  return { reminders: reminders ?? 0, sent, failed, care, einvoice };
+  return { reminders: reminders ?? 0, sent, failed, care, einvoice, loyaltyExpired };
 }

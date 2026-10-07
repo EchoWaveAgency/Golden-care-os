@@ -9,7 +9,7 @@ export function SiteHeader({ lang, whatsapp }: { lang: Lang; whatsapp: string | 
   const path = usePathname() ?? `/${lang}`;
   const c = copy(lang);
   const other = lang === "ar" ? "en" : "ar";
-  const links: [string, string][] = [[`/${lang}/specialties`, c.specialties], [`/${lang}/doctors`, c.doctors], [`/${lang}/offers`, c.offers], [`/${lang}/about`, c.about], [`/${lang}/contact`, c.contact]];
+  const links: [string, string][] = [[`/${lang}/specialties`, c.specialties], [`/${lang}/doctors`, c.doctors], [`/${lang}/offers`, c.offers], [`/${lang}/articles`, lang === "ar" ? "مقالات طبية" : "Health articles"], [`/${lang}/about`, c.about], [`/${lang}/contact`, c.contact]];
   return (
     <header className="no-print sticky top-0 z-30 border-b border-ivory-300/60 bg-ivory-50/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">

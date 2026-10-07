@@ -71,6 +71,13 @@ export async function portalProfile(form: FormData) {
   back(lang, "profile", error, error ? undefined : "saved");
 }
 
+export async function portalTestimonialConsent(form: FormData) {
+  const lang = langOf(form);
+  const { supabase } = await getPortal(lang);
+  const { error } = await supabase.rpc("portal_set_testimonial_consent", { p_granted: form.get("granted") === "1" });
+  back(lang, "profile", error, error ? undefined : "saved");
+}
+
 export async function portalShare(form: FormData) {
   const lang = langOf(form);
   const { supabase } = await getPortal(lang);

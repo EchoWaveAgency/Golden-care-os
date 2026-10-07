@@ -1,5 +1,5 @@
 "use server";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { anonClient } from "@/lib/site/api";
 import { copy, isLang } from "@/lib/site/copy";
 
@@ -51,5 +51,8 @@ export async function submitInquiry(_prev: InquiryState, form: FormData): Promis
     if (/name is required/.test(m)) return { error: c.errors.name };
     return { error: c.errors.generic };
   }
+  // A/B result: count the lead for the version this visitor saw (anonymous first-party id, never linked to the person).
+  const ab = field(form, "ab_variant", 1); const vid = cookies().get("gc_vid")?.value;
+  if (payload.landing_slug && ab && vid) await anonClient().rpc("public_landing_event", { p_slug: payload.landing_slug, p_variant: ab, p_kind: "lead", p_visitor: vid });
   return { ok: true, ref: String(data) };
 }

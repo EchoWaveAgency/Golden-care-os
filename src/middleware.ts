@@ -12,6 +12,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(to);
   }
 
+  // Landing pages: a random first-party visitor id so A/B versions stay stable for the visitor (no personal data).
+  if (/^\/(ar|en)\/lp\//.test(path)) {
+    if (request.cookies.get("gc_vid")) return NextResponse.next();
+    const vid = crypto.randomUUID().replace(/-/g, "");
+    request.cookies.set("gc_vid", vid);
+    const res = NextResponse.next({ request });
+    res.cookies.set("gc_vid", vid, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production" && !request.nextUrl.hostname.startsWith("localhost"), path: "/", maxAge: 60 * 60 * 24 * 90 });
+    return res;
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
@@ -45,5 +55,5 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   // Public website pages skip the auth round-trip except for the session refresh on /os.
-  matcher: ["/", "/os/:path*", "/ar/portal/:path*", "/en/portal/:path*"],
+  matcher: ["/", "/os/:path*", "/ar/portal/:path*", "/en/portal/:path*", "/ar/lp/:path*", "/en/lp/:path*"],
 };

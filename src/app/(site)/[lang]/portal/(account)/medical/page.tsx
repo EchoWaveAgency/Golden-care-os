@@ -7,7 +7,8 @@ import { dateTime } from "@/lib/format";
 export default async function PortalMedicalPage({ params }: { params: { lang: Lang } }) {
   const { supabase, active, full, ar, lang } = await getPortal(params.lang);
   if (!full) redirect(`/${lang}/portal/home`);
-  const { data } = await supabase.rpc("portal_medical", { p_patient: active.id });
+  const [{ data }, { data: instr }] = await Promise.all([supabase.rpc("portal_medical", { p_patient: active.id }), supabase.rpc("portal_instructions", { p_patient: active.id })]);
+  const instructions = (instr ?? []) as { slug: string; title_ar: string; title_en: string; summary_ar: string | null; summary_en: string | null }[];
   const m = (data ?? { visits: [], prescriptions: [], allergies: [] }) as PortalMedical;
   const day = (iso: string) => dateTime(iso, lang, { dateStyle: "long", timeStyle: undefined });
 
@@ -19,6 +20,13 @@ export default async function PortalMedicalPage({ params }: { params: { lang: La
       </div>
       {m.allergies.length > 0 && <p className="rounded-xl bg-danger-50 px-4 py-3 text-sm text-danger">{ar ? "حساسية مسجلة:" : "Recorded allergy:"} {m.allergies.join(ar ? "، " : ", ")}</p>}
 
+      {instructions.length > 0 && (
+        <section data-portal-instructions>
+          <h2 className="mb-3 font-medium text-navy-700">{ar ? "تعليمات تخص علاجك" : "Instructions for your treatment"}</h2>
+          <ul className="grid gap-3 sm:grid-cols-2">{instructions.map((i) => (
+            <li key={i.slug} className="rounded-2xl border border-ivory-300/70 bg-white p-4"><Link href={`/${lang}/articles/${i.slug}`} className="font-medium text-navy-700 hover:underline">{ar ? i.title_ar : i.title_en}</Link>
+              {(ar ? i.summary_ar : i.summary_en) && <p className="mt-1 text-sm text-ink-500">{ar ? i.summary_ar : i.summary_en}</p>}</li>))}</ul>
+        </section>)}
       {(m.files ?? []).length > 0 && (
         <section data-portal-files>
           <h2 className="mb-3 font-medium text-navy-700">{ar ? "النتائج والتقارير والصور" : "Results, reports and photos"}</h2>

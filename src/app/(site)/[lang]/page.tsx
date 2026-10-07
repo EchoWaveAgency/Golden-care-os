@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getDoctors, getOffers, getSite, getSpecialties, pick, setting, type Lang } from "@/lib/site/api";
+import { getDoctors, getOffers, getSite, getSpecialties, getTestimonials, pick, setting, type Lang } from "@/lib/site/api";
 import { copy } from "@/lib/site/copy";
 import { Feathers } from "@/components/site/Feathers";
 import { SpecialtyIcon } from "@/components/site/SpecialtyIcon";
@@ -13,8 +13,8 @@ export const revalidate = 60;
 export default async function Home({ params }: { params: { lang: Lang } }) {
   const lang = params.lang;
   const c = copy(lang);
-  const [site, specialties, doctors, offers] = await Promise.all([
-    getSite().catch(() => ({})), getSpecialties().catch(() => []), getDoctors().catch(() => []), getOffers().catch(() => []),
+  const [site, specialties, doctors, offers, testimonials] = await Promise.all([
+    getSite().catch(() => ({})), getSpecialties().catch(() => []), getDoctors().catch(() => []), getOffers().catch(() => []), getTestimonials().catch(() => []),
   ]);
   const s = (k: string) => setting(site, k, lang);
 
@@ -91,6 +91,20 @@ export default async function Home({ params }: { params: { lang: Lang } }) {
           </div>
         </section>
       )}
+
+      {testimonials.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6" data-testimonials>
+          <h2 className="mb-6 text-2xl font-semibold text-navy-700">{lang === "ar" ? "آراء مرضانا" : "What our patients say"}</h2>
+          <div className="grid gap-5 md:grid-cols-3">
+            {testimonials.map((t, i) => (
+              <figure key={i} className="rounded-2xl border border-ivory-300/70 bg-white p-6">
+                {t.rating ? <p className="mb-2 text-gold-500" aria-label={`${t.rating}/5`}>{"★".repeat(t.rating)}</p> : null}
+                <blockquote className="leading-8">«{lang === "ar" ? t.quote_ar : t.quote_en}»</blockquote>
+                <figcaption className="mt-3 text-sm text-ink-500">— {lang === "ar" ? t.name_ar : t.name_en}</figcaption>
+              </figure>))}
+          </div>
+          <p className="mt-3 text-xs text-ink-300">{lang === "ar" ? "تُنشر الآراء بموافقة كتابية من المرضى، والنتائج تختلف من شخص لآخر." : "Published with patients' written consent. Results vary from person to person."}</p>
+        </section>)}
 
       {/* Standards band */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6">

@@ -8,8 +8,11 @@ import { InquiryForm } from "@/components/site/InquiryForm";
 import { OfferCard } from "@/components/site/OfferCard";
 import { DoctorCard } from "@/components/site/DoctorCard";
 import { Countdown } from "@/components/site/Countdown";
+import { cookies } from "next/headers";
+import { createHash } from "node:crypto";
+import { anonClient } from "@/lib/site/api";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";   // the A/B version depends on the visitor
 export async function generateMetadata({ params }: { params: { lang: Lang; slug: string } }): Promise<Metadata> {
   const l = await getLanding(params.slug).catch(() => null);
   if (!l) return { robots: { index: false } };
@@ -18,8 +21,16 @@ export async function generateMetadata({ params }: { params: { lang: Lang; slug:
 }
 export default async function Landing({ params }: { params: { lang: Lang; slug: string } }) {
   const lang = params.lang; const c = copy(lang);
-  const [l, site] = await Promise.all([getLanding(params.slug).catch(() => null), getSite().catch(() => ({}))]);
+  const [l0, site] = await Promise.all([getLanding(params.slug).catch(() => null), getSite().catch(() => ({}))]);
+  const l = l0 ? structuredClone(l0) : null;
   if (!l) notFound();  // expired, archived or unapproved pages disappear automatically
+  // A/B: version B (if any) for a stable share of visitors, decided by their anonymous id.
+  const vid = cookies().get("gc_vid")?.value;
+  const vb = (l.variants ?? [])[0];
+  const bucket = vid ? parseInt(createHash("sha256").update(`${l.slug}:${vid}`).digest("hex").slice(0, 8), 16) % 100 : 0;
+  const variant = vb && vid && bucket < (vb.weight ?? 50) ? "B" : "A";
+  if (variant === "B" && vb) Object.assign(l, { title_ar: vb.title_ar, title_en: vb.title_en ?? vb.title_ar, hero_ar: vb.hero_ar ?? l.hero_ar, hero_en: vb.hero_en ?? l.hero_en });
+  if (vid && vb) await anonClient().rpc("public_landing_event", { p_slug: l.slug, p_variant: variant, p_kind: "view", p_visitor: vid });
   const wa = setting(site, "whatsapp", lang)?.replace(/\D/g, "");
   const faq = (l.faq ?? []).map((f) => ({ q: lang === "ar" ? f.q_ar : f.q_en, a: lang === "ar" ? f.a_ar : f.a_en })).filter((f) => f.q);
   return (
@@ -40,7 +51,7 @@ export default async function Landing({ params }: { params: { lang: Lang; slug: 
           </div>
           <div className="rounded-2xl bg-white p-6 text-ink shadow-card lg:col-span-2">
             <h2 className="mb-4 text-xl font-semibold text-navy-700">{l.cta_variant === "book" ? c.book : c.callback}</h2>
-            <Suspense><InquiryForm lang={lang} kind={l.cta_variant === "book" ? "booking" : "callback"} landingSlug={l.slug} offerSlug={l.offer?.slug} specialtySlug={l.specialty_slug ?? undefined} compact /></Suspense>
+            <Suspense><InquiryForm lang={lang} kind={l.cta_variant === "book" ? "booking" : "callback"} landingSlug={l.slug} abVariant={vb ? variant : undefined} offerSlug={l.offer?.slug} specialtySlug={l.specialty_slug ?? undefined} compact /></Suspense>
             {wa && <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener" className="mt-3 block rounded-full border border-[#1f8f5f]/40 px-5 py-2.5 text-center text-sm text-[#1f8f5f]">{c.whatsapp}</a>}
           </div>
         </div>

@@ -1,13 +1,13 @@
 // Field definitions for the website content editor. One generic editor renders every type;
 // the database enforces workflow, approvals and publication rules.
 
-export type FieldType = "text" | "slug" | "textarea" | "number" | "datetime" | "date" | "bool" | "specialty" | "staff" | "service" | "offer" | "faq" | "lines";
+export type FieldType = "text" | "slug" | "textarea" | "number" | "datetime" | "date" | "bool" | "specialty" | "staff" | "service" | "offer" | "faq" | "lines" | "services" | "choice" | "patient_mrn" | "variant";
 
-export type Field = { name: string; ar: string; en: string; type: FieldType; required?: boolean; help_ar?: string; help_en?: string };
+export type Field = { name: string; ar: string; en: string; type: FieldType; required?: boolean; help_ar?: string; help_en?: string; options?: [string, string, string][] };
 
 export type ContentType = {
-  key: "specialties" | "doctors" | "offers" | "landing";
-  table: "site_specialty_pages" | "site_doctor_profiles" | "offers" | "landing_pages";
+  key: "specialties" | "doctors" | "offers" | "landing" | "articles" | "testimonials";
+  table: "site_specialty_pages" | "site_doctor_profiles" | "offers" | "landing_pages" | "articles" | "testimonials";
   ar: string;
   en: string;
   titleField: string;
@@ -95,6 +95,41 @@ export const CONTENT_TYPES: ContentType[] = [
       { name: "starts_at", ar: "يبدأ", en: "Starts", type: "datetime" },
       { name: "ends_at", ar: "ينتهي", en: "Ends", type: "datetime" },
       { name: "show_countdown", ar: "عداد تنازلي (يتطلب تاريخ انتهاء حقيقي)", en: "Countdown (needs a real end date)", type: "bool" },
+      { name: "variants", ar: "تجربة A/B — نسخة بديلة (B)", en: "A/B test — alternative version (B)", type: "variant",
+        help_ar: "اتركها فارغة لعرض نسخة واحدة. الزوار يتوزعون بالنسبة المحددة، والنتائج تظهر في لوحة التسويق.", help_en: "Leave empty for one version. Visitors are split by the weight; results appear in the marketing funnel." },
+      ...workflowTiming,
+    ],
+  },
+  {
+    key: "articles", table: "articles", ar: "مقالات طبية وتعليمات المرضى", en: "Articles & patient instructions", titleField: "title_ar",
+    fields: [
+      { name: "kind", ar: "النوع", en: "Type", type: "choice", required: true, options: [["article", "مقال توعوي", "Article"], ["instruction", "تعليمات قبل/بعد خدمة", "Before/after instructions"]] },
+      { name: "slug", ar: "الرابط", en: "URL slug", type: "slug", required: true },
+      { name: "specialty_id", ar: "التخصص", en: "Specialty", type: "specialty" },
+      { name: "service_ids", ar: "الخدمات المرتبطة (للتعليمات تظهر لمرضى هذه الخدمات في حساباتهم)", en: "Related services (instructions show in these patients' accounts)", type: "services" },
+      { name: "author_doctor_id", ar: "الطبيب الكاتب", en: "Author (doctor)", type: "staff" },
+      { name: "title_ar", ar: "العنوان (عربي)", en: "Title (Arabic)", type: "text", required: true },
+      { name: "title_en", ar: "العنوان (إنجليزي)", en: "Title (English)", type: "text", required: true },
+      { name: "summary_ar", ar: "ملخص (عربي)", en: "Summary (Arabic)", type: "textarea" },
+      { name: "summary_en", ar: "ملخص (إنجليزي)", en: "Summary (English)", type: "textarea" },
+      { name: "body_ar", ar: "المحتوى (عربي)", en: "Body (Arabic)", type: "textarea", required: true },
+      { name: "body_en", ar: "المحتوى (إنجليزي)", en: "Body (English)", type: "textarea" },
+      { name: "sources", ar: "المصادر العلمية", en: "Sources", type: "textarea" },
+      { name: "reading_minutes", ar: "مدة القراءة (دقائق)", en: "Reading time (minutes)", type: "number" },
+      ...workflowTiming,
+    ],
+  },
+  {
+    key: "testimonials", table: "testimonials", ar: "آراء المرضى", en: "Patient testimonials", titleField: "display_name_ar",
+    fields: [
+      { name: "patient_id", ar: "رقم ملف المريض (لازم موافقة مسجلة على النشر)", en: "Patient file no. (recorded consent required)", type: "patient_mrn", required: true },
+      { name: "display_name_ar", ar: "الاسم الظاهر (مثال: س. م.)", en: "Display name (Arabic)", type: "text", required: true },
+      { name: "display_name_en", ar: "الاسم الظاهر (إنجليزي)", en: "Display name (English)", type: "text" },
+      { name: "quote_ar", ar: "كلام المريض (عربي، كما قاله)", en: "Quote (Arabic, as said)", type: "textarea", required: true },
+      { name: "quote_en", ar: "الترجمة (إنجليزي)", en: "Quote (English)", type: "textarea" },
+      { name: "rating", ar: "التقييم (1–5)", en: "Rating (1–5)", type: "number" },
+      { name: "specialty_id", ar: "التخصص", en: "Specialty", type: "specialty" },
+      { name: "doctor_id", ar: "الطبيب", en: "Doctor", type: "staff" },
       ...workflowTiming,
     ],
   },

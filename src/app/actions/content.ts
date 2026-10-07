@@ -34,6 +34,20 @@ export async function saveContent(form: FormData) {
       case "faq": row[f.name] = faqFromText(String(form.get(`${f.name}_ar`) ?? ""), String(form.get(`${f.name}_en`) ?? "")); break;
       case "lines": row[f.name] = benefitsFromText(String(form.get(`${f.name}_ar`) ?? ""), String(form.get(`${f.name}_en`) ?? "")); break;
       case "slug": row[f.name] = str.toLowerCase(); break;
+      case "services": row[f.name] = form.getAll(f.name).map(String).filter((v) => UUID.test(v)); break;
+      case "choice": row[f.name] = (f.options ?? []).some((o) => o[0] === str) ? str : null; break;
+      case "patient_mrn": {
+        if (!str && id) { continue; }                      // unchanged on edit
+        const { data: pid, error: perr } = await ctx.supabase.rpc("testimonial_patient_lookup", { p_mrn: str });
+        if (perr) fail(back, friendlyError(perr.message, ctx.locale));
+        row[f.name] = pid; break;
+      }
+      case "variant": {
+        const v = (k: string) => String(form.get(`${f.name}_${k}`) ?? "").trim();
+        row[f.name] = v("title_ar") ? [{ code: "B", weight: Math.min(Math.max(Number(v("weight") || 50), 1), 99), title_ar: v("title_ar"), title_en: v("title_en") || v("title_ar"),
+          hero_ar: v("hero_ar") || null, hero_en: v("hero_en") || null }] : [];
+        break;
+      }
       default: row[f.name] = str === "" ? null : str;
     }
     if (f.required && (row[f.name] === null || row[f.name] === "")) {

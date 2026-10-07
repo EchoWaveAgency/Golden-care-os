@@ -46,3 +46,9 @@ export async function revokeFamily(form: FormData) {
   revalidatePath(path);
   redirect(`${path}${error ? `?error=${encodeURIComponent(friendlyError(error.message, ctx.locale))}` : ""}`);
 }
+
+export async function saveMessagingSettings(form: FormData) {
+  const ctx = await getContext();
+  const { error } = await ctx.supabase.rpc("save_messaging_settings", { p_sms_fallback: form.get("sms_fallback") === "on" });
+  redirect(`/os/messages${error ? `?error=${encodeURIComponent(friendlyError(error.message, ctx.locale))}` : "?ok=saved"}`);
+}
