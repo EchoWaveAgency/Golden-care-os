@@ -35,8 +35,16 @@ export async function approveSettlement(form: FormData) {
 export async function paySettlement(form: FormData) {
   const ctx = await getContext();
   const id = String(form.get("id"));
-  const { error } = await ctx.supabase.rpc("pay_settlement", { p_run: id, p_reference: String(form.get("reference") ?? "") });
+  const { error } = await ctx.supabase.rpc("pay_settlement", { p_run: id, p_reference: String(form.get("reference") ?? ""), p_method: String(form.get("method") ?? "bank_transfer") });
   go(`/os/settlements/${id}`, error, ctx.locale, "paid");
+}
+
+// Remitting the tax withheld from doctors' fees to the Tax Authority.
+export async function payWithholdingTax(form: FormData) {
+  const ctx = await getContext();
+  const { error } = await ctx.supabase.rpc("pay_withholding_tax", { p_branch: ctx.branchId, p_period: String(form.get("period") ?? ""),
+    p_amount: Number(form.get("amount") || 0), p_reference: String(form.get("reference") ?? "") });
+  go("/os/settlements", error, ctx.locale, "wht_paid");
 }
 
 // Contract form: default % plus optional per-service rate (percent OR fixed amount per unit).
@@ -54,6 +62,7 @@ export async function saveContract(form: FormData) {
   const { error } = await ctx.supabase.rpc("save_doctor_contract", {
     p_doctor: doctor, p_from: String(form.get("from")), p_default_percent: Number(form.get("default_percent")),
     p_rates: rates, p_notes: String(form.get("notes") ?? "") || null, p_lab_cost_percent: Number(form.get("lab_cost_percent") || 0),
+    p_withholding_percent: Number(form.get("withholding_percent") || 0), p_basis: String(form.get("basis") ?? "invoiced"),
   });
   go(`/os/settlements/contracts/${doctor}`, error, ctx.locale, "saved");
 }

@@ -9,7 +9,7 @@ import { Banner } from "./Banner";
 import { approveSettlement, cancelSettlement, paySettlement } from "@/app/actions/settlements";
 
 type Run = { id: string; ref: string; doctor_id: string; period: string; status: string; gross_base: number; deductions: number; amount: number;
-  lines_without_contract: number; carried_in: number; carried_to: string | null; stale: boolean; approved_by: string | null; prepared_by: string; prepared_at: string; approved_at: string | null; paid_at: string | null; pay_reference: string | null;
+  lines_without_contract: number; carried_in: number; carried_to: string | null; stale: boolean; approved_by: string | null; prepared_by: string; prepared_at: string; approved_at: string | null; paid_at: string | null; pay_reference: string | null; withholding: number; withholding_percent: number; net_payable: number; pay_method: string | null;
   cancel_reason: string | null; doctor: { full_name_ar: string; full_name_en: string | null; specialty: { name_ar: string; name_en: string } | null } | null };
 type Line = { id: string; kind: string; on_date: string; invoice_no: string | null; base: number; percent: number | null; fixed_amount: number | null; amount: number; no_contract: boolean;
   service: { code: string; name_ar: string; name_en: string } | null; refund: { ref: string } | null };
@@ -27,7 +27,7 @@ export function monthLabel(period: string, locale: "ar" | "en") {
 export async function SettlementStatement({ ctx, id, error, ok, manage }: { ctx: Ctx; id: string; error?: string; ok?: string; manage: boolean }) {
   const ar = ctx.locale === "ar";
   const { data: run } = await ctx.supabase.from("settlement_runs")
-    .select("id, ref, doctor_id, period, status, gross_base, deductions, amount, lines_without_contract, carried_in, carried_to, stale, approved_by, prepared_by, prepared_at, approved_at, paid_at, pay_reference, cancel_reason, doctor:staff(full_name_ar, full_name_en, specialty:specialties(name_ar, name_en))")
+    .select("id, ref, doctor_id, period, status, gross_base, deductions, amount, lines_without_contract, carried_in, carried_to, stale, approved_by, prepared_by, prepared_at, approved_at, paid_at, pay_reference, withholding, withholding_percent, net_payable, pay_method, cancel_reason, doctor:staff(full_name_ar, full_name_en, specialty:specialties(name_ar, name_en))")
     .eq("id", id).maybeSingle<Run>();
   if (!run) notFound();
   const { data: lines } = await ctx.supabase.from("settlement_lines")
@@ -87,12 +87,15 @@ export async function SettlementStatement({ ctx, id, error, ok, manage }: { ctx:
           <div className="flex justify-between text-ink-500"><dt>{ar ? "إجمالي الخدمات (بعد خصومات البنود)" : "Services (net of line discounts)"}</dt><dd className="num">{money(run.gross_base, ctx.locale)}</dd></div>
           <div className="flex justify-between text-ink-500"><dt>{ar ? "الخصومات (استرداد / إلغاء)" : "Deductions (refunds / voids)"}</dt><dd className="num">{money(run.deductions, ctx.locale)}</dd></div>
           {Number(run.carried_in) !== 0 && <div className="flex justify-between text-ink-500"><dt>{ar ? "رصيد مُرحّل" : "Carried balance"}</dt><dd className="num">{money(run.carried_in, ctx.locale)}</dd></div>}
-          <div className="flex justify-between border-t border-ivory-300 pt-1 text-base font-semibold text-navy-700"><dt>{ar ? "صافي المستحق" : "Net due"}</dt><dd className="num">{money(run.amount, ctx.locale)}</dd></div>
+          <div className="flex justify-between border-t border-ivory-300 pt-1 text-base font-semibold text-navy-700"><dt>{Number(run.withholding) > 0 ? (ar ? "المستحق قبل الضريبة" : "Due before tax") : (ar ? "صافي المستحق" : "Net due")}</dt><dd className="num">{money(run.amount, ctx.locale)}</dd></div>
+          {Number(run.withholding) > 0 && <>
+            <div className="flex justify-between text-ink-500"><dt>{ar ? `ضريبة خصم من المنبع ${Number(run.withholding_percent)}%` : `Withholding tax ${Number(run.withholding_percent)}%`}</dt><dd className="num">-{money(run.withholding, ctx.locale)}</dd></div>
+            <div className="flex justify-between border-t border-ivory-300 pt-1 text-base font-semibold text-navy-700" data-net-payable><dt>{ar ? "الصافي المستحق للطبيب" : "Net payable to the doctor"}</dt><dd className="num">{money(run.net_payable, ctx.locale)}</dd></div></>}
         </dl>
         <p className="mt-4 text-xs text-ink-300">
           {ar ? "أُعد في" : "Prepared"} {dateTime(run.prepared_at, ctx.locale)}
           {run.approved_at ? ` · ${ar ? "اعتُمد في" : "approved"} ${dateTime(run.approved_at, ctx.locale)}` : ""}
-          {run.paid_at ? ` · ${ar ? "صُرف في" : "paid"} ${dateTime(run.paid_at, ctx.locale)} (${run.pay_reference})` : ""}
+          {run.paid_at ? ` · ${ar ? "صُرف في" : "paid"} ${dateTime(run.paid_at, ctx.locale)} (${run.pay_method === "cash" ? (ar ? "نقدًا" : "cash") : run.pay_reference})` : ""}
           {run.cancel_reason ? ` · ${run.cancel_reason}` : ""}
         </p>
       </article>
@@ -107,12 +110,15 @@ export async function SettlementStatement({ ctx, id, error, ok, manage }: { ctx:
               <input name="reason" required placeholder={ar ? "سبب الإلغاء" : "Reason"} className="input w-48" />
               <SubmitButton pendingLabel="…" className="btn-danger">{ar ? "إلغاء الكشف" : "Cancel statement"}</SubmitButton></form>
           )}
-          {run.status === "approved" && run.amount > 0 && ctx.can("settlement.pay") && run.approved_by === ctx.user.id && (
+          {run.status === "approved" && run.net_payable > 0 && ctx.can("settlement.pay") && run.approved_by === ctx.user.id && (
             <p className="text-sm text-ink-500">{ar ? "اعتمدت هذا الكشف — يسجل الصرف شخص آخر." : "You approved this — someone else records the payment."}</p>
           )}
-          {run.status === "approved" && run.amount > 0 && ctx.can("settlement.pay") && run.approved_by !== ctx.user.id && (
-            <form action={paySettlement} className="flex items-center gap-2"><input type="hidden" name="id" value={run.id} />
-              <input name="reference" required placeholder={ar ? "رقم التحويل البنكي" : "Bank transfer reference"} className="input w-56" dir="ltr" />
+          {run.status === "approved" && run.net_payable > 0 && ctx.can("settlement.pay") && run.approved_by !== ctx.user.id && (
+            <form action={paySettlement} className="flex flex-wrap items-center gap-2" data-pay-settlement><input type="hidden" name="id" value={run.id} />
+              <select name="method" className="input w-40" aria-label={ar ? "طريقة الصرف" : "Method"}>
+                <option value="bank_transfer">{ar ? "تحويل بنكي" : "Bank transfer"}</option>
+                <option value="cash">{ar ? "نقدًا من الخزينة" : "Cash from the drawer"}</option></select>
+              <input name="reference" placeholder={ar ? "رقم التحويل (للتحويل البنكي)" : "Transfer reference (bank)"} className="input w-56" dir="ltr" />
               <SubmitButton pendingLabel="…" className="btn-gold">{ar ? "تسجيل الصرف" : "Record payment"}</SubmitButton></form>
           )}
         </div>

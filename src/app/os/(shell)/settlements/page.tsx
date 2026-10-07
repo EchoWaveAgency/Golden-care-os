@@ -6,7 +6,8 @@ import { Banner } from "@/components/Banner";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SubmitButton } from "@/components/SubmitButton";
 import { SETTLEMENT_STATUS } from "@/components/SettlementStatement";
-import { prepareSettlement } from "@/app/actions/settlements";
+import { prepareSettlement, payWithholdingTax } from "@/app/actions/settlements";
+import { dateTime } from "@/lib/format";
 
 export const metadata = { title: "Doctor settlements" };
 export const dynamic = "force-dynamic";
@@ -19,7 +20,7 @@ function cairoMonth(offset = 0) {
   return d.toISOString().slice(0, 7);
 }
 
-export default async function SettlementsPage({ searchParams }: { searchParams: { m?: string; error?: string } }) {
+export default async function SettlementsPage({ searchParams }: { searchParams: { m?: string; error?: string; ok?: string } }) {
   const ctx = await requireAny("settlement.prepare", "settlement.approve", "settlement.pay", "contract.manage");
   const ar = ctx.locale === "ar";
   const month = /^\d{4}-\d{2}$/.test(searchParams.m ?? "") ? searchParams.m! : cairoMonth(-1);
@@ -35,12 +36,17 @@ export default async function SettlementsPage({ searchParams }: { searchParams: 
     return c.doctor_id === doctor && lo <= first && (!hi || first < hi);
   });
   const total = (runs ?? []).reduce((a, r) => a + Number(r.amount), 0);
+  const canPay = ctx.can("settlement.pay");
+  const [{ data: whtDue }, { data: remits }] = canPay ? await Promise.all([
+    ctx.supabase.rpc("withholding_due", { p_branch: ctx.branchId }),
+    ctx.supabase.from("tax_remittances").select("id, ref, period, amount, reference, paid_at").order("paid_at", { ascending: false }).limit(6),
+  ]) : [{ data: null }, { data: [] }];
   const months = [-3, -2, -1, 0].map(cairoMonth);
 
   return (
     <>
       <PageHeader title={ctx.t("nav.settlements")} subtitle={ar ? "الكشف يُحسب من الفواتير الصادرة بعد خصومات البنود، ويخصم نصيب الطبيب من المرتجعات والفواتير الملغاة. يعدّه محاسب ويعتمده مسؤول آخر." : "Computed from issued invoices net of line discounts, minus the doctor's share of refunds and voids. Prepared by one person, approved by another."} />
-      <Banner error={searchParams.error} />
+      <Banner error={searchParams.error} success={searchParams.ok === "wht_paid" ? (ar ? "تم تسجيل سداد ضريبة الخصم من المنبع." : "Withholding tax remittance recorded.") : undefined} />
       <nav className="mb-4 flex flex-wrap items-center gap-2">
         {months.map((m) => <Link key={m} href={`/os/settlements?m=${m}`} className={`num rounded-full px-3 py-1.5 text-sm ${m === month ? "bg-navy-700 text-white" : "bg-white text-ink-500 hover:bg-ivory-200"}`}>{m}</Link>)}
         <span className="ms-auto text-sm text-ink-500">{ar ? "إجمالي الكشوف" : "Total of statements"}: <span className="num font-semibold text-navy-700">{money(total, ctx.locale)}</span></span>
@@ -75,6 +81,20 @@ export default async function SettlementsPage({ searchParams }: { searchParams: 
           </tbody>
         </table>
       </div>
+      {canPay && (
+        <section className="card mt-6 p-5 text-sm" data-withholding>
+          <h2 className="mb-1 font-medium text-navy-700">{ar ? "ضريبة الخصم من المنبع على أتعاب الأطباء" : "Withholding tax on doctors' fees"}</h2>
+          <p className="mb-3 text-ink-500">{ar ? "المستحق للمصلحة حتى الآن:" : "Due to the Tax Authority so far:"} <span className="num font-semibold text-navy-700">{money(Number(whtDue ?? 0), ctx.locale)}</span></p>
+          {Number(whtDue ?? 0) > 0 && (
+            <form action={payWithholdingTax} className="flex flex-wrap items-end gap-2">
+              <input name="period" required defaultValue={month} pattern="\d{4}-\d{2}" className="input num w-28" dir="ltr" aria-label={ar ? "الفترة" : "Period"} />
+              <input name="amount" type="number" step="0.01" min="0.01" max={Number(whtDue)} required defaultValue={Number(whtDue)} className="input num w-32" aria-label={ar ? "المبلغ" : "Amount"} />
+              <input name="reference" required placeholder={ar ? "رقم السداد / التحويل" : "Payment reference"} className="input w-48" dir="ltr" />
+              <SubmitButton pendingLabel="…" className="btn-gold">{ar ? "تسجيل السداد" : "Record remittance"}</SubmitButton>
+            </form>)}
+          {(remits ?? []).length > 0 && <ul className="mt-3 divide-y divide-ivory-200 text-xs text-ink-500">{(remits ?? []).map((r) => (
+            <li key={r.id} className="py-1.5"><span className="num">{r.ref}</span> · <span className="num">{r.period}</span> · <span className="num">{money(r.amount, ctx.locale)}</span> · <span className="num">{r.reference}</span> · {dateTime(r.paid_at, ctx.locale)}</li>))}</ul>}
+        </section>)}
     </>
   );
 }

@@ -33,6 +33,7 @@ select org.id, c, ar, en, t::public.account_type, p from org, (values
   ('2400', 'رواتب مستحقة',                   'Salaries payable',            'liability', true),
   ('2410', 'التأمينات الاجتماعية المستحقة',   'Social insurance payable',    'liability', true),
   ('2420', 'ضريبة كسب العمل المستحقة',       'Payroll tax payable',         'liability', true),
+  ('2430', 'ضريبة خصم من المنبع مستحقة',      'Withholding tax payable',     'liability', true),
   ('3000', 'حقوق الملكية',                   'Equity',                      'equity',    false),
   ('3100', 'رأس المال',                      'Capital',                     'equity',    true),
   ('3200', 'أرباح مرحلة',                    'Retained earnings',           'equity',    true),
@@ -66,7 +67,7 @@ select a.organization_id, k, a.id from public.accounts a join (values
   ('inventory', '1300'), ('consumables_expense', '5300'), ('suppliers_payable', '2100'), ('inventory_adjustments', '5310'),
   ('package_deferred', '2210'), ('package_breakage', '4130'), ('lab_costs', '5500'), ('maintenance_expense', '5600'),
   ('employee_advances', '1160'), ('social_insurance_payable', '2410'), ('payroll_tax_payable', '2420'), ('employer_insurance_expense', '5210'),
-  ('salaries_expense', '5200'), ('salaries_payable', '2400')
+  ('salaries_expense', '5200'), ('salaries_payable', '2400'), ('withholding_tax_payable', '2430')
 ) m(k, code) on m.code = a.code
 where a.organization_id = '00000000-0000-4000-8000-000000000001'
 on conflict do nothing;
