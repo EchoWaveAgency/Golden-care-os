@@ -39,6 +39,9 @@ export default async function DoctorPage({ searchParams }: { searchParams: { err
         .eq("doctor_id", ctx.staff.id).neq("status", "resolved").order("due_at").limit(20)
     : { data: [] };
   const escNames = (escs ?? []).length ? await patientNames(ctx, Array.from(new Set((escs ?? []).map((x) => x.patient_id)))) : new Map();
+  const { data: toReview } = await ctx.supabase.rpc("results_to_review");
+  const results = ((toReview ?? []) as { id: string; ref: string; title: string; kind: string; patient_id: string; created_at: string }[]).slice(0, 20);
+  const resNames = results.length ? await patientNames(ctx, Array.from(new Set(results.map((x) => x.patient_id)))) : new Map();
   const ar = locale === "ar";
 
   return (
@@ -55,6 +58,15 @@ export default async function DoctorPage({ searchParams }: { searchParams: { err
                   {escNames.get(x.patient_id)?.name ?? ""} · {pick(x.summary, ar)}{x.patient_text ? ` — «${x.patient_text}»` : ""}</Link>
                 <span className="num text-xs text-ink-500"> {x.ref}</span>
               </li>))}
+          </ul>
+        </section>)}
+      {results.length > 0 && (
+        <section className="mb-5 rounded-xl border border-teal-200 bg-teal-50 p-4" data-results-to-review>
+          <p className="mb-2 text-sm font-medium text-navy-700">{ar ? `نتائج تنتظر مراجعتك (${results.length})` : `Results waiting for your review (${results.length})`}</p>
+          <ul className="space-y-1 text-sm">
+            {results.map((r) => (
+              <li key={r.id}><Link href={`/os/patients/${r.patient_id}`} className="hover:underline">{resNames.get(r.patient_id)?.name ?? ""} · {r.title}</Link>
+                <span className="num text-xs text-ink-500"> {r.ref}</span></li>))}
           </ul>
         </section>)}
       <div className="card">

@@ -19,6 +19,20 @@ export default async function PortalMedicalPage({ params }: { params: { lang: La
       </div>
       {m.allergies.length > 0 && <p className="rounded-xl bg-danger-50 px-4 py-3 text-sm text-danger">{ar ? "حساسية مسجلة:" : "Recorded allergy:"} {m.allergies.join(ar ? "، " : ", ")}</p>}
 
+      {(m.files ?? []).length > 0 && (
+        <section data-portal-files>
+          <h2 className="mb-3 font-medium text-navy-700">{ar ? "النتائج والتقارير والصور" : "Results, reports and photos"}</h2>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {(m.files ?? []).map((f) => (
+              <li key={f.id} className="rounded-2xl border border-ivory-300/70 bg-white p-4">
+                <a href={`/${lang}/portal/files/${f.id}`} target="_blank" rel="noreferrer" className="font-medium text-navy-700 hover:underline">{f.title}</a>
+                <p className="text-xs text-ink-500">{({ lab_result: ar ? "نتيجة تحليل" : "Lab result", radiology: ar ? "أشعة" : "Radiology", medical_report: ar ? "تقرير طبي" : "Medical report", photo: ar ? "صورة" : "Photo" } as Record<string, string>)[f.kind] ?? f.kind}
+                  {f.taken_on ? ` · ${f.taken_on}` : ""}{f.body_area ? ` · ${f.body_area}` : ""}</p>
+                {f.note && <p className="mt-2 rounded-lg bg-teal-50 px-3 py-2 text-sm text-teal-900">{ar ? "رسالة الطبيب: " : "From your doctor: "}{f.note}</p>}
+              </li>))}
+          </ul>
+        </section>)}
+
       <section>
         <h2 className="mb-3 font-medium text-navy-700">{ar ? "الروشتات" : "Prescriptions"}</h2>
         {m.prescriptions.length === 0 ? <Empty ar={ar} /> : (

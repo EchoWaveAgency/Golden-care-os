@@ -63,6 +63,7 @@ PORTAL_DEV_SHOW_OTP=true
 PAYMENTS_MODE=dev
 CARE_SIMULATOR=on
 EINVOICE_MODE=dev
+FILES_MODE=local
 CRON_SECRET=$(node -e "console.log(require('crypto').randomBytes(24).toString('hex'))")
 WHATSAPP_VERIFY_TOKEN=$(node -e "console.log(require('crypto').randomBytes(12).toString('hex'))")
 ENV

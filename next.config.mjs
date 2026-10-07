@@ -4,6 +4,8 @@ const nextConfig = {
   poweredByHeader: false,
   // Fonts are self-hosted (@fontsource); no third-party font requests.
   optimizeFonts: false,
+  // Patient files (results, photos) are uploaded through server actions — up to 15 MB each.
+  experimental: { serverActions: { bodySizeLimit: "16mb" } },
   async headers() {
     return [
       {

@@ -65,6 +65,7 @@ export type PortalRx = { id: string; ref: string; date: string; notes: string | 
 export type PortalMedical = {
   visits: { id: string; date: string; summary: string; instructions: string | null; released_at: string; doctor_ar: string; doctor_en: string; specialty_ar: string; specialty_en: string }[];
   prescriptions: PortalRx[]; allergies: string[];
+  files?: { id: string; ref: string; kind: string; title: string; taken_on: string | null; photo_stage: string | null; body_area: string | null; note: string | null; released_at: string; content_type: string }[];
 };
 export type PortalFinance = { balance: number; wallet?: number; loyalty?: { points: number; value: number; referral_code: string | null; referral_bonus: number | null } | null; invoices: { id: string; invoice_no: string; issued_at: string; status: string; total: number; paid: number; balance: number; discount: number;
   lines: { service_ar: string; service_en: string; qty: number; net: number }[] | null;
