@@ -39,7 +39,7 @@ export default async function PortalPlans({ params, searchParams }: { params: { 
             </div>
             <ul className="divide-y divide-ivory-200 text-sm">
               {(p.items ?? []).map((i, k) => (
-                <li key={k} className="flex justify-between py-1.5"><span>{ar ? i.service_ar : i.service_en}{i.tooth ? <span className="num text-xs text-ink-500"> · {ar ? "سن" : "tooth"} {i.tooth}</span> : null}{i.status === "done" ? <span className="text-xs text-ok"> · {ar ? "تم" : "done"}</span> : null}</span>
+                <li key={k} className="flex justify-between py-1.5"><span>{ar ? i.service_ar : i.service_en}{i.tooth ? <span className="text-xs text-ink-500">{" — "}{ar ? "سن" : "tooth"} <span className="num">{i.tooth}</span></span> : null}{i.status === "done" ? <span className="text-xs text-ok"> · {ar ? "تم" : "done"}</span> : null}</span>
                   <span className="num">{money(i.total, lang)}</span></li>))}
               <li className="flex justify-between py-1.5 font-semibold"><span>{ar ? "الإجمالي" : "Total"}</span><span className="num">{money(p.total, lang)}</span></li>
             </ul>

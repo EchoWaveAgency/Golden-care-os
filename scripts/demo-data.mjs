@@ -114,5 +114,6 @@ await import("./demo-inventory.mjs").then((m) => m.seedInventory({ db, url, PASS
 await import("./demo-devices.mjs").then((m) => m.seedDevices({ db, url, PASSWORD, BRANCH }));
 await import("./demo-hr.mjs").then((m) => m.seedHr({ db, url, PASSWORD, BRANCH }));
 await import("./demo-website.mjs").then((m) => m.seedWebsite({ db, url, PASSWORD, BRANCH }));
+await import("./demo-finance.mjs").then((m) => m.seedFinance({ db, url, PASSWORD, BRANCH }));
 console.log(`Demo ready. ${people.length} users (password: ${PASSWORD}), ${patients.length} patients, today's schedule created.`);
 for (const p of people) console.log(`  ${p.role.padEnd(18)} ${p.email}`);
