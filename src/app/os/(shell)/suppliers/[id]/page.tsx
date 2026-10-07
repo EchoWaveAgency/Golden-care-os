@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
 import { Stat } from "@/components/Stat";
 import { SubmitButton } from "@/components/SubmitButton";
-import { confirmReceipt, decideSupplierPayment, requestSupplierPayment } from "@/app/actions/purchasing";
+import { confirmReceipt, decideSupplierPayment, requestSupplierPayment, setReceiptVat, applySupplierCredit, recordSupplierRefund } from "@/app/actions/purchasing";
 import { confirmSupplierBill, voidSupplierBill } from "@/app/actions/dental";
 
 export const dynamic = "force-dynamic";
@@ -26,12 +26,20 @@ export default async function SupplierPage({ params, searchParams }: { params: {
   const open = st.receipts.filter((r) => Number(r.outstanding) - Number(r.pending) > 0);
   const canVoid = ctx.can("supplier.bill.record");
   const ok = { requested: ar ? "تم طلب الدفعة وتنتظر الصرف." : "Payment requested; awaiting release.", paid: ar ? "تم صرف الدفعة وتسجيل القيد." : "Payment released and posted.", rejected: ar ? "تم رفض الدفعة." : "Payment rejected.", confirmed: ar ? "تم تأكيد الاستلام — يمكن دفعه الآن." : "Receipt confirmed — it can now be paid.", bill_confirmed: ar ? "تم تأكيد الفاتورة — يمكن دفعها الآن." : "Bill confirmed — it can now be paid.", voided: ar ? "تم إلغاء الفاتورة وعكس قيدها." : "Bill voided and its journal reversed." }[searchParams.ok ?? ""];
+  const canVat = ctx.can("accounting.post");
+  const canCredit = ctx.can("supplier.pay.approve");
+  const [{ data: vatRows }, { data: credits }] = await Promise.all([
+    canVat ? ctx.supabase.from("goods_receipts").select("id, supplier_invoice_no, total, vat_amount, supplier_tax_invoice_no, returned_amount").eq("supplier_id", sup.id).order("created_at", { ascending: false }).limit(30) : Promise.resolve({ data: [] }),
+    ctx.supabase.from("supplier_credits").select("id, ref, amount, used, refunded, created_at").eq("supplier_id", sup.id).order("created_at", { ascending: false }),
+  ]);
+  const openCredits = (credits ?? []).filter((c) => Number(c.amount) - Number(c.used) - Number(c.refunded) > 0);
+  const okExtra = { vat: ar ? "تم تسجيل ضريبة القيمة المضافة على الفاتورة." : "VAT recorded on the invoice.", credit_applied: ar ? "تم خصم الرصيد الدائن من فاتورة المورد." : "Credit applied to the supplier invoice.", credit_refunded: ar ? "تم تسجيل استرداد المورد." : "Supplier refund recorded." }[searchParams.ok ?? ""];
   const statusLabel = (s: string) => ({ requested: ar ? "بانتظار الصرف" : "Awaiting release", paid: ar ? "مصروفة" : "Paid", rejected: ar ? "مرفوضة" : "Rejected" }[s] ?? s);
 
   return (
     <>
       <PageHeader title={ar ? sup.name_ar : sup.name_en ?? sup.name_ar} subtitle={[sup.tax_id, sup.phone].filter(Boolean).join(" · ")} actions={<Link href="/os/suppliers" className="btn-ghost">{ctx.t("common.back")}</Link>} />
-      <Banner error={searchParams.error ?? (stErr ? stErr.message : undefined)} success={ok} />
+      <Banner error={searchParams.error ?? (stErr ? stErr.message : undefined)} success={ok ?? okExtra} />
       <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={ar ? "حتى 30 يومًا" : "0–30 days"} value={money(st.aging.d0_30, ctx.locale)} />
         <Stat label={ar ? "31–60 يومًا" : "31–60 days"} value={money(st.aging.d31_60, ctx.locale)} tone="gold" />
@@ -92,6 +100,49 @@ export default async function SupplierPage({ params, searchParams }: { params: {
       {canVoid && st.receipts.filter((r) => r.kind === "bill" && Number(r.paid) === 0 && Number(r.pending) === 0).map((r) => (
         <form key={`v-${r.id}`} id={`void-${r.id}`} action={voidSupplierBill} hidden><input type="hidden" name="supplier_id" value={sup.id} /><input type="hidden" name="bill_id" value={r.id} /></form>
       ))}
+
+      {(credits ?? []).length > 0 && (
+        <section className="mt-6" data-supplier-credits>
+          <h2 className="mb-2 font-medium text-navy-700">{ar ? "أرصدة دائنة لدى المورد (مرتجعات على فواتير مدفوعة)" : "Supplier credits (returns on paid invoices)"}</h2>
+          <ul className="card divide-y divide-ivory-200 text-sm">
+            {(credits ?? []).map((c) => {
+              const left = Number(c.amount) - Number(c.used) - Number(c.refunded);
+              return (
+                <li key={c.id} className="space-y-2 px-5 py-3" data-credit={c.ref}>
+                  <p><span className="num font-medium">{c.ref}</span> · {ar ? "الرصيد" : "credit"} <span className="num">{money(c.amount, ctx.locale)}</span> · {ar ? "مستخدم" : "used"} <span className="num">{money(c.used, ctx.locale)}</span> · {ar ? "مسترد" : "refunded"} <span className="num">{money(c.refunded, ctx.locale)}</span> · <span className="num font-semibold">{ar ? "المتبقي" : "left"} {money(left, ctx.locale)}</span></p>
+                  {left > 0 && canCredit && (
+                    <div className="flex flex-wrap gap-4">
+                      {open.length > 0 && <form action={applySupplierCredit} className="flex flex-wrap items-center gap-2" data-apply-credit><input type="hidden" name="supplier_id" value={sup.id} /><input type="hidden" name="credit_id" value={c.id} />
+                        <select name="receipt_id" className="input w-48 py-1">{open.map((r) => <option key={r.id} value={r.id}>{r.invoice_no} · {money(Number(r.outstanding) - Number(r.pending), ctx.locale)}</option>)}</select>
+                        <input name="amount" type="number" min="0.01" step="0.01" max={left} required className="input num w-28 py-1" aria-label={ar ? "المبلغ" : "Amount"} />
+                        <SubmitButton pendingLabel="…" className="btn-ghost text-xs">{ar ? "خصم من فاتورة" : "Apply to invoice"}</SubmitButton></form>}
+                      <form action={recordSupplierRefund} className="flex flex-wrap items-center gap-2" data-supplier-refund><input type="hidden" name="supplier_id" value={sup.id} /><input type="hidden" name="credit_id" value={c.id} />
+                        <select name="method" className="input w-32 py-1"><option value="bank_transfer">{ar ? "تحويل" : "Transfer"}</option><option value="cheque">{ar ? "شيك" : "Cheque"}</option></select>
+                        <input name="amount" type="number" min="0.01" step="0.01" max={left} defaultValue={left} required className="input num w-28 py-1" aria-label={ar ? "المبلغ" : "Amount"} />
+                        <input name="reference" required placeholder={ar ? "رقم المرجع" : "Reference"} className="input w-36 py-1" dir="ltr" />
+                        <SubmitButton pendingLabel="…" className="btn-ghost text-xs">{ar ? "استلمنا المبلغ من المورد" : "Supplier paid us"}</SubmitButton></form>
+                    </div>)}
+                </li>);
+            })}
+          </ul>
+        </section>)}
+
+      {canVat && (vatRows ?? []).length > 0 && (
+        <details className="mt-6" data-receipt-vat>
+          <summary className="cursor-pointer font-medium text-navy-700">{ar ? "ضريبة القيمة المضافة على فواتير المورد" : "VAT on supplier invoices"}</summary>
+          <p className="mt-1 text-xs text-ink-500">{ar ? "اكتب قيمة الضريبة كما هي في فاتورة المورد الضريبية؛ تُضاف لمستحق المورد." : "Enter the VAT exactly as on the supplier's tax invoice; it is added to what is owed."}</p>
+          <ul className="card mt-2 divide-y divide-ivory-200 text-sm">
+            {(vatRows ?? []).map((g) => (
+              <li key={g.id} className="px-5 py-2">
+                <form action={setReceiptVat} className="flex flex-wrap items-center gap-2"><input type="hidden" name="supplier_id" value={sup.id} /><input type="hidden" name="receipt_id" value={g.id} />
+                  <span className="num min-w-32">{g.supplier_invoice_no}</span><span className="num text-ink-500">{money(g.total, ctx.locale)}</span>
+                  <input name="vat" type="number" min="0" step="0.01" defaultValue={Number(g.vat_amount)} disabled={Number(g.returned_amount) > 0} className="input num w-28 py-1" aria-label={ar ? "الضريبة" : "VAT"} />
+                  <input name="tax_invoice_no" defaultValue={g.supplier_tax_invoice_no ?? ""} disabled={Number(g.returned_amount) > 0} placeholder={ar ? "رقم الفاتورة الضريبية" : "Tax invoice no."} className="input w-40 py-1" dir="ltr" />
+                  {Number(g.returned_amount) === 0 && <SubmitButton pendingLabel="…" className="btn-ghost text-xs">{ar ? "حفظ" : "Save"}</SubmitButton>}
+                </form>
+              </li>))}
+          </ul>
+        </details>)}
 
       <section className="mt-6">
         <h2 className="mb-2 font-medium text-navy-700">{ar ? "الدفعات" : "Payments"}</h2>

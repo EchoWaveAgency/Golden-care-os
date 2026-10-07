@@ -11,7 +11,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { approvePo, cancelPo, closePo, receivePo, submitPo } from "@/app/actions/purchasing";
 
 export const dynamic = "force-dynamic";
-type Po = { id: string; ref: string; status: string; total: number; created_by: string; created_at: string; expected_on: string | null; notes: string | null; cancel_reason: string | null;
+type Po = { id: string; ref: string; status: string; total: number; created_by: string; created_at: string; first_approved_by: string | null; first_approved_at: string | null; expected_on: string | null; notes: string | null; cancel_reason: string | null;
   supplier: { name_ar: string; name_en: string | null } | null; location: { name_ar: string; name_en: string } | null;
   lines: { id: string; qty: number; unit_cost: number; received_qty: number; closed_short_qty: number; item: { code: string; name_ar: string; name_en: string; unit: string; category: string } }[] };
 
@@ -19,7 +19,7 @@ export default async function PoPage({ params, searchParams }: { params: { id: s
   const ctx = await requireAny("purchase.read", "purchase.request", "purchase.approve", "inventory.receive");
   const ar = ctx.locale === "ar";
   const { data: po } = await ctx.supabase.from("purchase_orders")
-    .select("id, ref, status, total, created_by, created_at, expected_on, notes, cancel_reason, supplier:suppliers(name_ar, name_en), location:inv_locations(name_ar, name_en), lines:po_lines(id, qty, unit_cost, received_qty, closed_short_qty, item:inv_items(code, name_ar, name_en, unit, category))")
+    .select("id, ref, status, total, created_by, created_at, first_approved_by, first_approved_at, expected_on, notes, cancel_reason, supplier:suppliers(name_ar, name_en), location:inv_locations(name_ar, name_en), lines:po_lines(id, qty, unit_cost, received_qty, closed_short_qty, item:inv_items(code, name_ar, name_en, unit, category))")
     .eq("id", params.id).maybeSingle<Po>();
   if (!po) notFound();
   const { data: receipts } = await ctx.supabase.from("goods_receipts").select("id, ref, supplier_invoice_no, total, created_at").eq("po_id", po.id).order("created_at");
@@ -71,8 +71,9 @@ export default async function PoPage({ params, searchParams }: { params: { id: s
       {po.cancel_reason && <p className="mt-3 text-sm text-ink-500">{po.cancel_reason}</p>}
       <div className="mt-5 flex flex-wrap gap-3">
         {po.status === "draft" && ctx.can("purchase.request") && <form action={submitPo}><input type="hidden" name="po_id" value={po.id} /><SubmitButton pendingLabel="…" className="btn-primary">{ar ? "إرسال للاعتماد" : "Submit for approval"}</SubmitButton></form>}
-        {po.status === "submitted" && ctx.can("purchase.approve") && (mine
-          ? <p className="text-sm text-ink-500">{ar ? "أنشأت هذا الأمر — يلزم اعتماد مسؤول آخر." : "You created this — another approver is required."}</p>
+        {po.status === "submitted" && po.first_approved_by && <p className="text-sm text-warn" data-first-approval>{ar ? "اعتماد أول تم — الأمر فوق حد الاعتماد وينتظر اعتمادًا ثانيًا من مدير المركز." : "First approval done — the order is above the limit and waits for the center director's second approval."}</p>}
+        {po.status === "submitted" && ctx.can("purchase.approve") && (mine || po.first_approved_by === ctx.user.id
+          ? <p className="text-sm text-ink-500">{mine ? (ar ? "أنشأت هذا الأمر — يلزم اعتماد مسؤول آخر." : "You created this — another approver is required.") : (ar ? "اعتمدته أولًا — يلزم معتمد ثانٍ." : "You gave the first approval — a second approver is required.")}</p>
           : <form action={approvePo}><input type="hidden" name="po_id" value={po.id} /><SubmitButton pendingLabel="…" className="btn-primary">{ar ? "اعتماد" : "Approve"}</SubmitButton></form>)}
         {["draft", "submitted", "approved"].includes(po.status) && po.lines.every((l) => Number(l.received_qty) === 0) && (ctx.can("purchase.request") || ctx.can("purchase.approve")) && (
           <form action={cancelPo} className="flex items-center gap-2"><input type="hidden" name="po_id" value={po.id} />

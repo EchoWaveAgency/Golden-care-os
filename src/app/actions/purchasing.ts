@@ -73,3 +73,38 @@ export async function confirmReceipt(form: FormData) {
   const { error } = await ctx.supabase.rpc("confirm_receipt", { p_receipt: String(form.get("receipt_id")) });
   go(`/os/suppliers/${sup}`, error, ctx.locale, "confirmed");
 }
+
+// Purchasing settings (chief accountant): approval thresholds and the VAT treatment.
+export async function savePurchasingSettings(form: FormData) {
+  const ctx = await getContext();
+  const { error } = await ctx.supabase.rpc("save_purchasing_settings", { p: {
+    po_high_approval_above: String(form.get("po_high_approval_above") ?? ""),
+    payment_high_approval_above: String(form.get("payment_high_approval_above") ?? ""),
+    vat_treatment: String(form.get("vat_treatment") ?? ""),
+  } });
+  go("/os/purchasing", error, ctx.locale, "settings");
+}
+
+export async function setReceiptVat(form: FormData) {
+  const ctx = await getContext();
+  const sup = String(form.get("supplier_id"));
+  const { error } = await ctx.supabase.rpc("set_receipt_vat", { p_receipt: String(form.get("receipt_id")), p_vat: Number(form.get("vat") || 0),
+    p_tax_invoice_no: String(form.get("tax_invoice_no") ?? "") });
+  go(`/os/suppliers/${sup}`, error, ctx.locale, "vat");
+}
+
+export async function applySupplierCredit(form: FormData) {
+  const ctx = await getContext();
+  const sup = String(form.get("supplier_id"));
+  const { error } = await ctx.supabase.rpc("apply_supplier_credit", { p_credit: String(form.get("credit_id")), p_receipt: String(form.get("receipt_id")),
+    p_amount: Number(form.get("amount") || 0) });
+  go(`/os/suppliers/${sup}`, error, ctx.locale, "credit_applied");
+}
+
+export async function recordSupplierRefund(form: FormData) {
+  const ctx = await getContext();
+  const sup = String(form.get("supplier_id"));
+  const { error } = await ctx.supabase.rpc("record_supplier_refund", { p_credit: String(form.get("credit_id")), p_amount: Number(form.get("amount") || 0),
+    p_method: String(form.get("method") ?? "bank_transfer"), p_reference: String(form.get("reference") ?? "") });
+  go(`/os/suppliers/${sup}`, error, ctx.locale, "credit_refunded");
+}
