@@ -6,6 +6,8 @@ import { createClient } from "@supabase/supabase-js";
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !key) throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required");
+// Synthetic demo data is for a developer's local stack only — never staging or production.
+if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(url)) throw new Error("demo data refuses a non-local database: " + new URL(url).hostname);
 if (process.env.GC_ENV === "production") throw new Error("Refusing to seed demo data in production");
 
 const db = createClient(url, key, { auth: { persistSession: false } });

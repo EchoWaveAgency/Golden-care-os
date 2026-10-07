@@ -52,6 +52,22 @@ All operational postings go through `app.post_journal()` using semantic account 
 | Supplier payment | Suppliers payable | Bank |
 | Payroll accrual / payment | Salaries expense → Salaries payable → Bank | |
 
+## Added in sessions 13–15
+
+| Event | Trigger | Debit | Credit | Notes |
+|---|---|---|---|---|
+| Doctor settlement approved (with withholding) | `approve_settlement()` | `doctor_fees` (5100) | `doctor_fees_payable` (2300, net) · `withholding_tax_payable` (2430) | % per contract; collected-basis lines only once the invoice is fully paid |
+| Doctor settlement paid in cash | `pay_settlement(…, 'cash')` | `doctor_fees_payable` (2300) | `cash_on_hand` | Payer's open session; counted in expected cash |
+| Withholding tax remitted | `pay_withholding_tax()` | `withholding_tax_payable` (2430) | `bank_main` | One payment per filing period |
+| VAT on a supplier invoice | `set_receipt_vat()` | `input_vat` (1170) or `vat_expense` (5700) | `suppliers_payable` (2100) | Amount from the supplier's tax invoice; treatment set by the chief accountant |
+| Supplier return beyond the unpaid amount | `decide_supplier_return()` | `suppliers_payable` (2100) | `inventory` (1300) · VAT share | Excess stays as a supplier credit (debit balance) |
+| Supplier refund received | `record_supplier_refund()` | `bank_main` | `suppliers_payable` (2100) | Closes a supplier credit |
+| Card / gateway / InstaPay / wallet settlement | `record_clearing_settlement()` | `bank_main` (net) · `bank_charges` (5400, fees) | Clearing account (gross) | Gross and fees from the bank deposit |
+| Loyalty points redeemed | `redeem_loyalty()` | `loyalty_redemptions` (4920, contra revenue) | `ar_patients` (1200) | Internal method 'loyalty'; programme off until configured |
+| Online installment paid | gateway confirmation → `app.plan_payment_confirm` | `gateway_clearing` | `patient_advances` (2200) | Allocated to the plan's installments in date order |
+| End-of-service approved / paid | `decide_eos()` / `pay_eos()` | `salaries_expense` | `salaries_payable` · `payroll_tax_payable` · `employee_advances` (loans) | Gratuity / tax entered by HR |
+| Stock transfer between branches | `dispatch_stock_transfer()` / `receive_stock_transfer()` | `inventory_in_transit` (1310) → `inventory` (destination) | `inventory` (source) → `inventory_in_transit` | Same store branch: no journal; shortage → `inventory_adjustments` |
+
 ## Controls
 - Period lock (`lock_fiscal_period`) blocks any posting dated inside the period.
 - Header accounts are not postable.

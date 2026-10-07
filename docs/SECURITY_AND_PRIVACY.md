@@ -63,3 +63,20 @@
 ## Package refunds, supplier returns, e-receipts (session 12)
 - Every money step is maker-checker (request ≠ approve) and posted as a balanced journal.
 - E-receipt payloads carry the patient's name only (no national id, no diagnosis); the queue is visible to accounting only. Tax Authority credentials are server environment variables, never stored in the database. `EINVOICE_MODE=dev` is local-only.
+
+## Finance completion (session 13)
+- Every new money step keeps maker-checker: settlement prepare ≠ approve ≠ pay; purchase orders and supplier payments above the clinic's threshold need a second, higher approval; end-of-service prepare ≠ approve ≠ pay; loyalty redemption only at the till with `payment.collect`.
+- The portal shows the patient only their own plans, installments, wallet and points; online installment payments reuse the gateway path (intent created by the patient's own session, confirmed by the signed callback).
+
+## Patient files (session 14)
+- Bytes live in a private bucket; the browser never receives a storage URL. Downloads go through the app, which first asks the database (`patient_file_access` / `portal_file`) — the same RLS rules as the record: clinical files (results, reports, photos) for clinical readers and the treating doctor only; administrative documents for the desk.
+- File type is checked from the file's first bytes, not the name; size ≤ 15 MB; SHA-256 stored; every opening of a clinical file is audited (`FILE_VIEWED`).
+- Patients see a file only after the doctor reviewed and released it, with the doctor's note. Files are voided with a reason, never deleted.
+
+## Performance reviews (session 14)
+- Reviews and KPIs are visible to reviewers (`performance.review`) and the employee concerned; nobody reviews themselves; submitted reviews are frozen.
+
+## Website and marketing (session 16)
+- Testimonials never identify the patient (initials only; the link to the patient stays internal) and are shown only while the patient's consent is current — withdrawal hides them immediately.
+- A/B tests use a random first-party cookie `gc_vid` (httpOnly, 90 days) that is never linked to a person or an inquiry record; only per-version counts are stored.
+- SMS bodies are rendered from approved templates; sign-in codes are never written to logs.

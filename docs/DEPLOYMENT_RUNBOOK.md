@@ -38,6 +38,13 @@ Never point staging or local at production. Never run `demo-data.mjs` against pr
 - E-receipts stay off until Accounting → E-invoicing settings are filled and switched on. The live Tax Authority connector is not built yet: it needs `ETA_CLIENT_ID` / `ETA_CLIENT_SECRET` (server env only) and certification on the pre-production portal. Until then, leave `EINVOICE_MODE` unset (documents wait in the queue). Never set `EINVOICE_MODE=dev` in production.
 - Receipt printers: install the 80 mm printer on the desk PC as a system printer, set paper 80 mm × receipt, margins none, and print from "80mm receipt" on the invoice.
 
+## Sessions 13–16 settings
+- **Patient files**: create the Storage bucket named in `FILES_BUCKET` (default `patient-files`) with **public access off**; no storage policies for `anon`/`authenticated` are needed (bytes are written and read only by the server after the database has checked access). Never set `FILES_MODE=local` outside a developer machine. The server action body limit is 16 MB (`next.config`), matching the 15 MB file limit.
+- **SMS** (optional): `SMS_PROVIDER=twilio` and `TWILIO_SMS_FROM` (with the Twilio account above). The SMS fallback stays off until an administrator switches it on in Messages (it costs per message).
+- **Policy settings the clinic must fill before use** (all start empty / off): doctor withholding % per contract; purchasing thresholds and VAT treatment (Purchasing → settings); loyalty programme (Accounting → Settlements & loyalty); online installments per plan; review criteria (HR → Performance); end-of-service amounts are entered per case.
+- **WhatsApp templates** to submit for approval: `installment_due` (installment reminders).
+- Demo scripts (`scripts/demo-*.mjs`) refuse a non-local database — never point them at production.
+
 ## Release checklist
 - [ ] CI green: typecheck, lint, unit, `db:test` (SQL + concurrency), build
 - [ ] Migration reviewed; rollback plan written (forward-fix migration preferred; restore-from-PITR for data incidents)

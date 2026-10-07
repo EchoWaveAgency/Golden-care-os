@@ -64,3 +64,21 @@ Added in 0021: `hr.read`, `hr.manage`, `attendance.manage`, `attendance.approve`
 Added in 0022 (no new codes): package refund — request `refund.request` (front_desk, cashier, patient_relations), approve `refund.approve` (chief_accountant, center_director; never your own), pay `payment.collect`; package transfer `package.manage` (chief_accountant, center_director); supplier return — record `inventory.receive` (inventory_controller), approve `purchase.approve` (chief_accountant, operations_manager, center_director; never your own).
 
 Added in 0023 (no new codes): e-receipt queue read `accounting.read`; settings, service tax codes and re-send `accounting.configure` (chief_accountant). The cashier sees an invoice's e-receipt id through `invoice_ereceipt()` (`billing.read`) without access to the queue. Sending is a service-role job (`svc_einvoice_*`).
+
+Added in 0024 (no new codes): doctor contracts — withholding % and basis — `contract.manage`; withholding due and its remittance `settlement.pay` (chief_accountant); cash payout of a settlement needs the payer's own open cashier session.
+
+Added in 0025: `purchase.approve.high` → center_director, owner — second approval for purchase orders and supplier payments above the clinic's thresholds (never their own). Purchasing settings (thresholds, VAT treatment) `accounting.configure`; VAT on a receipt, supplier credits and refunds `supplier.pay.request` / `purchase.approve` as for payments.
+
+Added in 0026 (no new codes): clearing balances `accounting.read`, settlements `accounting.post`, loyalty settings `accounting.configure`; redeem points `payment.collect`; invite codes and referrer `patient.write`; patient loyalty card `patient.read` / `billing.read`.
+
+Added in 0027 (no new codes): portal options per plan and acceptance `plan.accept`; patients accept and pay through `portal_*` functions only; salary increment `hr.manage`; end-of-service prepare `payroll.prepare`, approve `payroll.approve`, pay `payroll.pay` — three different people.
+
+Added in 0028: `files.upload` → front_desk, nurse, doctor, medical_director, patient_relations. Clinical files readable by clinical readers and the treating doctor; administrative documents by `patient.read`; review and release by the treating doctor or `clinical.release`; void by the uploader or medical_director.
+
+Added in 0029 (no new codes): dental chart — record and void findings `clinical.write` / treating doctor (`clinical.write.own`); read with the patient's clinical record.
+
+Added in 0030: `performance.review` → hr_manager, medical_director, center_director, operations_manager (never their own review). Every employee reads and acknowledges their own submitted reviews.
+
+Added in 0031 (no new codes): stock transfers — request `inventory.manage`, dispatch `inventory.manage` (+ `inventory.controlled` for controlled items), receive `inventory.receive` or `inventory.issue` at the destination; device on an appointment `appointment.write`; devices are readable for booking by the desk.
+
+Added in 0033 (no new codes): articles and testimonials follow the content workflow (`content.edit` → `content.medical_approve` → `content.marketing_approve` → `content.publish`; the last editor never medically approves); A/B report and funnel `marketing.read` (also `lead.read`, `reports.finance` for the funnel); marketing can list landing pages read-only; SMS settings `messages.manage`. Patients grant / withdraw testimonial consent with `portal_set_testimonial_consent`.

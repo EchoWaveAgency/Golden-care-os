@@ -77,3 +77,21 @@
 - `supabase/tests/16_package_refunds_supplier_returns.sql`: refund = unused − fee, fee bounds, unpaid package refused, redemption blocked while open, separation of duties, cash needs a session, journals, expected cash, transfer (value and memo), supplier return quantities, lot and payable effects, refusals (own approval, already paid, lot moved).
 - `supabase/tests/17_einvoice.sql`: off by default, blocked with reasons, only the accountant configures, claim once, retry with backoff, accepted ids, refunds as return documents for the amount paid back, voids as cancellations, cashier sees the receipt id but not the queue.
 - Browser `e2e/m12-journey.mjs` (21 checks): e-receipts on → two packages sold and paid → 80 mm receipt → package refund (request, approve, pay; 4,500 − 300 = 4,200) → package transfer → supplier return (store records, chief approves, 70.00) → blocked documents → service codes → re-send → simulator accepts (including the 4,200 return) → receipt shows the e-receipt id → day sheet → trial balance.
+
+## Session 13 additions — finance completion
+- `18_doctor_withholding_collected.sql`: withholding split on approval, collected basis (late payment picked up next run), cash payout needs a session and counts in the drawer, remittance by period, separation of duties.
+- `19_purchasing_credits_vat_thresholds.sql`: thresholds off by default, second approval above them (never your own), VAT treatment required before VAT, input VAT vs. cost, return beyond unpaid → supplier credit, credit used on another delivery, supplier refund.
+- `20_clearing_loyalty_referrals.sql`: clearing balances and settlement journal, loyalty off until configured, earn / refund take-back / redeem / expiry, referral once, self-referral refused, portal wallet and points.
+- `21_portal_plans_installments_hr_eos.sql`: portal plan acceptance and installment choice within the limit, online installment intent and allocation, reminders, salary increment, end-of-service three-person flow and journals.
+- Browser `e2e/m13-journey.mjs` (15 checks).
+
+## Sessions 14–15 additions — clinical and operations completion
+- `22_patient_files_results.sql`: type / size limits, nothing listed before storage, desk vs. clinical access, review before release, audit of openings, portal shows released files only, void hides from the portal, no delete.
+- `23_dental_chart.sql`: findings per tooth / surface, history, void with reason, chart with plan work, access.
+- `24_kpis_performance.sql`: criteria, weighted score, frozen on submit, own review only, acknowledgement.
+- `25_transfers_device_booking.sql`: FEFO dispatch, receipt with shortage, in-transit journals between branches, cancellation, controlled items; device double booking and out-of-service refused, bookings at risk.
+- Browser `e2e/m14-journey.mjs` (14 checks, fixtures in `e2e/fixtures/` are synthetic) and `e2e/m15-journey.mjs` (7 checks).
+
+## Session 16 additions — website and marketing
+- `26_articles_testimonials_ab_sms.sql`: article review and public functions, portal instructions by service, testimonial consent gate (insert and every read; grant / withdraw from the portal), A/B events and report, funnel permissions, SMS preferred channel and fallback setting.
+- Browser `e2e/m16-journey.mjs` (15 checks): article through review to `/articles`; portal testimonial consent → published under initials; landing version B → visitors and one inquiry → A/B report and funnel; SMS fallback switch.

@@ -281,3 +281,49 @@ End-of-service, annual increments and other policy items are open questions (92�
 
 ### Not verified here
 Real Tax Authority submission (credentials, signing, certification); printing on a physical thermal printer (layout checked in the browser at 80 mm).
+
+## Session 13 — 2026-10-07: finance completion
+
+### Delivered
+- **Doctor fees** (0024): each contract carries its own withholding-tax % (0 = none) and basis — *invoiced* (share due when the invoice is issued, as before) or *collected* (due only once the invoice is fully paid; earlier months' invoices are picked up when they get paid). Approval splits the accrual between the doctor's payable and withholding tax payable (2430). Payout by bank transfer (reference) or cash from the payer's open cashier session (counted in the drawer's expected cash). Withholding due per period and its remittance to the Tax Authority (`/os/settlements`).
+- **Purchasing finance** (0025): optional approval thresholds — purchase orders and supplier payments above the clinic's amount need a second approval (`purchase.approve.high`: center director, owner); empty = off. VAT on purchases entered from the supplier's tax invoice (never computed): recoverable input VAT (1170) or a cost (5700), chosen once by the chief accountant. A supplier return worth more than what is unpaid on its delivery becomes a **supplier credit**, used against another delivery or closed by recording the supplier's refund (bank).
+- **Card / gateway settlements and loyalty** (0026, `/os/accounting/clearing`): the uncleared balance of each clearing account (cards, gateway, InstaPay, wallets); each bank deposit is recorded gross with its fees (bank charges 5400). Loyalty programme and referral bonus are **off** with every rate empty until the chief accountant sets them: points earned on real payments, taken back on refunds, redeemed at the cashier as a payment method (contra revenue 4920), optional expiry; personal invite codes, the referrer rewarded once on the referred patient's first payment. The patient "wallet" is the existing advance balance; the portal shows wallet, points and invite code.
+- **Treatment plans in the portal** (0027): staff set per plan how many installments the patient may choose online (default 1 = pay in full); the patient reviews the proposed plan, accepts it (consent recorded) and pays installments online; the gateway result becomes an advance deposit allocated to the installments. Installment reminders on WhatsApp (`installment_due`).
+- **HR** (0027): annual salary increment (% from a month, all active employees or one); **end-of-service settlement** — leave encashment and outstanding loans calculated from the employee's own records; gratuity, tax and other items entered by HR (policy open); prepared → approved → paid by different people, with journals.
+
+### Verified
+SQL suites 18–21 ✅; browser journey m13 15/15 (contract with withholding → purchasing limits and VAT → clearing and loyalty → patient invite code → portal plan acceptance and online installment 3,200 ÷ 3 = 1,066.66 → HR increment → trial balance balanced).
+
+## Session 14 — 2026-10-07: clinical completion
+
+### Delivered
+- **Patient files** (0028): lab and radiology results, medical reports, before/after photos, signed consent forms, ID documents and insurance papers — PDF, JPEG, PNG, WebP, HEIC up to 15 MB, type checked from the file's bytes, SHA-256 kept. Files are stored in a **private** bucket (Supabase Storage; a local folder in development, `FILES_MODE=local`); the database holds the record and the access rules. Clinical files are visible to clinical readers and the treating doctor only (reception sees administrative documents); every opening of a clinical file is audited (`FILE_VIEWED`). Results wait in the doctor's **review list**; the doctor reviews (normal / abnormal + note) and decides whether to **release** to the patient with a plain-language note — the portal shows released files only. Void with a reason, never delete.
+- **Dental chart** (0029): odontogram per tooth and surface (FDI), conditions (caries, filling, crown, missing, implant, root canal, …), append-only history with void; the chart shows the latest finding of each tooth with the treatment-plan work planned or done on it.
+- **Staff KPIs and performance reviews** (0030, `/os/hr/performance`): KPIs computed from the system's own records (attendance, lateness, visits, revenue, rating, complaints); review criteria and weights are the clinic's (none created); reviews are weighted, submitted reviews are frozen with a KPI snapshot; the employee reads and acknowledges their review in `/os/me`. Nobody reviews themselves.
+
+### Verified
+SQL suites 22–24 ✅; browser journey m14 14/14 (reception uploads a lab result and an ID → reception cannot see the result → dentist reviews, releases, uploads a before photo, charts caries on 36/46 → patient downloads the result in the portal, photo not shared → HR criteria and review (5×2 + 4) ÷ 3 = 4.67 → the nurse acknowledges).
+
+## Session 15 — 2026-10-07: operations completion
+
+### Delivered
+- **Stock transfers** (0031, `/os/inventory/transfers`): requested → dispatched (stock leaves the source store FEFO, lot by lot) → received (same lots, cost and expiry at the destination; a shortage is written off with the receiver's note) → or cancelled before dispatch. Between branches the value passes through *inventory in transit* (1310) so each branch's books are right on the day. Controlled items need `inventory.controlled` to dispatch.
+- **Device booking** (0031): an appointment can reserve a device (e.g. a laser); the database refuses the same device twice at the same time or while it is out of service. When a device goes down, the devices page lists the upcoming bookings to move.
+
+### Verified
+SQL suite 25 ✅; browser journey m15 7/7.
+
+## Session 16 — 2026-10-07: website & marketing completion
+
+### Delivered
+- **Articles and patient instructions** (0033): medical articles and before/after instructions per service go through medical review then marketing approval (the last editor can never medically approve their own text). Public `/articles` pages (ar/en, in the sitemap); instructions appear in the portal of patients who had that service.
+- **Testimonials**: only for a patient with a recorded `testimonial` consent; shown under initials only, never identifying the patient; consent is re-checked on every read, so withdrawing it (from the portal profile, or by staff) removes the testimonial from the website at once.
+- **Landing page A/B tests**: a version B (title / hero) with a share of visitors; each visitor gets a random first-party id (`gc_vid` cookie, no personal data) and keeps seeing the same version; views and inquiries are counted per version.
+- **Marketing funnel** (`/os/leads/funnel`): inquiries by source and campaign → contacted → booked → came → revenue, plus the A/B results per landing page.
+- **SMS**: patients whose preferred channel is SMS get SMS; optional fallback to SMS when WhatsApp fails for good (off by default — costs per message; set in Messages). The dispatcher sends SMS rows through the SMS provider (Twilio adapter, `SMS_PROVIDER=twilio`; development logs only).
+
+### Verified
+SQL suite 26 ✅ (also: consent withdrawn from the portal); browser journey m16 15/15 (article drafted by marketing → medical and marketing review → public; patient consents in the portal → testimonial published under initials; version B at 99% → 3/3 visitors see it, one inquiry → A/B report B: 3 views, 1 inquiry, 33.3%; funnel; SMS fallback on). All SQL suites 26/26 plus concurrency, unit 121/121, typecheck, lint, build ✅.
+
+### Not verified here (needs the clinic's accounts)
+Real SMS delivery (Twilio or an Egyptian SMS provider, sender id), Supabase Storage in a hosted project (bucket must be private), real gateway payments for installments (Paymob sandbox).

@@ -52,7 +52,17 @@ A production-grade healthcare operating system for Golden Care Clinics, built on
 | **Supplier returns** — by lot from a delivery, approved by purchasing, reduce the payable | ✅ |
 | **E-receipts / e-invoices** — document queue, readiness checks per service, returns and cancellations, local simulator | ✅ queue · ⏳ live Tax Authority connector (needs the clinic's credentials and certification) |
 | **Printing** — 80 mm thermal receipt, per-doctor day sheet (paper fallback), prescriptions, payslips, statements | ✅ |
-| Patient wallet / loyalty, end-of-service settlements | ⏳ next milestones |
+| **Doctor withholding tax**, collected-basis contracts, cash payouts, tax remittance | ✅ (rates per doctor to be set) |
+| **Purchasing finance** — approval thresholds, purchase VAT from tax invoices, supplier credits and refunds | ✅ (thresholds and VAT treatment to be set) |
+| **Card / gateway settlements** with fees · **loyalty points and referrals** · patient wallet in the portal | ✅ (loyalty off until the clinic sets its rules) |
+| **Treatment plans in the portal** — the patient accepts and pays installments online; installment reminders | ✅ |
+| **Salary increments, end-of-service settlements** | ✅ (gratuity / tax entered by HR) |
+| **Patient files** — results, reports, photos, consents, IDs in private storage; doctor review and release to the portal; audited access | ✅ |
+| **Dental chart** (odontogram) with history and plan work | ✅ |
+| **Staff KPIs and performance reviews** | ✅ (criteria to be set by HR) |
+| **Stock transfers** between stores and branches (in transit) · **device booking** without double use | ✅ |
+| **Medical articles and patient instructions**, **consented testimonials**, **landing page A/B tests**, **marketing funnel** | ✅ |
+| **SMS** for patients who prefer it, optional fallback when WhatsApp fails | ✅ (needs an SMS provider) |
 
 Everything else in the master specification is planned in phases — see `PROGRESS.md`.
 
@@ -97,7 +107,7 @@ src/app/api/           public slots, message dispatcher job, WhatsApp webhook
 src/app/actions/       server actions (all writes go through the signed-in user's session → RLS applies)
 src/lib/               i18n, formatting, normalization, navigation, error mapping
 scripts/               db-test, local stack, demo data
-e2e/                   browser journeys (staff, portal, milestones 4–12)
+e2e/                   browser journeys (staff, portal, milestones 4–16)
 docs/                  architecture, permissions, accounting events, security, tests, deployment, Arabic user guide
 docs/website/          website architecture, sitemap, CMS model, landing pages, analytics, SEO, security, UAT
 ```

@@ -134,8 +134,31 @@ Each item has a configurable mechanism already (or planned). Placeholders are cl
 99. Package refund policy: is an unused package refundable at all, within what period, and is there an admin fee (fixed, percentage, none)? Current: refundable while active; fee entered per request, approved by a second person.
 100. Value of a session already used when the package was sold at a discount: current refund = sessions left × the package's per-session net price (the discount is shared across all sessions). Confirm, or should used sessions be re-priced at the full single-session price?
 101. Package transfer between patients: allowed? only within the family? fee? Current: allowed by the center director / chief accountant with a reason, no fee.
-102. Supplier return on a delivery already paid: does the supplier refund cash, or is it credited against the next invoice? Current: the approval refuses until the payment side is settled; a supplier credit / refund record is the next step once the clinic decides.
+102. Supplier return on a delivery already paid: does the supplier refund cash, or is it credited against the next invoice? Current (session 13): the excess becomes a supplier credit that can be used on another delivery or closed when the supplier's refund is recorded — confirm the clinic's practice with each supplier.
 103. E-receipts: the clinic's tax registration number, activity code, branch code and POS serial; whether the clinic issues B2C e-receipts, B2B e-invoices, or both; the ETA item codes (EGS) to register for each service.
 104. Tax treatment of each service (medical services exempt vs. taxable cosmetic services, e.g. laser hair removal): to be set by the clinic's tax accountant. Prices are currently treated as final (no VAT added).
 105. Live Tax Authority connector: who holds the portal credentials and the signing token (for e-invoices), and when pre-production testing can be scheduled.
 
+## Finance completion (added session 13)
+106. Withholding tax on doctor fees: the rate for each doctor (individual vs. company, Form 41 practice) and the filing period. Current: per contract, 0 = none.
+107. Doctor share basis: on invoice issue (current default) or only once collected? Per doctor or for all? Current: chosen per contract.
+108. Purchasing approval thresholds: amount above which a purchase order / supplier payment needs the second approval, and who holds it (current holders: center director, owner). Current: empty = off.
+109. VAT on purchases: recoverable input VAT, or a cost because the clinic's services are exempt (or a mix)? To be set by the tax accountant. Current: must be chosen before VAT can be recorded.
+110. Card / gateway settlement: expected fees per provider and the reconciliation cadence (daily / weekly). Current: fees entered from each bank deposit.
+111. Loyalty programme: is there one at all? Points per EGP, value of a point, minimum to redeem, expiry, which services earn, and the referral bonus. Current: off, every rate empty.
+112. Online installments: maximum number a patient may choose online per plan type, and whether a late installment blocks further work. Current: set per plan by staff (default 1).
+113. End-of-service: gratuity formula, tax treatment, notice-period rules and leave encashment basis. Current: leave encashment (daily rate × balance) and outstanding loans calculated; the rest entered by HR.
+114. Annual increment: one percentage for all, or per grade / performance? Current: entered per run (all active employees or one).
+
+## Clinical and operations completion (added sessions 14–15)
+115. Which results must the doctor review before the patient sees them (all, or abnormal only)? Current: every result is reviewed and released explicitly.
+116. Clinical photos: may they ever be shown to the patient in the portal, or used (with consent) for marketing? Current: photos can be released to the patient by the doctor; never public.
+117. File retention: how long are results, photos and ID copies kept after the last visit (MoH and data-protection rules)? Current: kept; void hides but does not delete.
+118. Performance reviews: criteria, weights, frequency (annual / semi-annual) and whether results affect increments. Current: none created; HR defines them.
+119. Stock transfers between branches: who approves, and is a shortage on receipt charged to anyone? Current: requested and dispatched by inventory, received by the destination, shortage written off with a note.
+
+## Website and marketing completion (added session 16)
+120. Testimonial consent wording (Arabic and English) to be approved by the medical director and legal; whether written consent is also required at the desk. Current: the patient grants or withdraws it from the portal profile; staff can record it.
+121. A/B testing cookie: confirm the privacy notice mentions the anonymous visitor id used only to keep the same page version (90 days).
+122. SMS: provider (Twilio or an Egyptian provider), sender id, budget, and whether to enable fallback when WhatsApp fails. Current: off; only patients who chose SMS get SMS.
+123. Medical articles: who may author (doctors only, or marketing with a doctor named as author), and whether sources are mandatory.
