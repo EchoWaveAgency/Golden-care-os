@@ -14,6 +14,7 @@ import { PrintButton } from "@/components/PrintButton";
 import { PaymentForm } from "./PaymentForm";
 import { requestRefund } from "@/app/actions/refunds";
 import { applyAdvance } from "@/app/actions/dental";
+import { redeemLoyalty } from "@/app/actions/loyalty";
 import type { DictKey } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
     ctx.supabase.from("payments").select("id, receipt_no, method, amount, reference, received_at").eq("invoice_id", inv.id).order("received_at"),
     ctx.supabase.rpc("patient_directory", { p_ids: [inv.patient_id] }),
     inv.status === "draft" ? ctx.supabase.from("services").select("id, code, name_ar, name_en").eq("is_active", true).order("code") : Promise.resolve({ data: [] }),
-    ctx.supabase.from("payment_methods").select("code, name_ar, name_en, requires_reference").eq("is_active", true).not("code", "in", "(online,advance)"),
+    ctx.supabase.from("payment_methods").select("code, name_ar, name_en, requires_reference").eq("is_active", true).not("code", "in", "(online,advance,loyalty)"),
     inv.status === "draft" ? ctx.supabase.from("staff").select("id, full_name_ar, full_name_en").eq("kind", "doctor").eq("is_active", true) : Promise.resolve({ data: [] }),
   ]);
   const { data: refunds } = await ctx.supabase.from("refunds").select("id, ref, amount, status, reason, requested_at").eq("invoice_id", inv.id).order("requested_at");
@@ -42,6 +43,8 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
   const canPay = ["issued", "partially_paid"].includes(inv.status) && ctx.can("payment.collect");
   const { data: advData } = canPay ? await ctx.supabase.rpc("patient_advance", { p_patient: inv.patient_id }) : { data: [] };
   const advAvail = Number((((advData ?? []) as { available: number }[])[0]?.available) ?? 0);
+  const { data: loyData } = canPay ? await ctx.supabase.rpc("patient_loyalty", { p_patient: inv.patient_id }) : { data: null };
+  const loy = loyData as { enabled: boolean; points: number; value: number; egp_per_point: number | null; min_redeem: number } | null;
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -53,6 +56,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
         />
         <Banner error={searchParams.error} success={searchParams.paid ? (ar ? "تم تسجيل الدفعة وإصدار الإيصال." : "Payment recorded and receipt issued.") : searchParams.ok === "refund_requested" ? (ar ? "تم إرسال طلب الاسترداد للاعتماد." : "Refund request sent for approval.") : searchParams.ok === "plan_billed" ? (ar ? "تمت فوترة البنود المنفذة وخصمها من الرصيد المقدم بقدر المتاح." : "Completed work billed; the advance balance was applied where available.")
           : searchParams.ok === "advance_applied" ? (ar ? "تم الخصم من الرصيد المقدم." : "Paid from the advance balance.")
+          : searchParams.ok === "points_redeemed" ? (ar ? "تم الخصم بنقاط الولاء." : "Paid with loyalty points.")
           : searchParams.ok === "package" ? (ar ? "تم بيع الباقة وإصدار الفاتورة. حصّل المبلغ؛ الجلسات تُستخدم بعد السداد الكامل." : "Package sold and invoice issued. Collect payment; sessions can be used once it is fully paid.") : undefined} />
       </div>
 
@@ -151,6 +155,15 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
               <input type="hidden" name="invoice_id" value={inv.id} /><input type="hidden" name="idempotency_key" value={randomUUID()} />
               <input name="amount" type="number" min="0.01" step="0.01" max={Math.min(advAvail, Number(inv.balance))} defaultValue={Math.min(advAvail, Number(inv.balance))} className="input num" aria-label={t("bill.amount")} />
               <SubmitButton pendingLabel="…" className="btn-gold">{ar ? "خصم" : "Apply"}</SubmitButton>
+            </form>
+          )}
+          {canPay && loy?.enabled && loy.points >= Math.max(loy.min_redeem, 1) && (
+            <form action={redeemLoyalty} className="card space-y-2 border-teal-200 p-5" data-redeem-points>
+              <h2 className="font-medium text-navy-700">{ar ? "الخصم بنقاط الولاء" : "Pay with loyalty points"}</h2>
+              <p className="text-sm text-ink-500">{ar ? "رصيد المريض:" : "Patient has:"} <span className="num font-medium">{loy.points}</span> {ar ? "نقطة" : "points"} (<span className="num">{money(loy.value, locale)}</span>)</p>
+              <input type="hidden" name="invoice_id" value={inv.id} /><input type="hidden" name="idempotency_key" value={randomUUID()} />
+              <input name="points" type="number" min={loy.min_redeem || 1} step="1" max={loy.points} required className="input num" aria-label={ar ? "النقاط" : "Points"} />
+              <SubmitButton pendingLabel="…" className="btn-ghost">{ar ? "خصم النقاط" : "Redeem"}</SubmitButton>
             </form>
           )}
           {canPay && (

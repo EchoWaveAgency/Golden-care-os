@@ -88,3 +88,11 @@ export async function portalRevoke(form: FormData) {
   const { error } = await supabase.rpc("portal_revoke_access", { p_grant: str(form, "grant") });
   back(lang, "family", error, error ? undefined : "revoked");
 }
+
+// Loyalty: the patient creates their own referral code to share.
+export async function portalReferralCode(form: FormData) {
+  const lang = langOf(form);
+  const { supabase, active } = await getPortal(lang);
+  const { error } = await supabase.rpc("portal_referral_code", { p_patient: active.id });
+  back(lang, "finance", error, "referral");
+}

@@ -38,7 +38,7 @@ export default async function PlanPage({ params, searchParams }: { params: { id:
     ctx.supabase.rpc("patient_advance", { p_patient: p.patient_id }),
     ctx.supabase.from("lab_cases").select("id, ref, plan_item_id, work_type, status, due_on, lab:suppliers(name_ar)").eq("plan_id", p.id).order("created_at"),
     ctx.can("lab.manage") ? ctx.supabase.from("suppliers").select("id, name_ar").eq("is_lab", true).eq("is_active", true).order("name_ar") : Promise.resolve({ data: [] }),
-    ctx.supabase.from("payment_methods").select("code, name_ar, name_en, requires_reference").eq("is_active", true).not("code", "in", "(advance,online)"),
+    ctx.supabase.from("payment_methods").select("code, name_ar, name_en, requires_reference").eq("is_active", true).not("code", "in", "(advance,online,loyalty)"),
     ctx.supabase.from("specialties").select("id").eq("code", "dental").maybeSingle(),
   ]);
   const patientName = ((dir ?? []) as { full_name_ar: string; mrn: string }[])[0];

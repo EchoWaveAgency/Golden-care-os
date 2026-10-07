@@ -48,6 +48,7 @@ export default async function AccountingPage({ searchParams }: { searchParams: {
             <div><label className="label" htmlFor="to">{t("acc.to")}</label><input id="to" type="date" name="to" defaultValue={to} className="input" /></div>
             <button className="btn-primary">{t("common.search")}</button>
             <Link href="/os/accounting/einvoice" className="btn-ghost">{ctx.locale === "ar" ? "الفاتورة الإلكترونية" : "E-invoicing"}</Link>
+            <Link href="/os/accounting/clearing" className="btn-ghost">{ctx.locale === "ar" ? "تسويات البطاقات والولاء" : "Settlements & loyalty"}</Link>
           </form>
         }
       />

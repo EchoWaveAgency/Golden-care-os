@@ -13,7 +13,8 @@ export async function dispatchOnce(limit = 20) {
   const { data: reminders } = await db.rpc("svc_enqueue_due_reminders");
   const care = await processDue().catch((e) => ({ error: e instanceof Error ? e.message : "care run failed" }));
   const einvoice = await processEinvoices().catch((e) => ({ error: e instanceof Error ? e.message : "e-invoice run failed" }));
-  if (messagingMode() === "disabled") return { reminders: reminders ?? 0, sent: 0, failed: 0, care, einvoice, skipped: "no provider configured" };
+  const { data: loyaltyExpired } = await db.rpc("svc_loyalty_expire");
+  if (messagingMode() === "disabled") return { reminders: reminders ?? 0, sent: 0, failed: 0, care, einvoice, loyaltyExpired, skipped: "no provider configured" };
 
   const { data: batch, error } = await db.rpc("svc_outbox_claim", { p_limit: limit });
   if (error) throw new Error(error.message);

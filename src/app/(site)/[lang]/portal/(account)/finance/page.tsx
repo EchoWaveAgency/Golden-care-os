@@ -6,10 +6,11 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Banner } from "@/components/Banner";
 import { SubmitButton } from "@/components/SubmitButton";
 import { startPayment } from "@/app/actions/portal-pay";
+import { portalReferralCode } from "@/app/actions/portal";
 import { paymentsMode } from "@/lib/payments/gateway";
 
 const METHOD: Record<string, [string, string]> = {
-  online: ["دفع إلكتروني", "Online"],
+  online: ["دفع إلكتروني", "Online"], advance: ["من الرصيد المقدم", "From your balance"], loyalty: ["نقاط الولاء", "Loyalty points"],
   cash: ["نقدًا", "Cash"], card: ["بطاقة", "Card"], instapay: ["إنستاباي", "InstaPay"], wallet: ["محفظة إلكترونية", "Mobile wallet"], bank_transfer: ["تحويل بنكي", "Bank transfer"],
 };
 
@@ -29,6 +30,20 @@ export default async function PortalFinancePage({ params, searchParams }: { para
         <p className="num mt-1 text-3xl font-semibold">{money(f.balance, lang)}</p>
         {Number(f.balance) > 0 && <p className="mt-2 text-xs">{online ? (ar ? "ادفع أونلاين بالبطاقة أو المحفظة من زر «ادفع الآن» بجوار الفاتورة، أو في استقبال العيادة." : "Pay online by card or wallet with \u201cPay now\u201d next to the invoice, or at the clinic reception.") : (ar ? "يمكنك السداد في استقبال العيادة." : "You can pay at the clinic reception.")}</p>}
       </div>
+      {(Number(f.wallet ?? 0) > 0 || f.loyalty) && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {Number(f.wallet ?? 0) > 0 && <div className="rounded-2xl border border-ivory-300/70 bg-white p-5" data-portal-wallet>
+            <p className="text-sm text-ink-500">{ar ? "رصيدك المقدم لدى العيادة" : "Your prepaid balance"}</p>
+            <p className="num mt-1 text-2xl font-semibold text-navy-700">{money(Number(f.wallet), lang)}</p>
+            <p className="mt-1 text-xs text-ink-500">{ar ? "يُخصم من فواتيرك القادمة في الاستقبال." : "Used on your next invoices at reception."}</p></div>}
+          {f.loyalty && <div className="rounded-2xl border border-ivory-300/70 bg-white p-5" data-portal-loyalty>
+            <p className="text-sm text-ink-500">{ar ? "نقاط الولاء" : "Loyalty points"}</p>
+            <p className="mt-1 text-2xl font-semibold text-navy-700"><span className="num">{f.loyalty.points}</span> <span className="text-sm font-normal text-ink-500">{ar ? "نقطة" : "points"} · <span className="num">{money(f.loyalty.value, lang)}</span></span></p>
+            {f.loyalty.referral_code
+              ? <p className="mt-2 text-xs text-ink-500">{ar ? "كود الدعوة الخاص بك:" : "Your invite code:"} <span className="num font-semibold text-navy-700" dir="ltr">{f.loyalty.referral_code}</span>{f.loyalty.referral_bonus ? (ar ? ` — تحصل على ${f.loyalty.referral_bonus} نقطة عن كل صديق يزورنا لأول مرة.` : ` — earn ${f.loyalty.referral_bonus} points for each friend's first visit.`) : ""}</p>
+              : <form action={portalReferralCode} className="mt-2"><input type="hidden" name="lang" value={lang} /><SubmitButton pendingLabel="…" className="btn-ghost text-xs">{ar ? "اعمل كود دعوة لأصدقائك" : "Create an invite code"}</SubmitButton></form>}
+          </div>}
+        </div>)}
       {f.invoices.length === 0 ? <p className="rounded-2xl border border-ivory-300/70 bg-white p-6 text-sm text-ink-500">{ar ? "لا توجد فواتير." : "No invoices."}</p> : (
         <ul className="space-y-3">
           {f.invoices.map((i) => (

@@ -66,7 +66,7 @@ export type PortalMedical = {
   visits: { id: string; date: string; summary: string; instructions: string | null; released_at: string; doctor_ar: string; doctor_en: string; specialty_ar: string; specialty_en: string }[];
   prescriptions: PortalRx[]; allergies: string[];
 };
-export type PortalFinance = { balance: number; invoices: { id: string; invoice_no: string; issued_at: string; status: string; total: number; paid: number; balance: number; discount: number;
+export type PortalFinance = { balance: number; wallet?: number; loyalty?: { points: number; value: number; referral_code: string | null; referral_bonus: number | null } | null; invoices: { id: string; invoice_no: string; issued_at: string; status: string; total: number; paid: number; balance: number; discount: number;
   lines: { service_ar: string; service_en: string; qty: number; net: number }[] | null;
   receipts: { receipt_no: string; amount: number; method: string; at: string }[] | null;
   refunded?: number; refunds?: { ref: string; amount: number; method: string; at: string }[] | null }[] };

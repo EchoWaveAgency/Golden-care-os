@@ -45,6 +45,7 @@ select org.id, c, ar, en, t::public.account_type, p from org, (values
   ('4120', 'إيرادات الأسنان',                 'Dental revenue',              'revenue',   true),
   ('4900', 'خصومات مسموح بها',               'Discounts allowed',           'revenue',   true),
   ('4910', 'مردودات ومبالغ مستردة للمرضى',    'Patient refunds (contra revenue)', 'revenue', true),
+  ('4920', 'خصومات برنامج الولاء',            'Loyalty redemptions (contra revenue)', 'revenue', true),
   ('4130', 'إيرادات باقات منتهية الصلاحية',     'Expired package revenue',     'revenue',   true),
   ('5000', 'المصروفات',                      'Expenses',                    'expense',   false),
   ('5100', 'أتعاب الأطباء',                  'Doctor fees',                 'expense',   true),
@@ -69,7 +70,7 @@ select a.organization_id, k, a.id from public.accounts a join (values
   ('inventory', '1300'), ('consumables_expense', '5300'), ('suppliers_payable', '2100'), ('inventory_adjustments', '5310'),
   ('package_deferred', '2210'), ('package_breakage', '4130'), ('lab_costs', '5500'), ('maintenance_expense', '5600'),
   ('employee_advances', '1160'), ('social_insurance_payable', '2410'), ('payroll_tax_payable', '2420'), ('employer_insurance_expense', '5210'),
-  ('salaries_expense', '5200'), ('salaries_payable', '2400'), ('withholding_tax_payable', '2430'), ('input_vat', '1170'), ('vat_expense', '5700')
+  ('salaries_expense', '5200'), ('salaries_payable', '2400'), ('withholding_tax_payable', '2430'), ('input_vat', '1170'), ('vat_expense', '5700'), ('bank_charges', '5400'), ('loyalty_redemptions', '4920')
 ) m(k, code) on m.code = a.code
 where a.organization_id = '00000000-0000-4000-8000-000000000001'
 on conflict do nothing;

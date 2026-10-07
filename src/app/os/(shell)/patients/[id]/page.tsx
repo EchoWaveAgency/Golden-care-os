@@ -1,3 +1,4 @@
+import { createReferralCode, setReferrer } from "@/app/actions/loyalty";
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -54,9 +55,11 @@ export default async function PatientPage({ params, searchParams }: { params: { 
     showPlans ? ctx.supabase.from("treatment_plans").select("id, ref, title, status, total, created_at").eq("patient_id", p.id).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
     showAdvance ? ctx.supabase.rpc("patient_advance", { p_patient: p.id }) : Promise.resolve({ data: [] }),
     showAdvance ? ctx.supabase.from("patient_deposits").select("id, ref, kind, amount, method, created_at").eq("patient_id", p.id).order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
-    ctx.can("payment.collect") || ctx.can("refund.request") ? ctx.supabase.from("payment_methods").select("code, name_ar, name_en").eq("is_active", true).not("code", "in", "(advance,online)") : Promise.resolve({ data: [] }),
+    ctx.can("payment.collect") || ctx.can("refund.request") ? ctx.supabase.from("payment_methods").select("code, name_ar, name_en").eq("is_active", true).not("code", "in", "(advance,online,loyalty)") : Promise.resolve({ data: [] }),
   ]);
   const adv = ((advData ?? []) as { balance: number; available: number }[])[0];
+  const { data: loyData } = await ctx.supabase.rpc("patient_loyalty", { p_patient: p.id });
+  const loy = loyData as { enabled: boolean; points: number; value: number; referral_code: string | null; referred_by: string | null; referrals: number } | null;
   const { data: careRows } = ctx.can("care.read")
     ? await ctx.supabase.from("care_journeys").select("id, ref, kind, status, outcome, channel, scheduled_at, closed_at").eq("patient_id", p.id).order("created_at", { ascending: false }).limit(10)
     : { data: [] };
@@ -86,7 +89,9 @@ export default async function PatientPage({ params, searchParams }: { params: { 
         : searchParams.ok === "deposit" ? (locale === "ar" ? "تم تحصيل الدفعة المقدمة." : "Advance received.")
         : searchParams.ok === "refund_requested" ? (locale === "ar" ? "تم إرسال طلب الاسترداد للاعتماد." : "Refund request sent for approval.")
         : searchParams.ok === "package_refund_requested" ? (locale === "ar" ? "تم إرسال طلب استرداد الباقة للاعتماد." : "Package refund request sent for approval.")
-        : searchParams.ok === "package_transferred" ? (locale === "ar" ? "تم تحويل الجلسات المتبقية للمريض الآخر." : "Remaining sessions transferred.") : undefined} />
+        : searchParams.ok === "package_transferred" ? (locale === "ar" ? "تم تحويل الجلسات المتبقية للمريض الآخر." : "Remaining sessions transferred.")
+        : searchParams.ok === "referrer_set" ? (locale === "ar" ? "تم تسجيل من رشّح المريض." : "Referrer recorded.")
+        : searchParams.ok === "referral_code" ? (locale === "ar" ? "تم إنشاء كود الدعوة." : "Invite code created.") : undefined} />
 
       {alerts.length > 0 && (
         <div role="note" className="mb-5 flex flex-wrap items-center gap-2 rounded-xl border border-danger/20 bg-danger-50 px-4 py-3">
@@ -209,6 +214,21 @@ export default async function PatientPage({ params, searchParams }: { params: { 
             </div>
           </section>
         )}
+        {loy?.enabled && (
+          <section className="card p-5 text-sm lg:col-span-3" data-loyalty>
+            <h2 className="mb-2 font-medium text-navy-700">{locale === "ar" ? "نقاط الولاء والدعوات" : "Loyalty and referrals"}</h2>
+            <p><span className="num font-semibold text-navy-700">{loy.points}</span> {locale === "ar" ? "نقطة" : "points"} (<span className="num">{money(loy.value, locale)}</span>)
+              {" · "}{locale === "ar" ? "دعوات ناجحة:" : "referrals:"} <span className="num">{loy.referrals}</span>
+              {loy.referred_by && <>{" · "}{locale === "ar" ? "رشّحه:" : "referred by:"} <span className="num">{loy.referred_by}</span></>}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-4">
+              {loy.referral_code ? <span>{locale === "ar" ? "كود الدعوة:" : "Invite code:"} <span className="num font-semibold" dir="ltr">{loy.referral_code}</span></span>
+                : ctx.can("patient.write") && <form action={createReferralCode}><input type="hidden" name="patient_id" value={p.id} /><SubmitButton pendingLabel="…" className="btn-ghost text-xs">{locale === "ar" ? "إنشاء كود دعوة" : "Create invite code"}</SubmitButton></form>}
+              {!loy.referred_by && ctx.can("patient.write") && (
+                <form action={setReferrer} className="flex items-center gap-2" data-set-referrer><input type="hidden" name="patient_id" value={p.id} />
+                  <input name="code" required placeholder={locale === "ar" ? "كود من رشّحه" : "Referrer's code"} className="input w-36 py-1 text-xs" dir="ltr" />
+                  <SubmitButton pendingLabel="…" className="btn-ghost text-xs">{locale === "ar" ? "تسجيل" : "Record"}</SubmitButton></form>)}
+            </div>
+          </section>)}
         {showPackages && (
           <section className="card lg:col-span-3" data-packages>
             <h2 className="border-b border-ivory-200 px-5 py-3 font-medium text-navy-700">{locale === "ar" ? "الباقات" : "Packages"}</h2>
