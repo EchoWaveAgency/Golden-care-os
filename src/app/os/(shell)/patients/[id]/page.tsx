@@ -1,5 +1,7 @@
 import { createReferralCode, setReferrer } from "@/app/actions/loyalty";
 import { PatientFiles, type PFile } from "@/components/PatientFiles";
+import { DentalChart, CONDITIONS, type Chart } from "@/components/DentalChart";
+import { recordDentalFindings, voidDentalFinding } from "@/app/actions/dental";
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -64,6 +66,9 @@ export default async function PatientPage({ params, searchParams }: { params: { 
     .select("id, ref, kind, clinical, title, taken_on, body_area, photo_stage, content_type, created_at, uploaded_by, reviewed_at, abnormal, review_note, released_at, release_note")
     .eq("patient_id", p.id).neq("status", "void").order("created_at", { ascending: false }).returns<PFile[]>();
   const canManageFiles = ctx.can("clinical.release") || ctx.can("clinical.write.own");
+  const { data: chartData } = await ctx.supabase.rpc("dental_chart", { p_patient: p.id });
+  const chart = chartData as Chart | null;
+  const showChart = chart && (chart.can_write || Object.keys(chart.teeth).length > 0 || chart.plan.length > 0);
   const loy = loyData as { enabled: boolean; points: number; value: number; referral_code: string | null; referred_by: string | null; referrals: number } | null;
   const { data: careRows } = ctx.can("care.read")
     ? await ctx.supabase.from("care_journeys").select("id, ref, kind, status, outcome, channel, scheduled_at, closed_at").eq("patient_id", p.id).order("created_at", { ascending: false }).limit(10)
@@ -95,6 +100,7 @@ export default async function PatientPage({ params, searchParams }: { params: { 
         : searchParams.ok === "refund_requested" ? (locale === "ar" ? "تم إرسال طلب الاسترداد للاعتماد." : "Refund request sent for approval.")
         : searchParams.ok === "package_refund_requested" ? (locale === "ar" ? "تم إرسال طلب استرداد الباقة للاعتماد." : "Package refund request sent for approval.")
         : searchParams.ok === "package_transferred" ? (locale === "ar" ? "تم تحويل الجلسات المتبقية للمريض الآخر." : "Remaining sessions transferred.")
+        : searchParams.ok === "chart_saved" ? (locale === "ar" ? "تم تحديث مخطط الأسنان." : "Dental chart updated.")
         : searchParams.ok === "file_uploaded" ? (locale === "ar" ? "تم رفع الملف." : "File uploaded.")
         : searchParams.ok === "file_reviewed" ? (locale === "ar" ? "تمت مراجعة النتيجة." : "Result reviewed.")
         : searchParams.ok === "file_released" ? (locale === "ar" ? "أصبح الملف ظاهرًا للمريض في حسابه." : "The file is now visible to the patient.")
@@ -166,6 +172,23 @@ export default async function PatientPage({ params, searchParams }: { params: { 
         {((fileRows ?? []).length > 0 || ctx.can("files.upload")) && (
           <PatientFiles patientId={p.id} files={fileRows ?? []} locale={locale} userId={ctx.user.id} canUpload={ctx.can("files.upload")} canManage={canManageFiles}
             appointments={(apts ?? []).slice(0, 10).map((a) => ({ id: a.id, label: `${a.ref} · ${dateTime(rangeStart(a.slot), locale)}` }))} />)}
+        {showChart && chart && (
+          <details className="card p-5 lg:col-span-3" open={Object.keys(chart.teeth).length > 0 || chart.plan.length > 0} data-dental>
+            <summary className="cursor-pointer font-medium text-navy-700">{locale === "ar" ? "مخطط الأسنان" : "Dental chart"}</summary>
+            <div className="mt-3"><DentalChart chart={chart} ar={locale === "ar"} action={recordDentalFindings} patientId={p.id} /></div>
+            {chart.history.length > 0 && (
+              <details className="mt-3 text-xs"><summary className="cursor-pointer text-ink-500">{locale === "ar" ? "سجل الملاحظات" : "Findings history"}</summary>
+                <ul className="mt-2 divide-y divide-ivory-200">
+                  {chart.history.map((h) => (
+                    <li key={h.id} className={`flex flex-wrap items-center justify-between gap-2 py-1.5 ${h.voided ? "text-ink-300 line-through" : ""}`}>
+                      <span><span className="num font-medium">{h.tooth}</span> · {locale === "ar" ? CONDITIONS[h.condition]?.ar : CONDITIONS[h.condition]?.en}{h.surfaces ? <span className="num"> ({h.surfaces})</span> : null}{h.note ? ` — ${h.note}` : ""} · {dateTime(h.at, locale)}</span>
+                      {!h.voided && chart.can_write && (
+                        <form action={voidDentalFinding} className="flex gap-1"><input type="hidden" name="patient_id" value={p.id} /><input type="hidden" name="finding_id" value={h.id} />
+                          <input name="reason" required placeholder={locale === "ar" ? "سبب الإلغاء" : "Reason"} className="input w-28 py-0.5 text-xs" />
+                          <SubmitButton pendingLabel="…" className="btn-ghost px-2 py-0.5 text-xs">{locale === "ar" ? "إلغاء" : "Void"}</SubmitButton></form>)}
+                    </li>))}
+                </ul></details>)}
+          </details>)}
         {(careRows ?? []).length > 0 && (
           <section className="card lg:col-span-3" data-care>
             <h2 className="border-b border-ivory-200 px-5 py-3 font-medium text-navy-700">{locale === "ar" ? "مساعد المتابعة" : "Care assistant"}</h2>

@@ -147,3 +147,20 @@ export async function voidSupplierBill(form: FormData) {
 export async function setPlanPortalOptions(form: FormData) {
   await planStep(form, "set_plan_portal_options", { p_max_installments: Number(s(form, "max_installments") || 1) }, "portal_options");
 }
+
+/** Dental chart: one finding for each selected tooth. */
+export async function recordDentalFindings(form: FormData) {
+  const ctx = await getContext();
+  const patient = s(form, "patient_id");
+  const surfaces = form.getAll("surface").map(String).join("");
+  const entries = s(form, "teeth").split(",").filter(Boolean).map((tooth) => ({ tooth, condition: s(form, "condition"), surfaces, note: s(form, "note") }));
+  const { error } = await ctx.supabase.rpc("record_dental_findings", { p_patient: patient, p_entries: entries });
+  go(`/os/patients/${patient}`, error, ctx.locale, "chart_saved");
+}
+
+export async function voidDentalFinding(form: FormData) {
+  const ctx = await getContext();
+  const patient = s(form, "patient_id");
+  const { error } = await ctx.supabase.rpc("void_dental_finding", { p_id: s(form, "finding_id"), p_reason: s(form, "reason") });
+  go(`/os/patients/${patient}`, error, ctx.locale, "chart_saved");
+}
