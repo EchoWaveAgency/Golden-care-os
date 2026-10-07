@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { dateTime } from "@/lib/format";
 import { SubmitButton } from "@/components/SubmitButton";
 import { uploadPatientFile, reviewPatientFile, releasePatientFile, voidPatientFile } from "@/app/actions/files";
@@ -77,7 +78,7 @@ export function PatientFiles({ patientId, files, locale, userId, canUpload, canM
         </div>)}
       {files.length === 0 && <p className="px-5 py-4 text-sm text-ink-300">{ar ? "لا توجد ملفات." : "No files."}</p>}
       {canUpload && (
-        <form action={uploadPatientFile} className="grid gap-3 border-t border-ivory-200 p-5 text-sm md:grid-cols-6" data-upload-file>
+        <form key={randomUUID()} action={uploadPatientFile} className="grid gap-3 border-t border-ivory-200 p-5 text-sm md:grid-cols-6" data-upload-file>
           <input type="hidden" name="patient_id" value={patientId} />
           <label className="md:col-span-2"><span className="label">{ar ? "الملف (PDF أو صورة حتى 15 ميجا)" : "File (PDF or photo, up to 15 MB)"}</span>
             <input name="file" type="file" required accept="application/pdf,image/jpeg,image/png,image/webp,image/heic" className="input py-1.5" /></label>

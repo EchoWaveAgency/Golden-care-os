@@ -98,7 +98,7 @@ export default async function PerformancePage({ searchParams }: { searchParams: 
           <details className="card p-4 text-sm" data-criteria open={active.length === 0}>
             <summary className="cursor-pointer font-medium text-navy-700">{ar ? "معايير التقييم" : "Review criteria"}</summary>
             <ul className="mt-2 space-y-1 text-xs">{(crit ?? []).map((c) => <li key={c.code} className={c.is_active ? "" : "text-ink-300"}><span className="num">{c.code}</span> · {ar ? c.name_ar : c.name_en} · ×{Number(c.weight)}</li>)}</ul>
-            <form action={saveReviewCriterion} className="mt-3 space-y-2"><input type="hidden" name="m" value={m} />
+            <form key={`crit-${(crit ?? []).length}`} action={saveReviewCriterion} className="mt-3 space-y-2"><input type="hidden" name="m" value={m} />
               <input name="code" required pattern="[A-Za-z][A-Za-z0-9_]{1,23}" placeholder={ar ? "الكود (مثال CARE)" : "Code (e.g. CARE)"} className="input" dir="ltr" />
               <input name="name_ar" required placeholder={ar ? "الاسم بالعربي" : "Arabic name"} className="input" />
               <input name="name_en" placeholder={ar ? "الاسم بالإنجليزي" : "English name"} className="input" dir="ltr" />

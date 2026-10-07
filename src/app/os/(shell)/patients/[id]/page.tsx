@@ -1,6 +1,7 @@
 import { createReferralCode, setReferrer } from "@/app/actions/loyalty";
 import { PatientFiles, type PFile } from "@/components/PatientFiles";
-import { DentalChart, CONDITIONS, type Chart } from "@/components/DentalChart";
+import { DentalChart, type Chart } from "@/components/DentalChart";
+import { CONDITIONS } from "@/lib/dental-chart";
 import { recordDentalFindings, voidDentalFinding } from "@/app/actions/dental";
 import { randomUUID } from "node:crypto";
 import Link from "next/link";
@@ -175,7 +176,7 @@ export default async function PatientPage({ params, searchParams }: { params: { 
         {showChart && chart && (
           <details className="card p-5 lg:col-span-3" open={Object.keys(chart.teeth).length > 0 || chart.plan.length > 0} data-dental>
             <summary className="cursor-pointer font-medium text-navy-700">{locale === "ar" ? "مخطط الأسنان" : "Dental chart"}</summary>
-            <div className="mt-3"><DentalChart chart={chart} ar={locale === "ar"} action={recordDentalFindings} patientId={p.id} /></div>
+            <div className="mt-3"><DentalChart key={chart.history.length} chart={chart} ar={locale === "ar"} action={recordDentalFindings} patientId={p.id} /></div>
             {chart.history.length > 0 && (
               <details className="mt-3 text-xs"><summary className="cursor-pointer text-ink-500">{locale === "ar" ? "سجل الملاحظات" : "Findings history"}</summary>
                 <ul className="mt-2 divide-y divide-ivory-200">
