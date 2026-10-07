@@ -36,6 +36,7 @@ export const REACTION: Record<string, L> = {
 };
 export const PACKAGE_STATUS: Record<string, L> = {
   active: { ar: "سارية", en: "Active" }, used: { ar: "مستهلكة", en: "Used up" }, expired: { ar: "منتهية", en: "Expired" }, cancelled: { ar: "ملغاة", en: "Cancelled" },
+  refunded: { ar: "مستردة", en: "Refunded" },
 };
 export const FITZPATRICK = ["I", "II", "III", "IV", "V", "VI"];
 

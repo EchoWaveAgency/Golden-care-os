@@ -256,5 +256,28 @@ Real WhatsApp delivery of the new templates (Meta approval of `gc_care_*`), real
 - Policy values are deliberately empty: the payroll refuses to run until the chief accountant sets the insurance rates, overtime / lateness multipliers and tax brackets (or switches a component off).
 - SQL suite 15: setup refusal, import (duplicates, unknown ids, bad rows), attendance statuses and minutes, manual punch approval, leave rules, loan separation of duties, full payslip math checked line by line, journals balanced, separation of duties, locked month, self-service payslip, privacy (doctors / desk see nothing).
 
-### Not built yet
-HR and payroll screens (employees, attendance, leave, loans, payroll run, payslip print), device push endpoint, demo data, browser journey. End-of-service, annual increments and other policy items are open questions.
+### Screens (same session, continued)
+- `/os/hr` employees (file, salary history, shift, biometric id, end of employment), attendance month grid with file import (paste or upload a device export; unknown ids flagged for linking), manual punches with approval, overtime approval and recompute, shifts and rosters, leave requests and balances, loans; `/os/payroll` runs (prepare → approve → pay, liability payments, adjustments), payslip print, settings (components, rates, tax brackets, devices); `/os/me` — every employee's own file (attendance, leave requests, loans, payslips).
+- Biometric device push endpoint `app/iclock/cdata` (ZKTeco ADMS protocol): registered serial numbers only, optional IP allow-list.
+- Demo data (`scripts/demo-hr.mjs`): six employee files, a month of synthetic punches, demo payroll rates (labelled as placeholders), a pending leave request.
+- Browser journey m11: 18/18.
+
+### Still open
+End-of-service, annual increments and other policy items are open questions (92–98).
+
+## Session 12 — 2026-10-07: package refunds and transfers, supplier returns, e-receipts, printing
+
+### Delivered
+- **Package refunds** (migration 0022): refund of the unused value of a paid package minus an optional admin fee the clinic keeps (no fixed fee — it is entered per request until the clinic sets a policy). Requested by the desk, approved by someone else (chief accountant / center director), paid by the cashier (cash needs an open session). Sessions cannot be redeemed while a refund is open. Journal: Dr deferred package revenue (unused) / Cr cash or card (amount) / Cr other income (fee). The cashier's expected cash accounts for it. Package invoices can no longer go through the ordinary invoice refund.
+- **Package transfer** to another patient (center director / chief accountant; reason required): remaining sessions move with their value; journal moves the deferred revenue between patients.
+- **Supplier returns** (migration 0022): the store records goods going back on a delivery (lot, quantity, reason); purchasing approves (never their own). Stock leaves at lot cost, the amount reduces what is owed on that delivery (Dr suppliers / Cr inventory). If the delivery is already paid beyond the return, the approval refuses and asks to record the supplier's refund first (open question).
+- **E-receipts / e-invoices** (migration 0023, `/os/accounting/einvoice`): switched off by default. When on, every issued invoice, paid refund and paid package refund becomes a document in a queue (receipt or invoice, return, cancellation on void). Documents missing the clinic's tax registration data or a service's ETA code / tax treatment are **blocked** with the reason and never sent; the accountant fills the codes per service and re-sends. Return documents carry only the amount paid back (lines scaled pro rata). The connector runs with the message dispatcher; locally a simulator accepts complete documents with test ids (`EINVOICE_MODE=dev`). The live Tax Authority connector is **not** built: it needs the clinic's portal credentials and must pass the pre-production tests — it plugs into `src/lib/einvoice/connector.ts`.
+- **80 mm thermal receipt** (`/os/print/receipt/[invoice]`, link on every issued invoice): clinic and branch, invoice and receipt numbers, lines, discounts, payments with method and reference, balance, the e-receipt id once accepted. Prints from the browser to any receipt printer installed on the PC (page size 80 mm).
+- **Day sheet** (`/os/print/day-sheet`, link on reception): the day's appointments, one A4 page per doctor, with arrival and payment tick boxes — the paper fallback when the network is down and the doctor's door list.
+
+### Verified
+- SQL suites 17/17 plus concurrency ✅ (16: refund math, fee bounds, redemption hold, separation of duties, cash session, journals, transfer, supplier return lot / payable effects and refusals; 17: off by default, blocked reasons, permissions, claim once, retry with backoff, returns, cancellations, receipt id visible to the cashier but not the tax queue).
+- Browser journey m12 21/21 ✅ (see TEST_PLAN). Typecheck, lint, build ✅.
+
+### Not verified here
+Real Tax Authority submission (credentials, signing, certification); printing on a physical thermal printer (layout checked in the browser at 80 mm).

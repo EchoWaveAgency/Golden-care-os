@@ -13,7 +13,7 @@ import { Empty } from "@/components/Empty";
 import type { DictKey } from "@/lib/i18n";
 import { PortalCard } from "./PortalCard";
 import { PACKAGE_STATUS, label, type PackageBalance } from "@/lib/devices";
-import { sellPackage } from "@/app/actions/packages";
+import { requestPackageRefund, sellPackage, transferPackage } from "@/app/actions/packages";
 import { PLAN_STATUS, label as dlabel } from "@/lib/dental";
 import { recordDeposit, requestDepositRefund, savePlan } from "@/app/actions/dental";
 import { CARE_KIND, CARE_OUTCOME, CARE_STATUS, lbl } from "@/lib/care/labels";
@@ -61,6 +61,7 @@ export default async function PatientPage({ params, searchParams }: { params: { 
     ? await ctx.supabase.from("care_journeys").select("id, ref, kind, status, outcome, channel, scheduled_at, closed_at").eq("patient_id", p.id).order("created_at", { ascending: false }).limit(10)
     : { data: [] };
   const methodsList = (depMethods ?? []) as { code: string; name_ar: string; name_en: string }[];
+  const refundMethods = methodsList;
   const kindLabel = (k: string) => ({ deposit: locale === "ar" ? "دفعة مقدمة" : "Advance", applied: locale === "ar" ? "خُصم على فاتورة" : "Applied to invoice", refund: locale === "ar" ? "مُسترد" : "Refunded" }[k] ?? k);
   const alerts = (flags ?? []) as { kind: string; severity: string; n: number }[];
 
@@ -83,7 +84,9 @@ export default async function PatientPage({ params, searchParams }: { params: { 
       />
       <Banner error={searchParams.error} success={searchParams.booked ? (locale === "ar" ? "تم حجز الموعد." : "Appointment booked.")
         : searchParams.ok === "deposit" ? (locale === "ar" ? "تم تحصيل الدفعة المقدمة." : "Advance received.")
-        : searchParams.ok === "refund_requested" ? (locale === "ar" ? "تم إرسال طلب الاسترداد للاعتماد." : "Refund request sent for approval.") : undefined} />
+        : searchParams.ok === "refund_requested" ? (locale === "ar" ? "تم إرسال طلب الاسترداد للاعتماد." : "Refund request sent for approval.")
+        : searchParams.ok === "package_refund_requested" ? (locale === "ar" ? "تم إرسال طلب استرداد الباقة للاعتماد." : "Package refund request sent for approval.")
+        : searchParams.ok === "package_transferred" ? (locale === "ar" ? "تم تحويل الجلسات المتبقية للمريض الآخر." : "Remaining sessions transferred.") : undefined} />
 
       {alerts.length > 0 && (
         <div role="note" className="mb-5 flex flex-wrap items-center gap-2 rounded-xl border border-danger/20 bg-danger-50 px-4 py-3">
@@ -217,7 +220,24 @@ export default async function PatientPage({ params, searchParams }: { params: { 
                     <td className="td num">{locale === "ar" ? "متبقي" : "Left"} {k.units_total - k.units_used}/{k.units_total}</td>
                     <td className="td num text-ink-500">{locale === "ar" ? "تنتهي" : "Expires"} {k.expires_on}</td>
                     <td className="td">{label(PACKAGE_STATUS, k.status, locale === "ar")}{!k.paid && k.status === "active" ? <span className="text-warn"> · {locale === "ar" ? "غير مسددة" : "unpaid"}</span> : null}</td>
-                    <td className="td">{ctx.can("billing.read") && <Link href={`/os/billing/${k.invoice_id}`} className="num text-navy-700 hover:underline">{k.invoice_no}</Link>}</td>
+                    <td className="td">{ctx.can("billing.read") && <Link href={`/os/billing/${k.invoice_id}`} className="num text-navy-700 hover:underline">{k.invoice_no}</Link>}
+                      {k.status === "active" && k.paid && (ctx.can("refund.request") || ctx.can("package.manage")) && (
+                        <details className="mt-1 text-xs" data-package-actions={k.ref}><summary className="cursor-pointer text-teal-700">{locale === "ar" ? "استرداد / تحويل" : "Refund / transfer"}</summary>
+                          {ctx.can("refund.request") && (
+                            <form action={requestPackageRefund} className="mt-2 flex flex-wrap items-end gap-2" data-package-refund>
+                              <input type="hidden" name="patient_id" value={p.id} /><input type="hidden" name="package_id" value={k.id} />
+                              <span className="text-ink-500">{locale === "ar" ? "غير المستخدم" : "Unused"} <span className="num">{money(k.value_total - k.value_used, locale)}</span></span>
+                              <input name="fee" type="number" min="0" step="0.01" defaultValue={0} title={locale === "ar" ? "رسوم إدارية تحتفظ بها العيادة" : "Admin fee kept by the clinic"} className="input num w-24 py-1 text-xs" />
+                              <select name="method" className="input w-28 py-1 text-xs">{refundMethods.map((m) => <option key={m.code} value={m.code}>{locale === "ar" ? m.name_ar : m.name_en}</option>)}</select>
+                              <input name="reason" required placeholder={locale === "ar" ? "السبب" : "Reason"} className="input w-40 py-1 text-xs" />
+                              <SubmitButton pendingLabel="…" className="btn-ghost px-2 py-1 text-xs">{locale === "ar" ? "طلب استرداد" : "Request refund"}</SubmitButton></form>)}
+                          {ctx.can("package.manage") && (
+                            <form action={transferPackage} className="mt-2 flex flex-wrap items-end gap-2" data-package-transfer>
+                              <input type="hidden" name="patient_id" value={p.id} /><input type="hidden" name="package_id" value={k.id} />
+                              <input name="mrn" required placeholder={locale === "ar" ? "رقم ملف المريض المستلم" : "Receiving patient's file no."} className="input w-44 py-1 text-xs" dir="ltr" />
+                              <input name="reason" required placeholder={locale === "ar" ? "السبب" : "Reason"} className="input w-40 py-1 text-xs" />
+                              <SubmitButton pendingLabel="…" className="btn-ghost px-2 py-1 text-xs">{locale === "ar" ? "تحويل الجلسات المتبقية" : "Transfer remaining sessions"}</SubmitButton></form>)}
+                        </details>)}</td>
                   </tr>))}
               </tbody></table>
             )}

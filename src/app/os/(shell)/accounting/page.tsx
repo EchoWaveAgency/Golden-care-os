@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAny } from "@/lib/session";
 import { clinicToday, dateTime, money } from "@/lib/format";
 import { PageHeader } from "@/components/PageHeader";
@@ -46,6 +47,7 @@ export default async function AccountingPage({ searchParams }: { searchParams: {
             <div><label className="label" htmlFor="from">{t("acc.from")}</label><input id="from" type="date" name="from" defaultValue={from} className="input" /></div>
             <div><label className="label" htmlFor="to">{t("acc.to")}</label><input id="to" type="date" name="to" defaultValue={to} className="input" /></div>
             <button className="btn-primary">{t("common.search")}</button>
+            <Link href="/os/accounting/einvoice" className="btn-ghost">{ctx.locale === "ar" ? "الفاتورة الإلكترونية" : "E-invoicing"}</Link>
           </form>
         }
       />

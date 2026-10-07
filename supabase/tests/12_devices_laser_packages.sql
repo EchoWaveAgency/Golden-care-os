@@ -166,7 +166,7 @@ select test.expect_error(format($q$select public.sign_laser_session(%L)$q$, :'s4
 select test.login(:'chief');
 select test.expect_error(format($q$select public.void_invoice(%L, 'x')$q$, :'pinv'), 'only issued invoices');
 select test.login(:'fd');
-select test.expect_error(format($q$select public.request_refund(%L, 100, 'card', 'المريضة لم تكمل')$q$, :'pinv'), 'package refunds are not supported');
+select test.expect_error(format($q$select public.request_refund(%L, 100, 'card', 'المريضة لم تكمل')$q$, :'pinv'), 'use the package refund');
 select id as pkg2, invoice_id as pinv2 from public.sell_package(:'pat', :'tpl', :'b1') \gset
 select test.login(:'chief');
 select public.void_invoice(:'pinv2', 'بيع بالخطأ') is not null as x \gset

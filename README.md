@@ -47,8 +47,12 @@ A production-grade healthcare operating system for Golden Care Clinics, built on
 | **Patient advances (deposits)** — down payments and installments held as a liability, applied to invoices, refunds with approval | ✅ |
 | **Dental lab cases** — ordered → sent → returned → delivered, remakes, due dates; lab and maintenance bills to suppliers payable; doctor's lab cost share in settlements | ✅ |
 | **Patient care assistant** — automated WhatsApp (and voice-call) assistant: confirms bookings, reminds, follows up after the visit (treatment, improvement, problems, rating), reminds about the follow-up visit; danger signs escalate urgently to the care team | ✅ (needs Meta template approval; voice needs a telephony provider) |
-| **HR & payroll — database layer**: employees, salaries, shifts and rosters, biometric attendance import, attendance computation (late / absent / overtime), leave with balances, employee loans, payroll engine (pro-rating, absences, lateness, overtime, social insurance, progressive income tax, loans), journals, three-person approval, payslips for employees | ✅ tested in SQL — screens not built yet; rates to be set by the clinic |
-| HR & payroll screens, package refunds, supplier returns, e-invoice adapter, patient wallet / loyalty | ⏳ next milestones |
+| **HR & payroll** — employees, salaries, shifts and rosters, biometric attendance (file import + device push), attendance computation (late / absent / overtime), leave with balances, employee loans, payroll engine (pro-rating, absences, lateness, overtime, social insurance, progressive income tax, loans), journals, three-person approval, payslips, each employee's own file | ✅ (rates and tax brackets to be set by the clinic) |
+| **Package refunds and transfers** — unused value less an optional fee, maker-checker, journals | ✅ (refund policy to be confirmed) |
+| **Supplier returns** — by lot from a delivery, approved by purchasing, reduce the payable | ✅ |
+| **E-receipts / e-invoices** — document queue, readiness checks per service, returns and cancellations, local simulator | ✅ queue · ⏳ live Tax Authority connector (needs the clinic's credentials and certification) |
+| **Printing** — 80 mm thermal receipt, per-doctor day sheet (paper fallback), prescriptions, payslips, statements | ✅ |
+| Patient wallet / loyalty, end-of-service settlements | ⏳ next milestones |
 
 Everything else in the master specification is planned in phases — see `PROGRESS.md`.
 
@@ -93,7 +97,7 @@ src/app/api/           public slots, message dispatcher job, WhatsApp webhook
 src/app/actions/       server actions (all writes go through the signed-in user's session → RLS applies)
 src/lib/               i18n, formatting, normalization, navigation, error mapping
 scripts/               db-test, local stack, demo data
-e2e/                   browser journeys (staff, portal, milestone 4)
+e2e/                   browser journeys (staff, portal, milestones 4–12)
 docs/                  architecture, permissions, accounting events, security, tests, deployment, Arabic user guide
 docs/website/          website architecture, sitemap, CMS model, landing pages, analytics, SEO, security, UAT
 ```

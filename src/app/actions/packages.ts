@@ -40,3 +40,28 @@ export async function expirePackages() {
   if (error && /all branches/.test(error.message)) ({ data, error } = await ctx.supabase.rpc("expire_packages", { p_branch: ctx.branchId }));
   go("/os/packages", error, ctx.locale, `expired:${Number(data ?? 0)}`);
 }
+
+// ---------- Package refunds and transfers
+export async function requestPackageRefund(form: FormData) {
+  const ctx = await getContext();
+  const patient = s(form, "patient_id");
+  const { error } = await ctx.supabase.rpc("request_package_refund", { p_package: s(form, "package_id"), p_fee: Number(s(form, "fee") || 0),
+    p_method: s(form, "method"), p_reason: s(form, "reason") });
+  go(`/os/patients/${patient}`, error, ctx.locale, "package_refund_requested");
+}
+export async function decidePackageRefund(form: FormData) {
+  const ctx = await getContext();
+  const { error } = await ctx.supabase.rpc("decide_package_refund", { p_refund: s(form, "id"), p_approve: form.get("decision") === "approve", p_note: s(form, "note") || null });
+  go("/os/refunds", error, ctx.locale, "decided");
+}
+export async function payPackageRefund(form: FormData) {
+  const ctx = await getContext();
+  const { error } = await ctx.supabase.rpc("pay_package_refund", { p_refund: s(form, "id"), p_reference: s(form, "reference") || null });
+  go("/os/refunds", error, ctx.locale, "paid");
+}
+export async function transferPackage(form: FormData) {
+  const ctx = await getContext();
+  const patient = s(form, "patient_id");
+  const { error } = await ctx.supabase.rpc("transfer_package_to_mrn", { p_package: s(form, "package_id"), p_mrn: s(form, "mrn"), p_reason: s(form, "reason") });
+  go(`/os/patients/${patient}`, error, ctx.locale, "package_transferred");
+}

@@ -67,3 +67,13 @@
 - `concurrency.sh`: 6 parallel job runs over 5 due conversations → each opened once; 10 parallel replies to one step → applied once.
 - Unit `src/lib/care/care.test.ts` (82): normalisation, danger signs (prefixes, two-part, fever numbers) and no over-triggering, opt-out only when clearly about messages, negations, every conversation path (booking, cancel window, appointment changed, questions, misunderstandings, nudges, voice fallback, after-visit branches, follow-up reminder, voice identity and silence), scripts in both languages, crisis line.
 - Browser `e2e/m10-journey.mjs` (25 checks, local simulator): settings → booking confirmation → visit with a follow-up date → after-visit follow-up (worse, complaint, low rating, follow-up booking) → doctor sees it → danger sign → urgent escalation, assistant paused, staff reply, resolved → tickets → outcome figures.
+
+## Session 11 additions — HR and payroll
+- `supabase/tests/15_hr_payroll.sql`: setup refusal until rates are set, punch import (duplicates, unknown ids, bad rows), device push, attendance statuses and minutes, manual punch approval, leave and loan separation of duties, full payslip math line by line (deductions 2,028.54, net 7,971.46, lateness 18.75, tax 559.79), balanced journals, locked month, own payslip only, doctors / desk see nothing.
+- Unit `hr.test.ts` (7): export parsing, date formats, minutes text.
+- Browser `e2e/m11-journey.mjs` (18 checks): employees → attendance import → leave approval → employee's own file → bonus → prepare (HR) → approve (chief accountant, accrual journal) → pay (director) → payslip → trial balance.
+
+## Session 12 additions — package refunds, supplier returns, e-receipts, printing
+- `supabase/tests/16_package_refunds_supplier_returns.sql`: refund = unused − fee, fee bounds, unpaid package refused, redemption blocked while open, separation of duties, cash needs a session, journals, expected cash, transfer (value and memo), supplier return quantities, lot and payable effects, refusals (own approval, already paid, lot moved).
+- `supabase/tests/17_einvoice.sql`: off by default, blocked with reasons, only the accountant configures, claim once, retry with backoff, accepted ids, refunds as return documents for the amount paid back, voids as cancellations, cashier sees the receipt id but not the queue.
+- Browser `e2e/m12-journey.mjs` (21 checks): e-receipts on → two packages sold and paid → 80 mm receipt → package refund (request, approve, pay; 4,500 − 300 = 4,200) → package transfer → supplier return (store records, chief approves, 70.00) → blocked documents → service codes → re-send → simulator accepts (including the 4,200 return) → receipt shows the e-receipt id → day sheet → trial balance.

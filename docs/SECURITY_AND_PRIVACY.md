@@ -55,3 +55,11 @@
 - All state changes go through service-role `svc_care_*` wrappers (not callable by signed-in users); internal `app.care_*` functions are revoked from users.
 - Opt-out is honoured everywhere (planning, claiming, waiting conversations, voice) and recorded as consent. The AI classifier is off by default; when on, only the reply text is sent.
 - `CARE_SIMULATOR=on` is for local development only and is refused unless messaging is in development mode. Never set it in production.
+
+## HR and payroll (session 11)
+- Employee files (national id, salary, bank) are readable by HR and payroll only; an employee sees only their own file and payslips (approved runs). Doctors and the desk see nothing.
+- The device push endpoint accepts registered serial numbers only (optional IP allow-list) and writes through a service-role wrapper.
+
+## Package refunds, supplier returns, e-receipts (session 12)
+- Every money step is maker-checker (request ≠ approve) and posted as a balanced journal.
+- E-receipt payloads carry the patient's name only (no national id, no diagnosis); the queue is visible to accounting only. Tax Authority credentials are server environment variables, never stored in the database. `EINVOICE_MODE=dev` is local-only.

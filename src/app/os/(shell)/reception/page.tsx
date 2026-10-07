@@ -46,6 +46,7 @@ export default async function ReceptionPage({ searchParams }: { searchParams: { 
               <input type="date" name="day" defaultValue={day} className="input w-auto" aria-label={t("common.date")} />
               <button className="btn-ghost">{t("common.search")}</button>
             </form>
+            <a href={`/os/print/day-sheet?day=${day}`} data-day-sheet-link className="btn-ghost">{locale === "ar" ? "طباعة ورقة اليوم" : "Print day sheet"}</a>
             {canWrite && <Link href="/os/patients/new" className="btn-ghost">{t("patient.new")}</Link>}
             {canWrite && <Link href="/os/patients" className="btn-primary">{t("apt.new")}</Link>}
           </>

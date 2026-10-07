@@ -49,7 +49,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
         <PageHeader
           title={`${t("bill.invoice")} ${inv.invoice_no ?? `(${t("bill.draft")})`}`}
           subtitle={patient ? `${patient.full_name_ar} · ${patient.mrn}` : undefined}
-          actions={<><StatusBadge status={inv.status} label={t(`bill.status.${inv.status}` as DictKey)} />{!isDraft && <PrintButton label={t("common.print")} />}</>}
+          actions={<><StatusBadge status={inv.status} label={t(`bill.status.${inv.status}` as DictKey)} />{!isDraft && <PrintButton label={t("common.print")} />}{!isDraft && <a href={`/os/print/receipt/${inv.id}`} data-thermal-link className="btn-ghost">{ar ? "إيصال حراري 80مم" : "80mm receipt"}</a>}</>}
         />
         <Banner error={searchParams.error} success={searchParams.paid ? (ar ? "تم تسجيل الدفعة وإصدار الإيصال." : "Payment recorded and receipt issued.") : searchParams.ok === "refund_requested" ? (ar ? "تم إرسال طلب الاسترداد للاعتماد." : "Refund request sent for approval.") : searchParams.ok === "plan_billed" ? (ar ? "تمت فوترة البنود المنفذة وخصمها من الرصيد المقدم بقدر المتاح." : "Completed work billed; the advance balance was applied where available.")
           : searchParams.ok === "advance_applied" ? (ar ? "تم الخصم من الرصيد المقدم." : "Paid from the advance balance.")

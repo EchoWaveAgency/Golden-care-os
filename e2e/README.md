@@ -14,6 +14,8 @@ node e2e/m8-journey.mjs       # 25 checks: devices & repair → package sale →
 node e2e/m10-journey.mjs      # 25 checks: care assistant (simulator): settings → booking confirmation → follow-up date → after-visit follow-up → doctor alert → danger sign → staff takeover → outcome figures
 node e2e/m9-journey.mjs       # 26 checks: dental plan from the visit → quotation → installments → advance → work billed from the advance → lab case and bill (void a wrong one) → settlement with lab share → profitability
 node e2e/m7-journey.mjs       # 18 checks: purchase order → approval → partial receipt → close short → confirm direct receipt → supplier payment → profitability + CSV
+node e2e/m11-journey.mjs      # 18 checks: employees → attendance import → leave → own file → payroll prepare / approve / pay → payslip
+node e2e/m12-journey.mjs      # 21 checks: e-receipts on → package sale → 80mm receipt → package refund + transfer → supplier return → e-receipt queue (blocked → codes → accepted) → day sheet
 ```
 Privileged demo users complete two-factor sign-in automatically through `e2e/mfa.mjs` (TOTP computed from the enrolled secret).
 ```

@@ -32,6 +32,12 @@ Never point staging or local at production. Never run `demo-data.mjs` against pr
 - The dispatcher job (`/api/jobs/dispatch`, every 5 minutes) also runs the assistant.
 - Never set `CARE_SIMULATOR` in production.
 
+## HR, payroll, e-receipts (sessions 11–12)
+- Biometric devices (ZKTeco ADMS push): point each device at `https://<host>/iclock/cdata`, register its serial number in Payroll → Settings → Devices, and optionally restrict by IP. Devices without a registered serial are ignored.
+- Payroll does not run until the chief accountant has entered the insurance rates, overtime / lateness rules and tax brackets (OPEN_QUESTIONS 92–98). The demo values from `scripts/demo-hr.mjs` are placeholders — never copy them to production.
+- E-receipts stay off until Accounting → E-invoicing settings are filled and switched on. The live Tax Authority connector is not built yet: it needs `ETA_CLIENT_ID` / `ETA_CLIENT_SECRET` (server env only) and certification on the pre-production portal. Until then, leave `EINVOICE_MODE` unset (documents wait in the queue). Never set `EINVOICE_MODE=dev` in production.
+- Receipt printers: install the 80 mm printer on the desk PC as a system printer, set paper 80 mm × receipt, margins none, and print from "80mm receipt" on the invoice.
+
 ## Release checklist
 - [ ] CI green: typecheck, lint, unit, `db:test` (SQL + concurrency), build
 - [ ] Migration reviewed; rollback plan written (forward-fix migration preferred; restore-from-PITR for data incidents)

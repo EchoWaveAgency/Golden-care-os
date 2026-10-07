@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SubmitButton } from "@/components/SubmitButton";
 import { decideRefund, payRefund } from "@/app/actions/refunds";
 import { decideDepositRefund, payDepositRefund } from "@/app/actions/dental";
+import { decidePackageRefund, payPackageRefund } from "@/app/actions/packages";
 
 export const metadata = { title: "Refunds" };
 export const dynamic = "force-dynamic";
@@ -41,11 +42,14 @@ export default async function RefundsPage({ searchParams }: { searchParams: { er
       : Promise.resolve({ data: [] as { id: string; provider: string; txn_id: string; amount: number; reason: string; created_at: string }[] }),
   ]);
   const exceptions = excRes.data ?? [];
+  const { data: pkgRef } = await ctx.supabase.from("package_refunds").select("id, ref, patient_id, package_id, unused_value, fee, amount, method, reason, status, requested_by, requested_at, decision_note")
+    .in("status", ["requested", "approved"]).order("requested_at");
   const { data: depRef } = await ctx.supabase.from("deposit_refunds").select("id, ref, patient_id, amount, method, reason, status, requested_by, requested_at, decision_note")
     .order("requested_at", { ascending: false }).limit(50);
   const depRows = (depRef ?? []) as { id: string; ref: string; patient_id: string; amount: number; method: string; reason: string; status: string; requested_by: string; requested_at: string; decision_note: string | null }[];
   const rows = data ?? [];
-  const pids = Array.from(new Set([...rows.map((r) => r.patient_id), ...depRows.map((r) => r.patient_id)]));
+  const pkgRows = (pkgRef ?? []) as { id: string; ref: string; patient_id: string; unused_value: number; fee: number; amount: number; method: string; reason: string; status: string; requested_by: string; requested_at: string; decision_note: string | null }[];
+  const pids = Array.from(new Set([...rows.map((r) => r.patient_id), ...depRows.map((r) => r.patient_id), ...pkgRows.map((r) => r.patient_id)]));
   const { data: dir } = pids.length ? await ctx.supabase.rpc("patient_directory", { p_ids: pids }) : { data: [] };
   const names = new Map(((dir ?? []) as { id: string; mrn: string; full_name_ar: string }[]).map((p) => [p.id, p]));
   const method = new Map((methods ?? []).map((m) => [m.code, m]));
@@ -107,6 +111,36 @@ export default async function RefundsPage({ searchParams }: { searchParams: { er
           );
         })}
       </div>
+
+      {pkgRows.length > 0 && (
+        <section className="mt-8" data-package-refunds>
+          <h2 className="mb-3 font-medium text-navy-700">{ar ? "استرداد الباقات" : "Package refunds"}</h2>
+          <div className="space-y-3">
+            {pkgRows.map((r) => {
+              const pt = names.get(r.patient_id);
+              const m = method.get(r.method);
+              return (
+                <article key={r.id} className="card p-4 text-sm" data-package-refund={r.ref}>
+                  <p><span className="num font-medium text-navy-700">{r.ref}</span> · <Link href={`/os/patients/${r.patient_id}`} className="text-teal-700 hover:underline">{pt?.full_name_ar ?? ""}</Link>
+                    {" · "}{r.status === "requested" ? (ar ? "بانتظار الاعتماد" : "awaiting approval") : (ar ? "معتمد — بانتظار الصرف" : "approved — awaiting payout")}</p>
+                  <p className="mt-1">{ar ? "غير المستخدم" : "Unused"} <span className="num">{money(r.unused_value, locale)}</span> − {ar ? "رسوم" : "fee"} <span className="num">{money(r.fee, locale)}</span>
+                    {" = "}<span className="num font-semibold">{money(r.amount, locale)}</span> · {ar ? m?.name_ar : m?.name_en}</p>
+                  <p className="text-ink-500">{r.reason} · {dateTime(r.requested_at, locale)}</p>
+                  {r.status === "requested" && canApprove && (r.requested_by === ctx.user.id
+                    ? <p className="mt-2 text-xs text-ink-500">{ar ? "قدّمت هذا الطلب بنفسك — يلزم اعتماد مسؤول آخر." : "You requested this — another approver is required."}</p>
+                    : <form action={decidePackageRefund} className="mt-3 flex flex-wrap items-end gap-2"><input type="hidden" name="id" value={r.id} />
+                        <input name="note" placeholder={ar ? "ملاحظة (مطلوبة عند الرفض)" : "Note (required to reject)"} className="input w-56" />
+                        <SubmitButton name="decision" value="approve" pendingLabel="…" className="btn-primary">{ar ? "اعتماد" : "Approve"}</SubmitButton>
+                        <SubmitButton name="decision" value="reject" pendingLabel="…" className="btn-danger">{ar ? "رفض" : "Reject"}</SubmitButton></form>)}
+                  {r.status === "approved" && canPay && (
+                    <form action={payPackageRefund} className="mt-3 flex flex-wrap items-end gap-2"><input type="hidden" name="id" value={r.id} />
+                      {m?.requires_reference && <input name="reference" required placeholder={ar ? "رقم المرجع" : "Reference"} className="input" dir="ltr" />}
+                      <SubmitButton pendingLabel="…" className="btn-gold">{ar ? "صرف المبلغ" : "Pay out"}</SubmitButton></form>)}
+                </article>);
+            })}
+          </div>
+        </section>
+      )}
 
       {depRows.length > 0 && (
         <section className="mt-8">

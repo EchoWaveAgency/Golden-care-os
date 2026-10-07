@@ -44,6 +44,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: { 
           {ctx.can("inventory.receive") && <Link href={`/os/inventory/receive${base}`} className="btn-gold">{ar ? "استلام بضاعة" : "Receive"}</Link>}
           {(ctx.can("inventory.count") || ctx.can("inventory.approve")) && <Link href={`/os/inventory/counts${base}`} className="btn-ghost">{ar ? "الجرد" : "Counts"}</Link>}
           {ctx.can("inventory.manage") && <Link href="/os/inventory/catalog" className="btn-ghost">{ar ? "الأصناف والموردون" : "Catalog"}</Link>}
+          {(ctx.can("inventory.receive") || ctx.can("purchase.approve")) && <Link href="/os/inventory/returns" className="btn-ghost">{ar ? "مرتجعات الموردين" : "Supplier returns"}</Link>}
         </>} />
       <Banner error={searchParams.error} success={ok} />
       <StoreTabs stores={list} current={current} base="/os/inventory" ar={ar} />

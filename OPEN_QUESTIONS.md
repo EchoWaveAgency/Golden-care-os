@@ -129,3 +129,13 @@ Each item has a configurable mechanism already (or planned). Placeholders are cl
 96. Which staff are on payroll (doctors on settlements are excluded by default) and how part-timers are paid.
 97. Loan policy: maximum amount and number of installments, who approves.
 98. End-of-service and resignation settlements.
+
+## Package refunds, supplier returns, e-receipts (added session 12)
+99. Package refund policy: is an unused package refundable at all, within what period, and is there an admin fee (fixed, percentage, none)? Current: refundable while active; fee entered per request, approved by a second person.
+100. Value of a session already used when the package was sold at a discount: current refund = sessions left × the package's per-session net price (the discount is shared across all sessions). Confirm, or should used sessions be re-priced at the full single-session price?
+101. Package transfer between patients: allowed? only within the family? fee? Current: allowed by the center director / chief accountant with a reason, no fee.
+102. Supplier return on a delivery already paid: does the supplier refund cash, or is it credited against the next invoice? Current: the approval refuses until the payment side is settled; a supplier credit / refund record is the next step once the clinic decides.
+103. E-receipts: the clinic's tax registration number, activity code, branch code and POS serial; whether the clinic issues B2C e-receipts, B2B e-invoices, or both; the ETA item codes (EGS) to register for each service.
+104. Tax treatment of each service (medical services exempt vs. taxable cosmetic services, e.g. laser hair removal): to be set by the clinic's tax accountant. Prices are currently treated as final (no VAT added).
+105. Live Tax Authority connector: who holds the portal credentials and the signing token (for e-invoices), and when pre-production testing can be scheduled.
+
