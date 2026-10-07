@@ -96,3 +96,11 @@ export async function portalReferralCode(form: FormData) {
   const { error } = await supabase.rpc("portal_referral_code", { p_patient: active.id });
   back(lang, "finance", error, "referral");
 }
+
+// Treatment plan accepted by the patient (number of monthly installments within what the clinic allowed).
+export async function portalAcceptPlan(form: FormData) {
+  const lang = langOf(form);
+  const { supabase } = await getPortal(lang);
+  const { error } = await supabase.rpc("portal_accept_plan", { p_plan: str(form, "plan"), p_installments: Number(str(form, "installments") || 1) });
+  back(lang, "plans", error, "accepted");
+}

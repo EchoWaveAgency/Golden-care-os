@@ -9,13 +9,13 @@ import { Banner } from "@/components/Banner";
 import { Stat } from "@/components/Stat";
 import { SubmitButton } from "@/components/SubmitButton";
 import { PrintButton } from "@/components/PrintButton";
-import { acceptPlan, billPlan, cancelItem, cancelPlan, completeItem, createLabCase, proposePlan, recordDeposit, revisePlan, savePlan } from "@/app/actions/dental";
+import { setPlanPortalOptions, acceptPlan, billPlan, cancelItem, cancelPlan, completeItem, createLabCase, proposePlan, recordDeposit, revisePlan, savePlan } from "@/app/actions/dental";
 import { PlanEditor } from "./PlanEditor";
 import { InstallmentPlanner } from "./InstallmentPlanner";
 
 export const dynamic = "force-dynamic";
 
-type Plan = { id: string; ref: string; branch_id: string; patient_id: string; doctor_id: string; title: string; notes: string | null; status: string; quote_no: string | null;
+type Plan = { id: string; ref: string; portal_max_installments: number; branch_id: string; patient_id: string; doctor_id: string; title: string; notes: string | null; status: string; quote_no: string | null;
   proposed_at: string | null; valid_until: string | null; subtotal: number; discount_total: number; total: number; accepted_at: string | null; acceptance_method: string | null;
   acceptance_note: string | null; cancel_reason: string | null; created_at: string };
 type Item = { id: string; seq: number; service_id: string; tooth: string | null; surfaces: string | null; quantity: number; unit_price: number; discount: number; line_total: number;
@@ -64,7 +64,7 @@ export default async function PlanPage({ params, searchParams }: { params: { id:
     services = (svc ?? []).map((x) => ({ id: x.id, code: x.code, name: ar ? x.name_ar : x.name_en, price: priceOf.get(x.id) ?? null }));
   }
   const ok = {
-    created: ar ? "تم إنشاء مسودة الخطة." : "Draft plan created.", saved: ar ? "تم حفظ الخطة." : "Plan saved.", proposed: ar ? "صدر عرض السعر." : "Quotation issued.",
+    created: ar ? "تم إنشاء مسودة الخطة." : "Draft plan created.", portal_options: ar ? "تم الحفظ — يظهر للمريض في حسابه." : "Saved — shown to the patient online.", saved: ar ? "تم حفظ الخطة." : "Plan saved.", proposed: ar ? "صدر عرض السعر." : "Quotation issued.",
     revised: ar ? "عادت الخطة مسودة للتعديل." : "Back to draft for changes.", accepted: ar ? "تم تسجيل موافقة المريض وجدول الأقساط." : "Acceptance and installment schedule recorded.",
     cancelled: ar ? "تم إلغاء الخطة." : "Plan cancelled.", done: ar ? "تم تسجيل تنفيذ البند." : "Work recorded.", item_cancelled: ar ? "تم إلغاء البند." : "Item cancelled.",
     deposit: ar ? "تم تحصيل الدفعة وإضافتها للرصيد المقدم." : "Payment received into the advance balance.", lab_created: ar ? "تم إنشاء طلب المعمل." : "Lab case created.",
@@ -157,6 +157,13 @@ export default async function PlanPage({ params, searchParams }: { params: { id:
         </div>
       )}
 
+      {p.status === "proposed" && canAccept && (
+        <form action={setPlanPortalOptions} className="card mt-6 flex flex-wrap items-end gap-3 p-4 text-sm no-print" data-portal-options>
+          <input type="hidden" name="plan_id" value={p.id} />
+          <p className="w-full text-ink-500">{ar ? "المريض يقدر يشوف الخطة ويوافق عليها من حسابه على الموقع ويدفع الأقساط أونلاين. حدد أقصى عدد أقساط شهرية مسموح له يختاره:" : "The patient can view and accept this plan in their online account and pay installments online. Set the most monthly installments they may choose:"}</p>
+          <label><span className="label">{ar ? "أقصى عدد أقساط" : "Max installments"}</span><input name="max_installments" type="number" min="1" max="36" defaultValue={p.portal_max_installments} className="input num w-24" /></label>
+          <SubmitButton pendingLabel="…" className="btn-ghost">{ar ? "حفظ" : "Save"}</SubmitButton>
+        </form>)}
       {p.status === "proposed" && (
         <div className="mt-6 grid gap-6 lg:grid-cols-3 no-print">
           {canAccept && (

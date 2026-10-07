@@ -14,9 +14,13 @@ const langOf = (f: FormData): Lang => (f.get("lang") === "en" ? "en" : "ar");
 export async function startPayment(form: FormData) {
   const lang = langOf(form);
   const { supabase } = await getPortal(lang);
-  const fail = (msg: string): never => redirect(`/${lang}/portal/finance?error=${encodeURIComponent(msg)}`);
+  const page = form.get("plan") ? "plans" : "finance";
+  const fail = (msg: string): never => redirect(`/${lang}/portal/${page}?error=${encodeURIComponent(msg)}`);
   if (paymentsMode() === "off") fail(lang === "ar" ? "الدفع الإلكتروني غير متاح حاليًا. يمكنك السداد في العيادة." : "Online payment is not available yet. You can pay at the clinic.");
-  const { data, error } = await supabase.rpc("portal_pay_invoice", { p_invoice: String(form.get("invoice")) });
+  const plan = String(form.get("plan") ?? "");
+  const { data, error } = plan
+    ? await supabase.rpc("portal_pay_installment", { p_plan: plan })
+    : await supabase.rpc("portal_pay_invoice", { p_invoice: String(form.get("invoice")) });
   if (error) fail(portalError(error.message, lang));
   const intentId = (data as { intent_id: string }).intent_id;
   const db = adminClient();

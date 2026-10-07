@@ -142,3 +142,8 @@ export async function voidSupplierBill(form: FormData) {
   const { error } = await ctx.supabase.rpc("void_supplier_bill", { p_bill: s(form, "bill_id"), p_reason: s(form, "reason") });
   go(`/os/suppliers/${sup}`, error, ctx.locale, "voided");
 }
+
+/** How many monthly installments the patient may choose when accepting from the portal (1 = pay in full). */
+export async function setPlanPortalOptions(form: FormData) {
+  await planStep(form, "set_plan_portal_options", { p_max_installments: Number(s(form, "max_installments") || 1) }, "portal_options");
+}

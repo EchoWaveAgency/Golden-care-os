@@ -192,3 +192,34 @@ export async function saveDevice(form: FormData) {
     p_active: form.get("is_active") !== "off" });
   go("/os/hr/attendance", error, ctx.locale, "device");
 }
+
+// ---------- Annual increments and end of service
+export async function applySalaryIncrement(form: FormData) {
+  const ctx = await getContext();
+  const { data, error } = await ctx.supabase.rpc("apply_salary_increment", { p_branch: ctx.branchId, p_effective: `${s(form, "month")}-01`,
+    p_percent: Number(s(form, "percent") || 0), p_component: s(form, "component") || "BASIC", p_employees: null, p_note: s(form, "note") || null });
+  go("/os/hr", error, ctx.locale, `increment_${data ?? 0}`);
+}
+
+export async function prepareEos(form: FormData) {
+  const ctx = await getContext();
+  const id = s(form, "employee_id");
+  const { error } = await ctx.supabase.rpc("prepare_eos", { p_employee: id, p_encash_leave: form.get("encash") === "on",
+    p_gratuity: Number(s(form, "gratuity") || 0), p_other_earnings: Number(s(form, "other_earnings") || 0), p_tax: Number(s(form, "tax") || 0),
+    p_other_deductions: Number(s(form, "other_deductions") || 0), p_note: s(form, "note") || null });
+  go(`/os/hr/employees/${id}`, error, ctx.locale, "eos_prepared");
+}
+
+export async function decideEos(form: FormData) {
+  const ctx = await getContext();
+  const id = s(form, "employee_id");
+  const { error } = await ctx.supabase.rpc("decide_eos", { p_id: s(form, "eos_id"), p_approve: s(form, "decision") === "approve", p_reason: s(form, "reason") || null });
+  go(`/os/hr/employees/${id}`, error, ctx.locale, s(form, "decision") === "approve" ? "eos_approved" : "eos_cancelled");
+}
+
+export async function payEos(form: FormData) {
+  const ctx = await getContext();
+  const id = s(form, "employee_id");
+  const { error } = await ctx.supabase.rpc("pay_eos", { p_id: s(form, "eos_id"), p_method: s(form, "method"), p_reference: s(form, "reference") });
+  go(`/os/hr/employees/${id}`, error, ctx.locale, "eos_paid");
+}

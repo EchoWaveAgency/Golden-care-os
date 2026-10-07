@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireAny } from "@/lib/session";
 import { money } from "@/lib/format";
 import { ATT_STATUS, LEAVE_STATUS, LOAN_STATUS, lab, minutesText } from "@/lib/hr";
-import { endEmployment, requestLeave, saveEmployee } from "@/app/actions/hr";
+import { endEmployment, requestLeave, saveEmployee, prepareEos, decideEos, payEos } from "@/app/actions/hr";
 import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -32,9 +32,12 @@ export default async function EmployeePage({ params, searchParams }: { params: {
     ctx.supabase.from("leave_types").select("code, name_ar, name_en").eq("is_active", true),
   ]);
   const manage = ctx.can("hr.manage");
+  const { data: eos } = await ctx.supabase.from("eos_settlements").select("*").eq("employee_id", e.id).neq("status", "cancelled").maybeSingle();
   const current = (code: string) => (items ?? []).find((i) => i.component_code === code && String(i.effective).includes(",)"))?.amount;
   const count = (st: string) => (att ?? []).filter((a) => a.status === st).length;
-  const ok = { saved: ar ? "تم الحفظ." : "Saved.", ended: ar ? "تم إنهاء الخدمة." : "Employment ended.", leave_requested: ar ? "تم تسجيل طلب الإجازة." : "Leave requested." }[searchParams.ok ?? ""];
+  const ok = { saved: ar ? "تم الحفظ." : "Saved.", ended: ar ? "تم إنهاء الخدمة." : "Employment ended.", leave_requested: ar ? "تم تسجيل طلب الإجازة." : "Leave requested.",
+    eos_prepared: ar ? "تم إعداد تسوية نهاية الخدمة — تنتظر الاعتماد." : "End-of-service settlement prepared — awaiting approval.", eos_approved: ar ? "تم اعتماد التسوية وترحيل القيد." : "Settlement approved and posted.",
+    eos_paid: ar ? "تم صرف التسوية." : "Settlement paid.", eos_cancelled: ar ? "تم إلغاء التسوية." : "Settlement cancelled." }[searchParams.ok ?? ""];
   const name = ar ? e.staff?.full_name_ar : e.staff?.full_name_en ?? e.staff?.full_name_ar;
   const field = (n: keyof E, label: string, opts: { type?: string; ltr?: boolean; w?: string } = {}) => (
     <label><span className="label">{label}</span><input name={n} type={opts.type ?? "text"} defaultValue={(e[n] as string | number | null) ?? ""} disabled={!manage}
@@ -131,6 +134,43 @@ export default async function EmployeePage({ params, searchParams }: { params: {
                 <input name="end_date" type="date" required className="input" /><input name="reason" required placeholder={ar ? "السبب" : "Reason"} className="input" />
                 <SubmitButton pendingLabel="…" className="btn-ghost w-full text-danger" confirm={ar ? "تأكيد إنهاء الخدمة؟" : "Confirm ending employment?"}>{ar ? "تأكيد" : "Confirm"}</SubmitButton></form>
             </details>)}
+          {e.status === "terminated" && (eos || ctx.can("payroll.prepare")) && (
+            <div className="card p-4 text-sm" data-eos>
+              <h2 className="mb-2 font-medium text-navy-700">{ar ? "تسوية نهاية الخدمة" : "End-of-service settlement"}</h2>
+              {eos ? (<>
+                <dl className="space-y-1 text-xs">
+                  <div className="flex justify-between"><dt>{ar ? `رصيد إجازات (${Number(eos.leave_days)} يوم)` : `Leave balance (${Number(eos.leave_days)} days)`}</dt><dd className="num">{money(eos.leave_amount, ctx.locale)}</dd></div>
+                  <div className="flex justify-between"><dt>{ar ? "مكافأة نهاية الخدمة" : "Gratuity"}</dt><dd className="num">{money(eos.gratuity, ctx.locale)}</dd></div>
+                  {Number(eos.other_earnings) > 0 && <div className="flex justify-between"><dt>{ar ? "مستحقات أخرى" : "Other earnings"}</dt><dd className="num">{money(eos.other_earnings, ctx.locale)}</dd></div>}
+                  {Number(eos.loan_deduction) > 0 && <div className="flex justify-between"><dt>{ar ? "خصم سلف" : "Loans deducted"}</dt><dd className="num">-{money(eos.loan_deduction, ctx.locale)}</dd></div>}
+                  {Number(eos.tax_deduction) > 0 && <div className="flex justify-between"><dt>{ar ? "ضريبة" : "Tax"}</dt><dd className="num">-{money(eos.tax_deduction, ctx.locale)}</dd></div>}
+                  {Number(eos.other_deductions) > 0 && <div className="flex justify-between"><dt>{ar ? "استقطاعات أخرى" : "Other deductions"}</dt><dd className="num">-{money(eos.other_deductions, ctx.locale)}</dd></div>}
+                  <div className="flex justify-between border-t border-ivory-300 pt-1 font-semibold"><dt>{ar ? "الصافي" : "Net"}</dt><dd className="num">{money(eos.net, ctx.locale)}</dd></div>
+                </dl>
+                <p className="mt-2 text-xs text-ink-500">{eos.ref} · {eos.status === "draft" ? (ar ? "بانتظار الاعتماد" : "awaiting approval") : eos.status === "approved" ? (ar ? "معتمدة — بانتظار الصرف" : "approved — to pay") : (ar ? "مصروفة" : "paid")}</p>
+                {eos.status === "draft" && ctx.can("payroll.approve") && eos.prepared_by !== ctx.user.id && (
+                  <form action={decideEos} className="mt-2"><input type="hidden" name="employee_id" value={e.id} /><input type="hidden" name="eos_id" value={eos.id} />
+                    <SubmitButton name="decision" value="approve" pendingLabel="…" className="btn-primary w-full">{ar ? "اعتماد وترحيل" : "Approve and post"}</SubmitButton></form>)}
+                {eos.status === "draft" && (ctx.can("payroll.prepare") || ctx.can("payroll.approve")) && (
+                  <form action={decideEos} className="mt-2 flex gap-2"><input type="hidden" name="employee_id" value={e.id} /><input type="hidden" name="eos_id" value={eos.id} />
+                    <input name="reason" required placeholder={ar ? "سبب الإلغاء" : "Reason"} className="input py-1 text-xs" />
+                    <SubmitButton name="decision" value="cancel" pendingLabel="…" className="btn-ghost text-xs">{ar ? "إلغاء" : "Cancel"}</SubmitButton></form>)}
+                {eos.status === "approved" && ctx.can("payroll.pay") && eos.approved_by !== ctx.user.id && (
+                  <form action={payEos} className="mt-2 space-y-2"><input type="hidden" name="employee_id" value={e.id} /><input type="hidden" name="eos_id" value={eos.id} />
+                    <select name="method" className="input"><option value="bank_transfer">{ar ? "تحويل بنكي" : "Bank transfer"}</option><option value="cash">{ar ? "نقدًا" : "Cash"}</option></select>
+                    <input name="reference" required placeholder={ar ? "المرجع" : "Reference"} className="input" dir="ltr" />
+                    <SubmitButton pendingLabel="…" className="btn-gold w-full">{ar ? "صرف" : "Pay"}</SubmitButton></form>)}
+              </>) : (
+                <form action={prepareEos} className="space-y-2"><input type="hidden" name="employee_id" value={e.id} />
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" name="encash" defaultChecked />{ar ? "صرف رصيد الإجازات غير المستخدم" : "Pay unused leave balance"}</label>
+                  <label className="block"><span className="label">{ar ? "مكافأة نهاية الخدمة (حسب العقد / القانون)" : "Gratuity (per contract / law)"}</span><input name="gratuity" type="number" min="0" step="0.01" defaultValue={0} className="input num" /></label>
+                  <label className="block"><span className="label">{ar ? "مستحقات أخرى" : "Other earnings"}</span><input name="other_earnings" type="number" min="0" step="0.01" defaultValue={0} className="input num" /></label>
+                  <label className="block"><span className="label">{ar ? "ضريبة مستقطعة" : "Tax withheld"}</span><input name="tax" type="number" min="0" step="0.01" defaultValue={0} className="input num" /></label>
+                  <label className="block"><span className="label">{ar ? "استقطاعات أخرى" : "Other deductions"}</span><input name="other_deductions" type="number" min="0" step="0.01" defaultValue={0} className="input num" /></label>
+                  <input name="note" placeholder={ar ? "ملاحظات" : "Notes"} className="input" />
+                  <p className="text-xs text-ink-500">{ar ? "السلف القائمة تُخصم تلقائيًا. المكافأة والضريبة يحددها المستشار القانوني/الضريبي." : "Outstanding loans are deducted automatically. Gratuity and tax are set by the legal / tax adviser."}</p>
+                  <SubmitButton pendingLabel="…" className="btn-primary w-full">{ar ? "إعداد التسوية" : "Prepare settlement"}</SubmitButton></form>)}
+            </div>)}
         </aside>
       </div>
     </>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAny } from "@/lib/session";
 import { money } from "@/lib/format";
-import { saveEmployee } from "@/app/actions/hr";
+import { saveEmployee, applySalaryIncrement } from "@/app/actions/hr";
 import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
 import { Stat } from "@/components/Stat";
@@ -41,7 +41,7 @@ export default async function HrPage({ searchParams }: { searchParams: { error?:
       <PageHeader title={ar ? "الموارد البشرية" : "Human resources"} subtitle={ar ? "ملفات الموظفين، الورديات، الحضور والانصراف، والإجازات." : "Employee files, shifts, attendance and leave."}
         actions={<Link href={searchParams.all ? "/os/hr" : "/os/hr?all=1"} className="btn-ghost">{searchParams.all ? (ar ? "الحاليون فقط" : "Current only") : (ar ? "عرض الكل" : "Show all")}</Link>} />
       <HrTabs active="employees" ar={ar} can={(p) => ctx.can(p)} />
-      <Banner error={searchParams.error} success={searchParams.ok === "saved" ? (ar ? "تم الحفظ." : "Saved.") : undefined} />
+      <Banner error={searchParams.error} success={searchParams.ok === "saved" ? (ar ? "تم الحفظ." : "Saved.") : searchParams.ok?.startsWith("increment_") ? (ar ? `تم تطبيق الزيادة على ${searchParams.ok.slice(10)} موظف.` : `Increment applied to ${searchParams.ok.slice(10)} employee(s).`) : undefined} />
       <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={ar ? "موظفون حاليون" : "Current employees"} value={(emps ?? []).filter((e) => e.status === "active").length} />
         <Stat label={ar ? "على كشف الرواتب" : "On payroll"} value={(emps ?? []).filter((e) => e.payroll_eligible && e.status === "active").length} tone="teal" />
@@ -84,6 +84,19 @@ export default async function HrPage({ searchParams }: { searchParams: { error?:
             <select name="shift_id" className="input"><option value="">—</option>{(shifts ?? []).map((s) => <option key={s.id} value={s.id}>{ar ? s.name_ar : s.name_en ?? s.name_ar}</option>)}</select></label>
           <SubmitButton pendingLabel="…">{ar ? "فتح الملف" : "Open file"}</SubmitButton>
         </form>)}
+      {ctx.can("hr.manage") && (
+        <details className="card mt-5 p-4 text-sm" data-increment>
+          <summary className="cursor-pointer font-medium text-navy-700">{ar ? "زيادة سنوية لكل الموظفين النشطين" : "Annual increment for all active employees"}</summary>
+          <form action={applySalaryIncrement} className="mt-3 flex flex-wrap items-end gap-3">
+            <label><span className="label">{ar ? "تبدأ من شهر" : "From month"}</span><input name="month" type="month" required className="input" /></label>
+            <label><span className="label">{ar ? "النسبة %" : "Percent"}</span><input name="percent" type="number" min="0.01" max="100" step="0.01" required className="input num w-24" /></label>
+            <label><span className="label">{ar ? "البند" : "Component"}</span><select name="component" className="input"><option value="BASIC">{ar ? "الأجر الأساسي" : "Basic salary"}</option>
+              <option value="HOUSING">{ar ? "بدل سكن" : "Housing"}</option><option value="TRANSPORT">{ar ? "بدل انتقال" : "Transport"}</option></select></label>
+            <input name="note" placeholder={ar ? "ملاحظة (مثال: زيادة 2027)" : "Note (e.g. 2027 increment)"} className="input w-56" />
+            <SubmitButton pendingLabel="…" confirm={ar ? "تطبيق الزيادة على كل الموظفين النشطين؟" : "Apply to all active employees?"}>{ar ? "تطبيق" : "Apply"}</SubmitButton>
+          </form>
+          <p className="mt-2 text-xs text-ink-500">{ar ? "الأجر القديم يظل محفوظًا في السجل، والجديد يسري من أول الشهر المختار. لا يمكن البدء داخل شهر رواتب معتمد." : "The old amount stays in the history; the new one applies from the first of the chosen month. It cannot start inside an approved payroll month."}</p>
+        </details>)}
     </>
   );
 }
