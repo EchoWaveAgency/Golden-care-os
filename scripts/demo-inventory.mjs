@@ -7,6 +7,8 @@ export async function seedInventory({ db, url, PASSWORD, BRANCH }) {
   const must = (r, w) => { if (r.error) throw new Error(`${w}: ${r.error.message}`); return r.data; };
   let loc = must(await db.from("inv_locations").select("id").eq("branch_id", BRANCH).eq("code", "MAIN"), "loc")[0];
   if (!loc) loc = must(await db.from("inv_locations").insert({ branch_id: BRANCH, code: "MAIN", name_ar: "المخزن الرئيسي", name_en: "Main store" }).select("id").single(), "loc");
+  if (!must(await db.from("inv_locations").select("id").eq("branch_id", BRANCH).eq("code", "ROOM-LSR"), "loc2").length)
+    must(await db.from("inv_locations").insert({ branch_id: BRANCH, code: "ROOM-LSR", name_ar: "مخزن غرفة الليزر", name_en: "Laser room store" }), "loc2");
   const items = [
     ["GLOVE-M", "جوانتي طبي مقاس M", "Exam gloves (M)", "زوج", "consumable", 50],
     ["GAUZE-10", "شاش معقم 10×10", "Sterile gauze 10×10", "عبوة", "consumable", 20],

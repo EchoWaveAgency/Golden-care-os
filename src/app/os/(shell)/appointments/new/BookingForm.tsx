@@ -6,8 +6,8 @@ import { FormMessage } from "@/components/FormMessage";
 
 type Doctor = { id: string; name: string; specialty: string };
 
-export function BookingForm({ patientId, doctors, today, idempotencyKey, l }: {
-  patientId: string; doctors: Doctor[]; today: string; idempotencyKey: string; l: Record<string, string>;
+export function BookingForm({ patientId, doctors, today, idempotencyKey, l, devices = [] }: {
+  patientId: string; doctors: Doctor[]; today: string; idempotencyKey: string; l: Record<string, string>; devices?: { id: string; name: string }[];
 }) {
   const [state, action] = useFormState(bookAppointment, undefined);
   return (
@@ -46,6 +46,8 @@ export function BookingForm({ patientId, doctors, today, idempotencyKey, l }: {
         </select>
       </div>
       <div className="sm:col-span-2">
+        {devices.length > 0 && <><label className="label" htmlFor="device_id">{l.device}</label>
+          <select id="device_id" name="device_id" className="input mb-3"><option value="">—</option>{devices.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select></>}
         <label className="label" htmlFor="notes_admin">{l.notes}</label>
         <input id="notes_admin" name="notes_admin" className="input" maxLength={500} />
       </div>

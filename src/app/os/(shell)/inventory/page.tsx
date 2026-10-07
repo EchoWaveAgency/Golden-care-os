@@ -34,7 +34,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: { 
   const [okKind, okRef] = (searchParams.ok ?? "").split(":");
   const ok = okKind === "received" ? (ar ? `تم الاستلام ${okRef} وتسجيل القيد.` : `Received ${okRef} and posted.`) : undefined;
   const base = `?loc=${current?.id ?? ""}`;
-  const kind = (k: string) => ({ receipt: ar ? "استلام" : "Receipt", issue: ar ? "صرف" : "Issue", count_adjust: ar ? "تسوية جرد" : "Count adjustment" }[k] ?? k);
+  const kind = (k: string) => ({ receipt: ar ? "استلام" : "Receipt", issue: ar ? "صرف" : "Issue", count_adjust: ar ? "تسوية جرد" : "Count adjustment", supplier_return: ar ? "مرتجع لمورد" : "Return to supplier", transfer_out: ar ? "تحويل صادر" : "Transfer out", transfer_in: ar ? "تحويل وارد" : "Transfer in" }[k] ?? k);
 
   return (
     <>
@@ -43,6 +43,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: { 
           {ctx.can("inventory.issue") && <Link href={`/os/inventory/issue${base}`} className="btn-primary">{ar ? "صرف مستهلكات" : "Issue"}</Link>}
           {ctx.can("inventory.receive") && <Link href={`/os/inventory/receive${base}`} className="btn-gold">{ar ? "استلام بضاعة" : "Receive"}</Link>}
           {(ctx.can("inventory.count") || ctx.can("inventory.approve")) && <Link href={`/os/inventory/counts${base}`} className="btn-ghost">{ar ? "الجرد" : "Counts"}</Link>}
+          {(ctx.can("inventory.manage") || ctx.can("inventory.receive") || ctx.can("inventory.issue")) && <Link href="/os/inventory/transfers" className="btn-ghost">{ar ? "التحويلات" : "Transfers"}</Link>}
           {ctx.can("inventory.manage") && <Link href="/os/inventory/catalog" className="btn-ghost">{ar ? "الأصناف والموردون" : "Catalog"}</Link>}
           {(ctx.can("inventory.receive") || ctx.can("purchase.approve")) && <Link href="/os/inventory/returns" className="btn-ghost">{ar ? "مرتجعات الموردين" : "Supplier returns"}</Link>}
         </>} />

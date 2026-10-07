@@ -5,6 +5,7 @@ import { ALERT, DEVICE_CATEGORY, DEVICE_STATUS, label } from "@/lib/devices";
 import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
 import { Stat } from "@/components/Stat";
+import { dateTime, rangeStart } from "@/lib/format";
 import { DeviceForm } from "./DeviceForm";
 
 export const dynamic = "force-dynamic";
@@ -32,12 +33,19 @@ export default async function DevicesPage({ searchParams }: { searchParams: { ne
   const cost = Array.from(us.values()).reduce((a, u) => a + Number(u.maintenance_cost), 0);
   const nf = new Intl.NumberFormat("en-US");
 
+  const { data: atRisk } = ctx.branchId ? await ctx.supabase.rpc("device_bookings_at_risk", { p_branch: ctx.branchId }) : { data: [] };
   return (
     <>
       <PageHeader title={ar ? "الأجهزة والصيانة" : "Devices & maintenance"}
         subtitle={ar ? "سجل الأصول، عدادات النبضات، أوامر الصيانة، المعايرة والتنبيهات." : "Asset register, pulse counters, work orders, calibration and alerts."}
         actions={ctx.can("device.manage") ? <Link href="/os/devices?new=1" className="btn-primary">{ar ? "تسجيل جهاز" : "Register device"}</Link> : undefined} />
       <Banner error={searchParams.error} />
+      {(atRisk ?? []).length > 0 && (
+        <section className="mb-5 rounded-xl border border-danger/30 bg-danger-50 p-4 text-sm" data-bookings-at-risk>
+          <p className="mb-2 font-medium text-danger">{ctx.locale === "ar" ? "مواعيد قادمة على أجهزة متوقفة — انقلها لجهاز آخر أو موعد آخر:" : "Upcoming bookings on devices that are down — move them:"}</p>
+          <ul className="space-y-1">{(atRisk ?? []).map((r: { appointment_id: string; ref: string; slot: string; device_ar: string; device_en: string; patient_id: string }) => (
+            <li key={r.appointment_id}><Link href={`/os/patients/${r.patient_id}`} className="hover:underline"><span className="num">{r.ref}</span> · {dateTime(rangeStart(r.slot), ctx.locale)} · {ctx.locale === "ar" ? r.device_ar : r.device_en}</Link></li>))}</ul>
+        </section>)}
       {searchParams.new && ctx.can("device.manage") && (
         <section className="mb-6"><DeviceForm ar={ar} rooms={rooms ?? []} suppliers={suppliers ?? []} /></section>
       )}

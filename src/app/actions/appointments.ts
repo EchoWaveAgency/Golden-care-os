@@ -17,6 +17,7 @@ const BookInput = z.object({
   channel: z.enum(["front_desk", "phone", "whatsapp", "website", "portal", "social", "referral", "walk_in"]),
   idempotency_key: z.string().min(10),
   notes_admin: z.string().trim().max(500).optional(),
+  device_id: z.union([z.string().uuid(), z.literal("")]).optional(),
 });
 
 export async function bookAppointment(_prev: FormState, form: FormData): Promise<FormState> {
@@ -38,6 +39,7 @@ export async function bookAppointment(_prev: FormState, form: FormData): Promise
     status: "booked",
     idempotency_key: v.idempotency_key,
     notes_admin: v.notes_admin || null,
+    device_id: v.device_id || null,
   });
   // A duplicate idempotency key means this exact submission already succeeded.
   if (error && !/appointments_idempotency_key_key/.test(error.message)) {
