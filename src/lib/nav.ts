@@ -3,7 +3,7 @@ import type { DictKey } from "./i18n";
 // Navigation is built from the user's effective permissions, so each role gets its
 // own workspace. The database still enforces every permission independently.
 
-export type NavItem = { href: string; label: DictKey; section: DictKey; any: string[] };
+export type NavItem = { href: string; label: DictKey; section: DictKey; any: string[]; hideIf?: string[] };
 
 export const NAV: NavItem[] = [
   { href: "/os/executive", label: "nav.executive", section: "nav.section.governance", any: ["dashboard.executive"] },
@@ -24,6 +24,7 @@ export const NAV: NavItem[] = [
   { href: "/os/refunds", label: "nav.refunds", section: "nav.section.finance", any: ["refund.request", "refund.approve"] },
   { href: "/os/settlements", label: "nav.settlements", section: "nav.section.finance", any: ["settlement.prepare", "settlement.approve", "settlement.pay", "contract.manage"] },
   { href: "/os/hr", label: "nav.hr", section: "nav.section.people", any: ["hr.read", "hr.manage", "attendance.manage", "leave.approve"] },
+  { href: "/os/hr/performance", label: "nav.performance", section: "nav.section.people", any: ["performance.review"], hideIf: ["hr.read"] },
   { href: "/os/payroll", label: "nav.payroll", section: "nav.section.people", any: ["payroll.read", "payroll.prepare", "payroll.settings"] },
   { href: "/os/accounting", label: "nav.accounting", section: "nav.section.finance", any: ["accounting.read"] },
   { href: "/os/inventory", label: "nav.inventory", section: "nav.section.operations", any: ["inventory.read", "inventory.issue", "inventory.receive", "inventory.count", "inventory.approve", "inventory.manage"] },
@@ -39,7 +40,7 @@ export const NAV: NavItem[] = [
 ];
 
 export function navFor(perms: Set<string>): NavItem[] {
-  return NAV.filter((i) => i.any.some((p) => perms.has(p)));
+  return NAV.filter((i) => i.any.some((p) => perms.has(p)) && !(i.hideIf ?? []).some((p) => perms.has(p)));
 }
 
 /** Landing page for a user: the first workspace their permissions open. */

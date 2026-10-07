@@ -5,6 +5,7 @@ const TABS = [
   { key: "attendance", href: "/os/hr/attendance", ar: "الحضور والانصراف", en: "Attendance", any: ["hr.read", "attendance.manage"] },
   { key: "leave", href: "/os/hr/leave", ar: "الإجازات", en: "Leave", any: ["hr.read", "leave.approve"] },
   { key: "shifts", href: "/os/hr/shifts", ar: "الورديات", en: "Shifts", any: ["hr.read", "hr.manage"] },
+  { key: "performance", href: "/os/hr/performance", ar: "الأداء", en: "Performance", any: ["performance.review"] },
   { key: "payroll", href: "/os/payroll", ar: "الرواتب", en: "Payroll", any: ["payroll.read", "payroll.prepare"] },
 ];
 

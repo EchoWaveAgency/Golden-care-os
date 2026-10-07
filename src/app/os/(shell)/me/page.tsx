@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getContext } from "@/lib/session";
 import { dateTime, money } from "@/lib/format";
 import { ATT_STATUS, LEAVE_STATUS, lab, minutesText } from "@/lib/hr";
-import { cancelLeave, requestLeave } from "@/app/actions/hr";
+import { cancelLeave, requestLeave, acknowledgeReview } from "@/app/actions/hr";
 import { PageHeader } from "@/components/PageHeader";
 import { Banner } from "@/components/Banner";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -27,8 +27,10 @@ export default async function MePage({ searchParams }: { searchParams: { error?:
     ctx.supabase.from("payroll_slips").select("run_id, net, run:payroll_runs(period, status)").eq("employee_id", emp.id),
     ctx.supabase.from("leave_types").select("code, name_ar, name_en").eq("is_active", true),
   ]);
+  const { data: reviews } = await ctx.supabase.from("performance_reviews").select("id, ref, period_from, period_to, overall, strengths, improvements, goals, status, employee_comment")
+    .eq("employee_id", emp.id).order("created_at", { ascending: false });
   const shift = emp.shift as unknown as { name_ar: string; name_en: string | null; start_time: string; end_time: string } | null;
-  const ok = { leave_requested: ar ? "تم إرسال طلب الإجازة للاعتماد." : "Leave request sent for approval.", leave_cancelled: ar ? "تم إلغاء الطلب." : "Request cancelled." }[searchParams.ok ?? ""];
+  const ok = { leave_requested: ar ? "تم إرسال طلب الإجازة للاعتماد." : "Leave request sent for approval.", leave_cancelled: ar ? "تم إلغاء الطلب." : "Request cancelled.", review_ack: ar ? "تم تسجيل اطلاعك على التقييم." : "Review acknowledged." }[searchParams.ok ?? ""];
   const mySlips = ((slips ?? []) as unknown as { run_id: string; net: number; run: { period: string; status: string } | null }[]).sort((a, b) => (b.run?.period ?? "").localeCompare(a.run?.period ?? ""));
   return (
     <>
@@ -58,6 +60,22 @@ export default async function MePage({ searchParams }: { searchParams: { error?:
             <li key={l.id} className="flex items-center justify-between gap-2"><span><span className="num">{l.from_date} → {l.to_date}</span> · {l.days} · {lab(LEAVE_STATUS, l.status, ar)}{l.decision_note ? ` · ${l.decision_note}` : ""}</span>
               {l.status === "requested" && <form action={cancelLeave}><input type="hidden" name="id" value={l.id} /><SubmitButton pendingLabel="…" className="text-danger">{ar ? "إلغاء" : "Cancel"}</SubmitButton></form>}</li>))}</ul>
         </section>
+        {(reviews ?? []).length > 0 && (
+          <section className="card space-y-3 p-4 text-sm" data-my-reviews>
+            <h2 className="font-medium text-navy-700">{ar ? "تقييمات الأداء" : "Performance reviews"}</h2>
+            {(reviews ?? []).map((r) => (
+              <div key={r.id} className="rounded-lg bg-ivory-50 p-3">
+                <p><span className="num">{r.period_from} → {r.period_to}</span>{r.overall != null && <> · <span className="num font-semibold">{Number(r.overall).toFixed(2)} / 5</span></>}</p>
+                {r.strengths && <p className="mt-1"><span className="text-ink-500">{ar ? "نقاط القوة: " : "Strengths: "}</span>{r.strengths}</p>}
+                {r.improvements && <p><span className="text-ink-500">{ar ? "للتحسين: " : "To improve: "}</span>{r.improvements}</p>}
+                {r.goals && <p><span className="text-ink-500">{ar ? "الأهداف: " : "Goals: "}</span>{r.goals}</p>}
+                {r.status === "submitted" ? (
+                  <form action={acknowledgeReview} className="mt-2 flex gap-2"><input type="hidden" name="id" value={r.id} />
+                    <input name="comment" placeholder={ar ? "تعليقك (اختياري)" : "Your comment (optional)"} className="input py-1" />
+                    <SubmitButton pendingLabel="…" className="btn-ghost text-xs">{ar ? "اطلعت" : "Acknowledge"}</SubmitButton></form>
+                ) : <p className="mt-1 text-xs text-ink-500">{ar ? "تم الاطلاع" : "Acknowledged"}{r.employee_comment ? ` — «${r.employee_comment}»` : ""}</p>}
+              </div>))}
+          </section>)}
         <section className="card p-4 text-sm" data-my-payslips>
           <h2 className="mb-2 font-medium text-navy-700">{ar ? "قسائم الراتب" : "Payslips"}</h2>
           <ul className="space-y-1">{mySlips.map((s) => (

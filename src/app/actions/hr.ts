@@ -223,3 +223,28 @@ export async function payEos(form: FormData) {
   const { error } = await ctx.supabase.rpc("pay_eos", { p_id: s(form, "eos_id"), p_method: s(form, "method"), p_reference: s(form, "reference") });
   go(`/os/hr/employees/${id}`, error, ctx.locale, "eos_paid");
 }
+
+// ---------- Performance
+export async function saveReviewCriterion(form: FormData) {
+  const ctx = await getContext();
+  const { error } = await ctx.supabase.rpc("save_review_criterion", { p_code: s(form, "code"), p: {
+    name_ar: s(form, "name_ar"), name_en: s(form, "name_en"), applies_to: s(form, "applies_to"), weight: s(form, "weight"), is_active: form.get("is_active") !== "off" } });
+  go(`/os/hr/performance?m=${s(form, "m")}`, error, ctx.locale, "criterion");
+}
+
+export async function savePerformanceReview(form: FormData) {
+  const ctx = await getContext();
+  const scores: Record<string, number> = {};
+  for (const [k, v] of Array.from(form.entries())) { const m = /^score_([A-Z][A-Z0-9_]+)$/.exec(k); if (m && String(v)) scores[m[1]] = Number(v); }
+  const { data, error } = await ctx.supabase.rpc("save_performance_review", { p: {
+    id: s(form, "id") || null, employee_id: s(form, "employee_id"), period_from: s(form, "period_from"), period_to: s(form, "period_to"), scores,
+    strengths: s(form, "strengths"), improvements: s(form, "improvements"), goals: s(form, "goals") }, p_submit: s(form, "submit") === "1" });
+  const id = (data as { id?: string } | null)?.id;
+  go(`/os/hr/performance?m=${s(form, "m")}${id && s(form, "submit") !== "1" ? `&review=${id}` : ""}`, error, ctx.locale, s(form, "submit") === "1" ? "review_submitted" : "review_saved");
+}
+
+export async function acknowledgeReview(form: FormData) {
+  const ctx = await getContext();
+  const { error } = await ctx.supabase.rpc("acknowledge_review", { p_id: s(form, "id"), p_comment: s(form, "comment") });
+  go("/os/me", error, ctx.locale, "review_ack");
+}
