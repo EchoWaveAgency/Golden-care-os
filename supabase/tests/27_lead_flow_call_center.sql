@@ -16,6 +16,8 @@ insert into public.profiles (user_id, full_name_ar, full_name_en) values
 insert into public.user_roles (user_id, role_code, branch_id) values
   (:'ag1', 'call_center_agent', :'b1'), (:'ag2', 'call_center_agent', :'b1'), (:'boss', 'operations_manager', null), (:'mkt', 'marketing', null);
 update public.lead_flow_settings set default_branch_id = :'b1';
+-- Keep this suite independent of today's date: the Golden Friday codes run undated here (restored at the end).
+update public.lead_campaigns set starts_on = null, ends_on = null where code like 'GF26-%';
 
 -- Agents go on duty themselves.
 set role authenticated;
@@ -34,7 +36,7 @@ select public.svc_lead_capture(jsonb_build_object(
   'received_at', (now() - interval '7 minutes')::text)) as c1 \gset
 select test.assert((:'c1'::jsonb)->>'action' = 'created', 'TEST 1–2: message captured, lead created');
 select id as l1, code as l1code from public.leads where id = ((:'c1'::jsonb)->>'lead_id')::uuid \gset
-select test.assert(:'l1code' ~ '^GF26-[2-9A-HJ-NP-Z]{6}$', 'lead id GF26-XXXXXX');
+select test.assert(:'l1code' ~ '^GC-[2-9A-HJ-NP-Z]{6}$', 'lead id GC-XXXXXX');
 select test.assert((select c.code = 'GF26-LASER' from public.leads l join public.lead_campaigns c on c.id = l.campaign_id where l.id = :'l1'), 'TEST 3: campaign detected from the code');
 select test.assert((select source = 'facebook' and ad_id = '120210000000001' and ctwa_clid is not null and full_name = 'Mariam Adel'
                            and whatsapp_name = 'Mariam Adel' and cc_status = 'new' and phone = '+201001112233' from public.leads where id = :'l1'),
@@ -255,3 +257,5 @@ select test.assert((select c.code = 'GF26-CHECKUP' and l.adset_name = 'Women 25-
 update public.lead_agent_duty set on_duty = false;
 select public.svc_lead_capture(jsonb_build_object('phone', '01066600012', 'provider_id', 'wamid.A2', 'text', 'GF26-OFFER')) is not null as x \gset
 select test.assert((select assigned_to is null from public.leads where phone = '+201066600012'), 'nobody on duty → unassigned');
+reset role;
+update public.lead_campaigns set starts_on = '2026-11-01', ends_on = '2026-11-30' where code in ('GF26-LASER', 'GF26-DENTAL', 'GF26-SKIN', 'GF26-OFFER', 'GF26-CHECKUP');

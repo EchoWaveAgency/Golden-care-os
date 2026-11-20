@@ -24,7 +24,7 @@ function when(f: FormData, prefix: string): string | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !/^\d{2}:\d{2}$/.test(t)) return null;
   return clinicLocalToIso(d, t);
 }
-function done() { revalidatePath("/os/calls"); revalidatePath("/os/golden"); }
+function done() { revalidatePath("/os/calls"); revalidatePath("/os/campaigns"); }
 
 export async function setLeadOutcome(form: FormData) {
   const ctx = await getContext();
@@ -118,7 +118,7 @@ export async function sendLeadReply(form: FormData) {
 
 export async function saveCampaign(form: FormData) {
   const ctx = await getContext();
-  const path = "/os/golden/settings";
+  const path = "/os/campaigns/settings";
   const id = str(form, "id");
   const row = {
     code: normalizeCode(str(form, "code")), name_ar: str(form, "name_ar"), name_en: str(form, "name_en"),
@@ -126,6 +126,7 @@ export async function saveCampaign(form: FormData) {
     keywords: splitList(str(form, "keywords")), meta_ad_ids: splitList(str(form, "meta_ad_ids")),
     starts_on: str(form, "starts_on") || null, ends_on: str(form, "ends_on") || null,
     is_active: form.get("is_active") === "on",
+    always_on: form.get("always_on") === "on",
     growth_department: str(form, "growth_department") || null,
   };
   const { error } = id
@@ -138,7 +139,7 @@ export async function saveCampaign(form: FormData) {
 
 export async function saveLeadSettings(form: FormData) {
   const ctx = await getContext();
-  const path = "/os/golden/settings";
+  const path = "/os/campaigns/settings";
   const { error } = await ctx.supabase.rpc("lead_update_settings", { p: {
     code_prefix: normalizeCode(str(form, "code_prefix")).replace(/-/g, ""), sla_minutes: str(form, "sla_minutes"),
     auto_assign: form.get("auto_assign") === "on",
@@ -153,7 +154,7 @@ const rate = (f: FormData, k: string) => { const v = Number(str(f, k)); return N
 
 export async function saveGrowthSettings(form: FormData) {
   const ctx = await getContext();
-  const path = "/os/golden/settings";
+  const path = "/os/campaigns/settings";
   const start = str(form, "phase1_start");
   const { error } = await ctx.supabase.rpc("growth_update_settings", { p: {
     phase1_start: /^\d{4}-\d{2}-\d{2}$/.test(start) ? start : "",
@@ -167,7 +168,7 @@ export async function saveGrowthSettings(form: FormData) {
 
 export async function saveGrowthDepartment(form: FormData) {
   const ctx = await getContext();
-  const path = "/os/golden/settings";
+  const path = "/os/campaigns/settings";
   const int = (k: string) => (/^\d{1,6}$/.test(str(form, k)) ? str(form, k) : null);
   const { error } = await ctx.supabase.rpc("growth_update_department", { p_code: str(form, "code"), p: {
     baseline_month: int("baseline_month"), target_p1: int("target_p1"), target_p2: int("target_p2"), target_p3: int("target_p3"),

@@ -100,6 +100,7 @@ describe("formatting", () => {
   it("period presets", () => {
     expect(periodFor("7d", "2026-11-27")).toEqual({ from: "2026-11-21", to: "2026-11-27", key: "7d" });
     expect(periodFor(undefined, "2026-11-27")).toEqual({ from: "2026-11-27", to: "2026-11-27", key: "today" });
+    expect(periodFor("month", "2026-12-09")).toEqual({ from: "2026-12-01", to: "2026-12-09", key: "month" });
     expect(periodFor("yesterday", "2026-12-01").from).toBe("2026-11-30");
   });
 });

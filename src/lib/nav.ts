@@ -9,7 +9,7 @@ export const NAV: NavItem[] = [
   { href: "/os/executive", label: "nav.executive", section: "nav.section.governance", any: ["dashboard.executive"] },
   { href: "/os/reception", label: "nav.reception", section: "nav.section.front", any: ["appointment.write"] },
   { href: "/os/calls", label: "nav.calls", section: "nav.section.front", any: ["lead.own", "lead.write"] },
-  { href: "/os/golden", label: "nav.golden", section: "nav.section.web", any: ["lead.report", "lead.assign"] },
+  { href: "/os/campaigns", label: "nav.golden", section: "nav.section.web", any: ["lead.report", "lead.assign"] },
   { href: "/os/leads", label: "nav.leads", section: "nav.section.front", any: ["lead.read"] },
   { href: "/os/care", label: "nav.care", section: "nav.section.front", any: ["care.read", "care.settings", "clinical.write.own"] },
   { href: "/os/tickets", label: "nav.tickets", section: "nav.section.front", any: ["ticket.read"] },

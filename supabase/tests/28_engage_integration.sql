@@ -4,7 +4,7 @@ select public.svc_lead_external(jsonb_build_object('event', 'booking_request', '
   'campaign_code', 'GF26-LASER', 'service_code', 'LASER', 'contact', jsonb_build_object('name', 'Sara Engage', 'phone', '01123456780'),
   'transcript', jsonb_build_array(jsonb_build_object('from', 'contact', 'text', 'بكام الليزر؟'), jsonb_build_object('from', 'bot', 'text', 'من 500 جنيه')),
   'booking', jsonb_build_object('day', '2026-11-28', 'period', 'evening'))) as r1 \gset
-select test.assert((:'r1'::jsonb)->>'action' = 'created' and (:'r1'::jsonb)->>'ref' like 'GF26-%', 'lead created with a call-center id');
+select test.assert((:'r1'::jsonb)->>'action' = 'created' and (:'r1'::jsonb)->>'ref' like 'GC-%', 'lead created with a call-center id');
 select test.assert((select l.source = 'facebook' and l.channel = 'social' and l.kind = 'booking' and c.code = 'GF26-LASER' and l.full_name = 'Sara Engage'
                     from public.leads l join public.lead_campaigns c on c.id = l.campaign_id where l.code = (:'r1'::jsonb)->>'ref'), 'source, campaign, booking kind');
 select test.assert((select count(*) = 1 from public.lead_activities a join public.leads l on l.id = a.lead_id where l.code = (:'r1'::jsonb)->>'ref' and a.body like 'booking request via HORUS Engage · 2026-11-28 · evening%'), 'booking request visible to the agent');

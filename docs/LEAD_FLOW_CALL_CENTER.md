@@ -1,4 +1,12 @@
-# Golden Friday — Lead Flow × Call Center / تدفق العملاء × الكول سنتر
+# Lead Flow × Call Center — all campaigns, all year / تدفق العملاء × الكول سنتر — كل الحملات طول السنة
+
+> Built first for Golden Friday (November 2026); now the clinic's permanent system. / اتبنى أولًا للجمعة الذهبية، ودلوقتي هو النظام الدائم للعيادات.
+
+## Campaigns / الحملات
+- **Always-on** (`GC-LASER`, `GC-SKIN`, `GC-DENTAL`, `GC-GYN`, `GC-NUTRITION`, `GC-VASCULAR`, `GC-GENERAL`): receive leads all year by keyword; no dates. / حملات دائمة تستقبل العملاء طول السنة.
+- **Seasonal** (e.g. `GF26-*` 1–30 Nov 2026, next `RAMADAN27-*`, `SUMMER27-*`): have dates; while live they take priority over the always-on campaign of the same service. / حملات موسمية بتواريخ، ليها الأولوية طول مدتها.
+- An explicit code in the message always wins, even after the season ends. New lead ids: `GC-XXXXXX` (prefix editable). / الكود الصريح في الرسالة له الأولوية دائمًا.
+- Control page: `/os/campaigns` (old `/os/golden` redirects). / لوحة التحكم: `/os/campaigns`.
 
 **AD → WHATSAPP → LEAD CAPTURE → LEAD LOG → CALL CENTER → FOLLOW-UP → BOOKING → REPORT**
 Every lead has a source. Every lead has an owner. Every lead has a status. — لكل عميل: مصدر · مسؤول · حالة.

@@ -11,7 +11,7 @@ export function GfHeader({ ar, title, subtitle, actions, tabs }: {
     <header className="mb-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-300">Golden Friday · {ar ? "الجمعة الذهبية" : "Golden Care"}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-300">Golden Care · {ar ? "الحملات ومركز الاتصال" : "Campaigns & call center"}</p>
           <h1 className="mt-1 text-2xl font-semibold text-ivory-50">{title}</h1>
           {subtitle && <p className="gf-muted mt-1 text-sm">{subtitle}</p>}
         </div>

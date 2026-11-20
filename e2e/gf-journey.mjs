@@ -67,7 +67,7 @@ const cc2 = await login("cc2@demo.goldencare.local");
 await submit(cc2, "form:has(input[name=on]) button");
 check((await text(cc2)).includes("في الوردية"), "agent 2 on duty");
 const boss = await login("director@demo.goldencare.local");
-await go(boss, "/os/golden");
+await go(boss, "/os/campaigns");
 const totalBefore = Number(await boss.$eval("[data-dashboard] .num", (e) => e.textContent));
 
 // ---------- Webhook security
@@ -92,7 +92,7 @@ const owner = in1 ? cc1 : cc2, other = in1 ? cc2 : cc1;
 const card = await owner.$eval(`[data-lead="${code}"]`, (e) => e.innerText);
 check(card.includes("GF26-LASER") && card.includes("نورهان") && card.includes("عاجل"), "TEST 4: card shows id, name, campaign and 🔴 URGENT (waiting 7 min)");
 await shot(owner, "gf-01-call-center-urgent");
-await go(boss, "/os/golden");
+await go(boss, "/os/campaigns");
 check((await boss.$eval("[data-alert=urgent]", (e) => e.innerText)).includes(code), "control page lists it under 🔴 URGENT");
 const totalAfter = Number(await boss.$eval("[data-dashboard] .num", (e) => e.textContent));
 check(totalAfter === totalBefore + 1, `TEST 10a: total leads on the dashboard ${totalBefore} → ${totalAfter}`);
@@ -110,7 +110,7 @@ const nurse = await login("nurse@demo.goldencare.local");
 await go(nurse, "/os/calls");
 check(!nurse.url().includes("/os/calls"), "TEST 12d: a nurse cannot open the call center");
 const mkt = await login("marketing@demo.goldencare.local");
-const exp = await mkt.goto(`${BASE}/os/golden/export`, { waitUntil: "networkidle0" }).catch(() => null);
+const exp = await mkt.goto(`${BASE}/os/campaigns/export`, { waitUntil: "networkidle0" }).catch(() => null);
 check(exp && exp.status() === 403, "TEST 12e: marketing cannot export (403)");
 
 // ---------- TEST 6–7: agent marks CONTACTED → response time
@@ -158,7 +158,7 @@ const r3 = await webhook(msg("wamid.E2E3", "تأكيد الموعد GF26-LASER")
 check(r3.body.leads[0] === code, "TEST 11b: message after booking still joins the same lead");
 
 // ---------- TEST 10: dashboard and reports updated from the database
-await go(boss, "/os/golden");
+await go(boss, "/os/campaigns");
 const dash = await text(boss);
 const campRow = await boss.$$eval("table tr", (rows) => rows.map((r) => r.innerText).find((t) => t.includes("GF26-LASER")) ?? "");
 const campFlat = campRow.replace(/\s+/g, " ");
@@ -166,10 +166,10 @@ check(/GF26-LASER .* 1 1 1 1 1 100% 7 د 0%/.test(campFlat), `TEST 10b: campaign
 check(dash.includes("أحمد — كول سنتر") || dash.includes("منة — كول سنتر"), "TEST 10c: agent report shows the agent");
 check(!(await boss.$eval("[data-alert=urgent]", (e) => e.innerText)).includes(code), "TEST 10d: no longer urgent");
 await shot(boss, "gf-03-control-dashboard");
-const csv = await boss.evaluate(async () => (await fetch("/os/golden/export")).text());
+const csv = await boss.evaluate(async () => (await fetch("/os/campaigns/export")).text());
 check(csv.includes(code) && csv.includes("booked") && csv.includes("GF26-LASER") && csv.includes("120219999000001"), "export CSV contains the lead, status, campaign and ad id");
 
-await go(boss, "/os/golden/settings");
+await go(boss, "/os/campaigns/settings");
 check((await text(boss)).includes("/api/webhooks/whatsapp"), "settings show the webhook URL and integration checklist");
 await shot(boss, "gf-04-settings");
 

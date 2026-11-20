@@ -7,11 +7,11 @@ import { Since } from "@/components/gf/Live";
 import { SubmitButton } from "@/components/SubmitButton";
 import { saveCampaign, saveGrowthDepartment, saveGrowthSettings, saveLeadSettings, setDuty } from "@/app/actions/lead-flow";
 
-export const metadata = { title: "Golden Friday settings" };
+export const metadata = { title: "Campaigns settings" };
 export const dynamic = "force-dynamic";
 
 type Campaign = { id: string; code: string; name_ar: string; name_en: string; service_label: string | null; keywords: string[]; meta_ad_ids: string[];
-  is_active: boolean; starts_on: string | null; ends_on: string | null; growth_department: string | null };
+  is_active: boolean; starts_on: string | null; ends_on: string | null; growth_department: string | null; always_on: boolean };
 type Dept = { code: string; name_ar: string; name_en: string; baseline_month: number; target_p1: number; target_p2: number; target_p3: number };
 type GSet = { phase1_start: string | null; phase_weeks: number; booking_rate: number; show_rate: number; new_lead_share: number };
 
@@ -19,7 +19,7 @@ export default async function GoldenSettings({ searchParams }: { searchParams: {
   const ctx = await requireAny("lead.campaigns", "lead.assign");
   const ar = ctx.locale === "ar";
   const [{ data: camps }, { data: settings }, { data: people }, { data: last }, { data: depts }, { data: gs }] = await Promise.all([
-    ctx.supabase.from("lead_campaigns").select("*").order("is_active", { ascending: false }).order("code").returns<Campaign[]>(),
+    ctx.supabase.from("lead_campaigns").select("*").order("is_active", { ascending: false }).order("always_on").order("code").returns<Campaign[]>(),
     ctx.supabase.from("lead_flow_settings").select("code_prefix, sla_minutes, auto_assign, updated_at").maybeSingle(),
     ctx.supabase.rpc("lead_agents"),
     ctx.supabase.from("lead_messages").select("received_at").eq("direction", "in").order("received_at", { ascending: false }).limit(1).maybeSingle(),
@@ -42,7 +42,7 @@ export default async function GoldenSettings({ searchParams }: { searchParams: {
 
   return (
     <div className="gf">
-      <GfHeader ar={ar} title={ar ? "الحملات والإعدادات" : "Campaigns & settings"} actions={<Link href="/os/golden" className="gf-btn-ghost">{ar ? "لوحة التحكم" : "Control"}</Link>} />
+      <GfHeader ar={ar} title={ar ? "الحملات والإعدادات" : "Campaigns & settings"} actions={<Link href="/os/campaigns" className="gf-btn-ghost">{ar ? "لوحة التحكم" : "Control"}</Link>} />
       <GfBanner ar={ar} error={searchParams.error} ok={searchParams.ok} />
 
       <section className="gf-card mb-5 p-4" data-integration>
@@ -91,7 +91,7 @@ export default async function GoldenSettings({ searchParams }: { searchParams: {
                     <span className="flex-1">{s.full_name}<span className="gf-muted block text-[11px]">{s.is_agent ? (ar ? "موظف كول سنتر" : "Agent") : (ar ? "مشرف" : "Supervisor")} · {s.open_leads} {ar ? "مفتوح" : "open"} · {s.new_leads} {ar ? "جديد" : "new"}</span></span>
                     {s.is_agent && ctx.can("lead.assign") && (
                       <form action={setDuty}>
-                        <input type="hidden" name="user" value={s.user_id} /><input type="hidden" name="on" value={s.on_duty ? "0" : "1"} /><input type="hidden" name="back" value="/os/golden/settings" />
+                        <input type="hidden" name="user" value={s.user_id} /><input type="hidden" name="on" value={s.on_duty ? "0" : "1"} /><input type="hidden" name="back" value="/os/campaigns/settings" />
                         <SubmitButton pendingLabel="…" className={`gf-btn min-h-0 px-3 py-1.5 text-xs ${s.on_duty ? "bg-emerald-500 text-coal-950" : "border border-coal-500 text-ivory-300"}`}>
                           {s.on_duty ? (ar ? "● في الوردية" : "● On duty") : (ar ? "○ خارج الوردية" : "○ Off duty")}
                         </SubmitButton>
@@ -107,8 +107,8 @@ export default async function GoldenSettings({ searchParams }: { searchParams: {
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-gold-100">{ar ? "أكواد الحملات" : "Campaign codes"}</h2>
           <p className="text-xs text-ivory-300/70">
-            {ar ? "ضع الكود في الرسالة الجاهزة لإعلان Click-to-WhatsApp (مثال: «GF26-LASER — أريد تفاصيل عرض الليزر»). الترتيب: الكود في الرسالة ← رقم الإعلان ← الكلمات المفتاحية لحملة نشطة ← اسم حملة ميتا."
-                : "Put the code in the Click-to-WhatsApp ad's pre-filled message (e.g. “GF26-LASER — I want the laser offer”). Order: code in the message → ad id → keywords of a live campaign → Meta campaign name."}
+            {ar ? "ضع الكود في الرسالة الجاهزة لإعلان Click-to-WhatsApp (مثال: «SUMMER27-LASER — أريد تفاصيل عرض الليزر»). الترتيب: الكود في الرسالة ← رقم الإعلان ← الكلمات المفتاحية لحملة نشطة (الموسمية قبل الدائمة) ← اسم حملة ميتا. الحملات الدائمة تستقبل العملاء طول السنة، والحملة الموسمية (بتواريخ) تأخذ الأولوية طول مدتها."
+                : "Put the code in the Click-to-WhatsApp ad's pre-filled message (e.g. “SUMMER27-LASER — I want the laser offer”). Order: code in the message → ad id → keywords of a live campaign (seasonal before always-on) → Meta campaign name. Always-on campaigns receive leads all year; a seasonal campaign (with dates) takes over while it runs."}
           </p>
           {(camps ?? []).map((c) => <CampaignForm key={c.id} c={c} ar={ar} canEdit={canEdit} depts={depts ?? []} />)}
           {canEdit && <CampaignForm ar={ar} canEdit depts={depts ?? []} />}
@@ -166,12 +166,13 @@ function CampaignForm({ c, ar, canEdit, depts }: { c?: Campaign; ar: boolean; ca
         {c ? <>
           <span className="num font-bold text-gold-300">{c.code}</span>
           <span className="text-sm">{ar ? c.name_ar : c.name_en}</span>
-          <span className={`ms-auto rounded px-2 py-0.5 text-[11px] ${c.is_active ? "bg-emerald-500/20 text-emerald-200" : "bg-coal-600 text-ivory-300"}`}>{c.is_active ? (ar ? "نشطة" : "Active") : (ar ? "متوقفة" : "Inactive")}</span>
+          <span className="ms-auto rounded bg-coal-700 px-2 py-0.5 text-[11px] text-ivory-200">{c.always_on ? (ar ? "دائمة" : "Always on") : c.starts_on || c.ends_on ? `${c.starts_on ?? "…"} → ${c.ends_on ?? "…"}` : (ar ? "بدون تواريخ" : "Undated")}</span>
+          <span className={`rounded px-2 py-0.5 text-[11px] ${c.is_active ? "bg-emerald-500/20 text-emerald-200" : "bg-coal-600 text-ivory-300"}`}>{c.is_active ? (ar ? "نشطة" : "Active") : (ar ? "متوقفة" : "Inactive")}</span>
         </> : <span className="text-sm font-semibold text-gold-100">{ar ? "+ كود حملة جديد" : "+ New campaign code"}</span>}
       </summary>
       <form action={saveCampaign} className="grid gap-3 border-t border-coal-600 p-4 sm:grid-cols-2">
         {c && <input type="hidden" name="id" value={c.id} />}
-        <label><span className="gf-label">{ar ? "الكود" : "Code"}</span><input name="code" required defaultValue={c?.code} placeholder="GF26-LASER" className="gf-input num" disabled={!canEdit} /></label>
+        <label><span className="gf-label">{ar ? "الكود" : "Code"}</span><input name="code" required defaultValue={c?.code} placeholder="SUMMER27-LASER" className="gf-input num" disabled={!canEdit} /></label>
         <label><span className="gf-label">{ar ? "الخدمة (تظهر عند الحجز)" : "Service (prefilled on booking)"}</span><input name="service_label" defaultValue={c?.service_label ?? ""} className="gf-input" disabled={!canEdit} /></label>
         <label><span className="gf-label">{ar ? "الاسم بالعربية" : "Arabic name"}</span><input name="name_ar" required defaultValue={c?.name_ar} className="gf-input" disabled={!canEdit} /></label>
         <label><span className="gf-label">{ar ? "الاسم بالإنجليزية" : "English name"}</span><input name="name_en" required defaultValue={c?.name_en} className="gf-input" dir="ltr" disabled={!canEdit} /></label>
@@ -186,6 +187,7 @@ function CampaignForm({ c, ar, canEdit, depts }: { c?: Campaign; ar: boolean; ca
             <option value="">{ar ? "— لا يُحسب لقسم —" : "— no department —"}</option>
             {depts.map((d) => <option key={d.code} value={d.code}>{ar ? d.name_ar : d.name_en}</option>)}
           </select></label>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="always_on" defaultChecked={c?.always_on ?? false} disabled={!canEdit} />{ar ? "دائمة طول السنة (بدون تواريخ)" : "Always on all year (no dates)"}</label>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" defaultChecked={c?.is_active ?? true} disabled={!canEdit} />{ar ? "نشطة" : "Active"}</label>
         {canEdit && <SubmitButton pendingLabel="…" className="gf-btn-gold sm:col-span-2">{ar ? "حفظ الحملة" : "Save campaign"}</SubmitButton>}
       </form>

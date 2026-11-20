@@ -1,4 +1,4 @@
-// Golden Friday lead flow: pure helpers shared by the webhook, the call-center pages and reports.
+// Lead flow × call center (all campaigns, all year): pure helpers shared by the webhook, the call-center pages and reports.
 // No I/O here — everything is unit-tested in leads-flow.test.ts.
 
 export const CC_STATUSES = ["new", "contacted", "interested", "not_interested", "no_response", "follow_up", "booked", "closed"] as const;
@@ -176,6 +176,7 @@ export function periodFor(key: string | undefined, today: string): { from: strin
     case "yesterday": return { from: d(-1), to: d(-1), key };
     case "7d": return { from: d(-6), to: today, key };
     case "30d": return { from: d(-29), to: today, key };
+    case "month": return { from: `${today.slice(0, 7)}-01`, to: today, key };
     default: return { from: today, to: today, key: "today" };
   }
 }

@@ -98,7 +98,7 @@ export default async function CallCenterPage({ searchParams }: { searchParams: {
               </SubmitButton>
             </form>
           )}
-          {(ctx.can("lead.report") || ctx.can("lead.assign")) && <Link href="/os/golden" className="gf-btn-ghost">{ar ? "لوحة التحكم" : "Control"}</Link>}
+          {(ctx.can("lead.report") || ctx.can("lead.assign")) && <Link href="/os/campaigns" className="gf-btn-ghost">{ar ? "لوحة التحكم" : "Control"}</Link>}
         </>} />
       <GfBanner ar={ar} error={searchParams.error} ok={searchParams.ok} />
 
@@ -124,7 +124,7 @@ export default async function CallCenterPage({ searchParams }: { searchParams: {
             <label className="block"><span className="gf-label">{ar ? "الاسم" : "Name"}</span><input name="full_name" required minLength={2} maxLength={120} className="gf-input" /></label>
             <label className="block"><span className="gf-label">{ar ? "الموبايل" : "Mobile"}</span><input name="phone" required inputMode="tel" className="gf-input num" placeholder="01xxxxxxxxx" /></label>
             <div className="grid grid-cols-2 gap-2">
-              <label><span className="gf-label">{ar ? "كود الحملة" : "Campaign code"}</span><input name="campaign_code" className="gf-input num" placeholder="GF26-LASER" /></label>
+              <label><span className="gf-label">{ar ? "كود الحملة" : "Campaign code"}</span><input name="campaign_code" className="gf-input num" placeholder="GC-LASER" /></label>
               <label><span className="gf-label">{ar ? "المصدر" : "Source"}</span>
                 <select name="source" className="gf-input" defaultValue="manual">
                   {SOURCES.map((s) => <option key={s} value={s}>{ar ? SOURCE[s].ar : SOURCE[s].en}</option>)}
