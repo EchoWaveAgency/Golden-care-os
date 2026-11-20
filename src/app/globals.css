@@ -20,6 +20,22 @@ body { font-feature-settings: "tnum" 1; }
   .th { @apply px-3 py-2 text-start text-xs font-medium text-ink-500; }
   .td { @apply px-3 py-2 text-sm; }
   .num { direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
+
+  /* Golden Friday operations surfaces — black / charcoal / gold, built for speed. */
+  /* Full-bleed: the dark surface fills the content column edge to edge (sticky sidebar/header stay on top). */
+  .gf { @apply -mx-4 -my-6 min-h-screen bg-coal-950 px-4 py-6 text-ivory-100 sm:-mx-6 sm:px-6 lg:-mx-10 lg:-my-10 lg:px-10 lg:py-10; color-scheme: dark;
+        box-shadow: 0 0 0 100vmax theme("colors.coal.950"); clip-path: inset(0 -100vmax); }
+  .gf-card { @apply rounded-xl border border-coal-600/70 bg-coal-800; }
+  .gf-muted { @apply text-ivory-300/70; }
+  .gf-input { @apply w-full rounded-lg border border-coal-500 bg-coal-900 px-3 py-2.5 text-sm text-ivory-100 placeholder:text-ivory-300/40
+              focus:border-gold-300 focus:outline-none focus:ring-2 focus:ring-gold-500/30; }
+  .gf-label { @apply mb-1 block text-xs font-medium text-ivory-300/80; }
+  .gf-btn { @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-300 disabled:cursor-not-allowed disabled:opacity-50; }
+  .gf-btn-gold { @apply gf-btn bg-gold-300 text-coal-950 hover:bg-gold-100; }
+  .gf-btn-ghost { @apply gf-btn border border-coal-500 bg-coal-900 text-ivory-100 hover:border-gold-300 hover:text-gold-100; }
+  .gf-th { @apply px-3 py-2 text-start text-[11px] font-semibold uppercase tracking-wide text-ivory-300/60; }
+  .gf-td { @apply px-3 py-2.5 text-sm; }
 }
 
 @media print {

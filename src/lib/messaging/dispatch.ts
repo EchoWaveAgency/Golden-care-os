@@ -4,6 +4,7 @@ import { messagingMode, sendMessage, sendSms, smsMode } from "./provider";
 import { renderTemplate } from "./render";
 import { processDue } from "@/lib/care/runner";
 import { processEinvoices } from "@/lib/einvoice/connector";
+import { enrichAdNames } from "@/lib/leads/meta-ads";
 
 type OutboxRow = { id: string; channel: "whatsapp" | "sms"; to_phone: string; lang: "ar" | "en"; template_code: string; vars: Record<string, unknown> };
 
@@ -14,7 +15,8 @@ export async function dispatchOnce(limit = 20) {
   const care = await processDue().catch((e) => ({ error: e instanceof Error ? e.message : "care run failed" }));
   const einvoice = await processEinvoices().catch((e) => ({ error: e instanceof Error ? e.message : "e-invoice run failed" }));
   const { data: loyaltyExpired } = await db.rpc("svc_loyalty_expire");
-  if (messagingMode() === "disabled" && smsMode() === "disabled") return { reminders: reminders ?? 0, sent: 0, failed: 0, care, einvoice, loyaltyExpired, skipped: "no provider configured" };
+  const ads = await enrichAdNames().catch((e) => ({ error: e instanceof Error ? e.message : "ad names failed" }));
+  if (messagingMode() === "disabled" && smsMode() === "disabled") return { reminders: reminders ?? 0, sent: 0, failed: 0, care, einvoice, loyaltyExpired, ads, skipped: "no provider configured" };
 
   const { data: batch, error } = await db.rpc("svc_outbox_claim", { p_limit: limit });
   if (error) throw new Error(error.message);
@@ -35,5 +37,5 @@ export async function dispatchOnce(limit = 20) {
     await db.rpc("svc_outbox_result", { p_id: m.id, p_ok: r.ok, p_provider: r.provider, p_provider_id: "id" in r ? r.id ?? null : null, p_error: r.error ?? null });
     if (r.ok) sent++; else failed++;
   }
-  return { reminders: reminders ?? 0, sent, failed, care, einvoice, loyaltyExpired };
+  return { reminders: reminders ?? 0, sent, failed, care, einvoice, loyaltyExpired, ads };
 }

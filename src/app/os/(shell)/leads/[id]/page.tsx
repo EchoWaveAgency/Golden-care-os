@@ -14,7 +14,7 @@ type Lead = {
   id: string; ref: string; kind: string; status: string; channel: string; full_name: string; phone: string; email: string | null;
   message: string | null; preferred_slot: string | null; consent_marketing: boolean; created_at: string; due_at: string | null;
   first_contact_at: string | null; utm_source: string | null; utm_medium: string | null; utm_campaign: string | null; page_path: string | null;
-  patient_id: string | null; appointment_id: string | null; assigned_to: string | null; doctor_id: string | null; specialty_id: string | null;
+  code: string; patient_id: string | null; appointment_id: string | null; assigned_to: string | null; doctor_id: string | null; specialty_id: string | null;
   close_reason: string | null; lang: string;
   specialty: { name_ar: string; name_en: string } | null; offer: { title_ar: string; title_en: string } | null;
 };
@@ -44,7 +44,7 @@ export default async function LeadPage({ params, searchParams }: { params: { id:
     <div className="mx-auto max-w-6xl">
       <PageHeader
         title={l.full_name}
-        subtitle={`${l.ref} · ${ar ? LEAD_KIND[l.kind]?.ar : LEAD_KIND[l.kind]?.en} · ${ar ? LEAD_STATUS[l.status]?.ar : LEAD_STATUS[l.status]?.en}`}
+        subtitle={`${l.code} · ${l.ref} · ${ar ? LEAD_KIND[l.kind]?.ar : LEAD_KIND[l.kind]?.en} · ${ar ? LEAD_STATUS[l.status]?.ar : LEAD_STATUS[l.status]?.en}`}
         actions={<Link href="/os/leads" className="btn-ghost">{ctx.t("common.back")}</Link>}
       />
       <Banner error={searchParams.error} success={searchParams.converted ? (ar ? "تم تسجيل المريض وحجز الموعد وربطه بالطلب." : "Patient registered, appointment booked and linked.") : undefined} />

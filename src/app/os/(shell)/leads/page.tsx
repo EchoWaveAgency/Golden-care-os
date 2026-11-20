@@ -10,7 +10,7 @@ import { LEAD_STATUS, LEAD_KIND } from "@/lib/leads";
 export const metadata = { title: "Patient relations" };
 export const dynamic = "force-dynamic";
 
-type Lead = { id: string; ref: string; kind: string; status: string; full_name: string; phone: string; created_at: string; due_at: string | null;
+type Lead = { id: string; ref: string; code: string; kind: string; status: string; full_name: string; phone: string; created_at: string; due_at: string | null;
   preferred_slot: string | null; utm_source: string | null; utm_campaign: string | null; channel: string; assigned_to: string | null;
   specialty: { name_ar: string; name_en: string } | null; doctor: { full_name_ar: string; full_name_en: string | null } | null };
 
@@ -23,8 +23,8 @@ export default async function LeadsPage({ searchParams }: { searchParams: { view
   const view = ["open", "mine", "converted", "closed", "all"].includes(searchParams.view ?? "") ? searchParams.view! : "open";
 
   let q = ctx.supabase.from("leads")
-    .select("id, ref, kind, status, full_name, phone, created_at, due_at, preferred_slot, utm_source, utm_campaign, channel, assigned_to, specialty:specialties(name_ar, name_en), doctor:staff(full_name_ar, full_name_en)")
-    .order("created_at", { ascending: false }).limit(200);
+    .select("id, ref, code, kind, status, full_name, phone, created_at, due_at, preferred_slot, utm_source, utm_campaign, channel, assigned_to, specialty:specialties(name_ar, name_en), doctor:staff(full_name_ar, full_name_en)")
+    .is("archived_at", null).order("created_at", { ascending: false }).limit(200);
   if (view === "open") q = q.in("status", OPEN);
   if (view === "mine") q = q.eq("assigned_to", ctx.user.id).in("status", OPEN);
   if (view === "converted") q = q.in("status", ["appointment_confirmed", "arrived", "visit_completed", "follow_up_completed"]);
@@ -38,7 +38,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: { view
   return (
     <>
       <PageHeader title={ctx.t("nav.leads")} subtitle={ar ? "استفسارات الموقع والحملات والمكالمات وواتساب في صندوق واحد" : "Website, campaign, call and WhatsApp inquiries in one queue"}
-        actions={<Link href="/os/leads/funnel" className="btn-ghost" data-funnel-link>{ar ? "قمع التسويق وتجارب أ/ب" : "Funnel & A/B tests"}</Link>} />
+        actions={<><Link href="/os/calls" className="btn-gold">{ar ? "مركز الاتصال" : "Call center"}</Link><Link href="/os/leads/funnel" className="btn-ghost" data-funnel-link>{ar ? "قمع التسويق وتجارب أ/ب" : "Funnel & A/B tests"}</Link></>} />
       <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={ar ? "مفتوحة" : "Open"} value={rows.filter((r) => OPEN.includes(r.status)).length} />
         <Stat label={ar ? "لم يتم الرد في الوقت المحدد" : "Past response SLA"} value={overdue} tone={overdue ? "danger" : "navy"} />
@@ -69,7 +69,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: { view
                 return (
                   <tr key={r.id} className={late ? "bg-danger-50/50" : "hover:bg-ivory-50"}>
                     <td className="td">
-                      <Link href={`/os/leads/${r.id}`} className="num font-medium text-navy-700 hover:underline">{r.ref}</Link>
+                      <Link href={`/os/leads/${r.id}`} className="num font-medium text-navy-700 hover:underline">{r.code}</Link>
                       <p className="text-xs text-ink-300">{ar ? LEAD_KIND[r.kind]?.ar : LEAD_KIND[r.kind]?.en} · <span className="whitespace-nowrap">{dateTime(r.created_at, locale)}</span></p>
                     </td>
                     <td className="td">{r.full_name}<p className="num text-xs text-ink-300">{r.phone}</p></td>

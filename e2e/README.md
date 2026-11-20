@@ -16,6 +16,7 @@ node e2e/m9-journey.mjs       # 26 checks: dental plan from the visit → quotat
 node e2e/m7-journey.mjs       # 18 checks: purchase order → approval → partial receipt → close short → confirm direct receipt → supplier payment → profitability + CSV
 node e2e/m11-journey.mjs      # 18 checks: employees → attendance import → leave → own file → payroll prepare / approve / pay → payslip
 node e2e/m12-journey.mjs      # 21 checks: e-receipts on → package sale → 80mm receipt → package refund + transfer → supplier return → e-receipt queue (blocked → codes → accepted) → day sheet
+node e2e/gf-journey.mjs      # 29 checks: Golden Friday — signed WhatsApp webhook (CTWA ad) → lead GF26-XXXXXX → round-robin agent → URGENT → contacted (response time) → follow-up → reply → booked → dashboard, campaign/agent reports, export; isolation (other agent, anon API, nurse, marketing export). Needs WHATSAPP_APP_SECRET in .env.local
 ```
 Privileged demo users complete two-factor sign-in automatically through `e2e/mfa.mjs` (TOTP computed from the enrolled secret).
 ```

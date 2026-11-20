@@ -327,3 +327,24 @@ SQL suite 26 ✅ (also: consent withdrawn from the portal); browser journey m16 
 
 ### Not verified here (needs the clinic's accounts)
 Real SMS delivery (Twilio or an Egyptian SMS provider, sender id), Supabase Storage in a hosted project (bucket must be private), real gateway payments for installments (Paymob sandbox).
+
+## Session 17 — 2026-11-20: Golden Friday lead flow × call center
+
+### Root cause found
+WhatsApp messages from ads reached the database but not the call center: known patients' messages became support tickets, a number's 4th+ message in 24 h was dropped, voice notes / images from unknown numbers went to care escalations, and the ad referral and WhatsApp name were never stored.
+
+### Delivered
+- **Migration 0034**: campaign codes (`GF26-LASER`, `-DENTAL`, `-SKIN`, `-OFFER`, `-CHECKUP`; admin-editable keywords, Meta ad ids, dates), settings (id prefix, SLA 5 min, auto-assign), lead ids `GF26-XXXXXX`, call-center status (NEW · CONTACTED · INTERESTED · NOT INTERESTED · NO RESPONSE · FOLLOW-UP · BOOKED · CLOSED), source (Meta / Facebook / Instagram / WhatsApp / organic / manual / other) with ad id, ad / ad set / campaign names, click id and UTM; owner with round-robin auto-assignment to agents on duty; first-contact time and response SLA; follow-ups; booking details; archive instead of delete; message history (`lead_messages`); activity log; reports (dashboard, campaign, source/ad, agent, daily); audited export; new role **Call Center Agent** (own leads only) and permissions `lead.own / assign / campaigns / export / report`.
+- **Capture** (`svc_lead_capture`) in the WhatsApp webhook before the care assistant: idempotent per Meta message id, serialized per phone, one open lead per phone + campaign, every message kept. Care-assistant routing fixed (open lead takes the message; unknown sender → one lead; voice notes → lead; one auto-reply per new lead).
+- **Screens**: `/os/calls` call center (urgent first, live timers, one-tap actions, mobile), `/os/calls/[id]` lead workspace, `/os/golden` control dashboard, `/os/golden/settings`, CSV export. Black / charcoal / gold, Arabic RTL with English.
+- **Meta ad names** (optional `META_ADS_TOKEN`) in the dispatcher job.
+- Setup guide: `docs/GOLDEN_FRIDAY_LEAD_FLOW.md`.
+
+### Verified
+SQL suites 27/27 + concurrency (10 simultaneous first messages → 1 lead / 10 messages); unit 134/134; typecheck, lint, build ✅; browser journey `gf-journey.mjs` 29/29 (all 12 acceptance tests through a signed webhook on the running app). A dashboard bug found by the journey (empty period showed total 1) fixed with a regression test.
+
+### Not verified here (needs the clinic's Meta accounts)
+Real Meta webhook delivery and signature with the clinic's app secret; real Click-to-WhatsApp referral payloads from live ads; sending replies through the clinic's number; Marketing API ad names.
+
+## Session 18 — 2026-11-20: HORUS Engage integration
+HORUS Engage (separate EchoWave product: WhatsApp / Messenger / Instagram / comments bot with human handoff) posts signed events to `POST /api/integrations/engage` (`ENGAGE_SECRET`). Migration 0035 `svc_lead_external`: each event becomes or joins a call-center lead through the same capture rules (one open lead per phone + campaign, idempotent per event), with source (Messenger → Facebook, Instagram), campaign code, booking request (day + period) and the conversation summary. Leads arrive as NEW so the response SLA applies. Verified: SQL suite 28, all suites + concurrency, and the cross-system journey (24/24). Local stacks now stop only their own processes, so Golden Care and Engage can run side by side.

@@ -95,3 +95,13 @@
 ## Session 16 additions — website and marketing
 - `26_articles_testimonials_ab_sms.sql`: article review and public functions, portal instructions by service, testimonial consent gate (insert and every read; grant / withdraw from the portal), A/B events and report, funnel permissions, SMS preferred channel and fallback setting.
 - Browser `e2e/m16-journey.mjs` (15 checks): article through review to `/articles`; portal testimonial consent → published under initials; landing version B → visitors and one inquiry → A/B report and funnel; SMS fallback switch.
+
+## Session 17 — Golden Friday lead flow × call center
+- SQL `supabase/tests/27_lead_flow_call_center.sql`: CTWA capture (id, campaign code, keyword, ad id, Facebook/Instagram source, WhatsApp name, received time), Meta retries, duplicates (phone + campaign + open), different campaign → separate lead, round-robin to agents on duty, agent isolation (RLS), guard against direct edits, contacted → response time, follow-up / booked / reason validation, reassign / unassign, archive (no delete), manual leads, replies inside the 24-hour window, delivery statuses, dashboard = database, campaign / source / agent / daily reports, audited export, settings, care-assistant routing (unknown sender: one lead for all messages; ad patient: lead not ticket; voice note → lead), appointment link → BOOKED, Meta campaign name → campaign, nobody on duty → unassigned, empty period → 0.
+- `concurrency.sh`: 10 simultaneous first messages from one number → 1 lead / 10 messages; the same Meta message 5× → stored once.
+- Unit `src/lib/leads-flow.test.ts` (13): webhook parsing (contacts, referral, media, statuses), SLA states, alerts and queue order, durations, CSV formula-injection guard, period presets.
+- Browser `e2e/gf-journey.mjs` (29 checks) — the 12 acceptance tests of the brief through the running app.
+
+## Session 18 — HORUS Engage integration
+- SQL `supabase/tests/28_engage_integration.sql`: Engage booking request → lead (GF26 id, Facebook source for Messenger, campaign from the code, booking kind, activity with day / period, conversation summary in history); same event twice → once; later event joins the open lead; no phone → skipped; unknown event refused; service role only.
+- Cross-system journey `horus-engage/e2e/engage-journey.mjs` (24 checks) with both stacks running: WhatsApp booking in Engage arrives in this call center as a NEW lead with the booking request.

@@ -171,7 +171,8 @@ export async function processInbound(input: { phone: string; text: string; provi
     const thanks = s.thanks && raw.trim().length <= 40;
     const { data: routed } = await db.rpc("svc_care_unrouted", { p_message: msg, p_thanks: thanks });
     const action = (routed as { action: string } | null)?.action ?? "none";
-    const key = thanks ? "welcome" : action === "none" ? null : "received_will_contact";
+    // One acknowledgement per new lead / ticket; later messages on an open lead are for the call center, not the bot.
+    const key = action === "lead_attached" ? null : thanks ? "welcome" : action === "none" ? null : "received_will_contact";
     if (key) await replyTo(db, msg, input.phone, lang, key);
     return { handled: action };
   } catch (e) {
