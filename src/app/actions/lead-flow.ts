@@ -126,6 +126,7 @@ export async function saveCampaign(form: FormData) {
     keywords: splitList(str(form, "keywords")), meta_ad_ids: splitList(str(form, "meta_ad_ids")),
     starts_on: str(form, "starts_on") || null, ends_on: str(form, "ends_on") || null,
     is_active: form.get("is_active") === "on",
+    growth_department: str(form, "growth_department") || null,
   };
   const { error } = id
     ? await ctx.supabase.from("lead_campaigns").update(row).eq("id", id)
@@ -145,4 +146,33 @@ export async function saveLeadSettings(form: FormData) {
   if (error) go(path, { error: friendlyError(error.message, ctx.locale) });
   done(); revalidatePath(path);
   go(path, { ok: "settings" });
+}
+
+// Growth plan targets and funnel assumptions (lead.campaigns, checked in the database). Rates are entered as percentages.
+const rate = (f: FormData, k: string) => { const v = Number(str(f, k)); return Number.isFinite(v) && str(f, k) !== "" ? Math.round(v * 10) / 1000 : null; };
+
+export async function saveGrowthSettings(form: FormData) {
+  const ctx = await getContext();
+  const path = "/os/golden/settings";
+  const start = str(form, "phase1_start");
+  const { error } = await ctx.supabase.rpc("growth_update_settings", { p: {
+    phase1_start: /^\d{4}-\d{2}-\d{2}$/.test(start) ? start : "",
+    phase_weeks: str(form, "phase_weeks") || null,
+    booking_rate: rate(form, "booking_rate"), show_rate: rate(form, "show_rate"), new_lead_share: rate(form, "new_lead_share"),
+  } });
+  if (error) go(path, { error: friendlyError(error.message, ctx.locale) });
+  done(); revalidatePath(path);
+  go(path, { ok: "growth" });
+}
+
+export async function saveGrowthDepartment(form: FormData) {
+  const ctx = await getContext();
+  const path = "/os/golden/settings";
+  const int = (k: string) => (/^\d{1,6}$/.test(str(form, k)) ? str(form, k) : null);
+  const { error } = await ctx.supabase.rpc("growth_update_department", { p_code: str(form, "code"), p: {
+    baseline_month: int("baseline_month"), target_p1: int("target_p1"), target_p2: int("target_p2"), target_p3: int("target_p3"),
+  } });
+  if (error) go(path, { error: friendlyError(error.message, ctx.locale) });
+  done(); revalidatePath(path);
+  go(path, { ok: "growth" });
 }

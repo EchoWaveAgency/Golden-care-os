@@ -5,22 +5,26 @@ import { dateTime } from "@/lib/format";
 import { GfBanner, GfHeader } from "@/components/gf/Frame";
 import { Since } from "@/components/gf/Live";
 import { SubmitButton } from "@/components/SubmitButton";
-import { saveCampaign, saveLeadSettings, setDuty } from "@/app/actions/lead-flow";
+import { saveCampaign, saveGrowthDepartment, saveGrowthSettings, saveLeadSettings, setDuty } from "@/app/actions/lead-flow";
 
 export const metadata = { title: "Golden Friday settings" };
 export const dynamic = "force-dynamic";
 
 type Campaign = { id: string; code: string; name_ar: string; name_en: string; service_label: string | null; keywords: string[]; meta_ad_ids: string[];
-  is_active: boolean; starts_on: string | null; ends_on: string | null };
+  is_active: boolean; starts_on: string | null; ends_on: string | null; growth_department: string | null };
+type Dept = { code: string; name_ar: string; name_en: string; baseline_month: number; target_p1: number; target_p2: number; target_p3: number };
+type GSet = { phase1_start: string | null; phase_weeks: number; booking_rate: number; show_rate: number; new_lead_share: number };
 
 export default async function GoldenSettings({ searchParams }: { searchParams: { error?: string; ok?: string } }) {
   const ctx = await requireAny("lead.campaigns", "lead.assign");
   const ar = ctx.locale === "ar";
-  const [{ data: camps }, { data: settings }, { data: people }, { data: last }] = await Promise.all([
+  const [{ data: camps }, { data: settings }, { data: people }, { data: last }, { data: depts }, { data: gs }] = await Promise.all([
     ctx.supabase.from("lead_campaigns").select("*").order("is_active", { ascending: false }).order("code").returns<Campaign[]>(),
     ctx.supabase.from("lead_flow_settings").select("code_prefix, sla_minutes, auto_assign, updated_at").maybeSingle(),
     ctx.supabase.rpc("lead_agents"),
     ctx.supabase.from("lead_messages").select("received_at").eq("direction", "in").order("received_at", { ascending: false }).limit(1).maybeSingle(),
+    ctx.supabase.from("growth_departments").select("code, name_ar, name_en, baseline_month, target_p1, target_p2, target_p3").eq("is_active", true).order("sort_order").returns<Dept[]>(),
+    ctx.supabase.from("growth_settings").select("phase1_start, phase_weeks, booking_rate, show_rate, new_lead_share").maybeSingle<GSet>(),
   ]);
   const staff = (people ?? []) as { user_id: string; full_name: string; is_agent: boolean; on_duty: boolean; open_leads: number; new_leads: number }[];
   const canEdit = ctx.can("lead.campaigns");
@@ -106,15 +110,56 @@ export default async function GoldenSettings({ searchParams }: { searchParams: {
             {ar ? "ضع الكود في الرسالة الجاهزة لإعلان Click-to-WhatsApp (مثال: «GF26-LASER — أريد تفاصيل عرض الليزر»). الترتيب: الكود في الرسالة ← رقم الإعلان ← الكلمات المفتاحية لحملة نشطة ← اسم حملة ميتا."
                 : "Put the code in the Click-to-WhatsApp ad's pre-filled message (e.g. “GF26-LASER — I want the laser offer”). Order: code in the message → ad id → keywords of a live campaign → Meta campaign name."}
           </p>
-          {(camps ?? []).map((c) => <CampaignForm key={c.id} c={c} ar={ar} canEdit={canEdit} />)}
-          {canEdit && <CampaignForm ar={ar} canEdit />}
+          {(camps ?? []).map((c) => <CampaignForm key={c.id} c={c} ar={ar} canEdit={canEdit} depts={depts ?? []} />)}
+          {canEdit && <CampaignForm ar={ar} canEdit depts={depts ?? []} />}
         </section>
       </div>
+
+      {gs && <GrowthForms ar={ar} canEdit={canEdit} gs={gs} depts={depts ?? []} />}
     </div>
   );
 }
 
-function CampaignForm({ c, ar, canEdit }: { c?: Campaign; ar: boolean; canEdit: boolean }) {
+const pctIn = (n: number) => String(Math.round(n * 1000) / 10);
+
+function GrowthForms({ ar, canEdit, gs, depts }: { ar: boolean; canEdit: boolean; gs: GSet; depts: Dept[] }) {
+  return (
+    <section id="growth" className="mt-6 space-y-4">
+      <h2 className="text-sm font-semibold text-gold-100">{ar ? "أهداف الأقسام (خطة النمو)" : "Department targets (growth plan)"}</h2>
+      <form action={saveGrowthSettings} className="gf-card grid gap-3 p-4 sm:grid-cols-3 lg:grid-cols-6">
+        <label><span className="gf-label">{ar ? "بداية المرحلة الأولى" : "Phase 1 start"}</span><input type="date" name="phase1_start" defaultValue={gs.phase1_start ?? ""} className="gf-input num" disabled={!canEdit} /></label>
+        <label><span className="gf-label">{ar ? "أسابيع كل مرحلة" : "Weeks per phase"}</span><input type="number" name="phase_weeks" min={1} max={52} defaultValue={gs.phase_weeks} className="gf-input num" disabled={!canEdit} /></label>
+        <label><span className="gf-label">{ar ? "نسبة الحجز من العملاء %" : "Lead → booked %"}</span><input type="number" name="booking_rate" step="0.1" min={1} max={100} defaultValue={pctIn(gs.booking_rate)} className="gf-input num" disabled={!canEdit} /></label>
+        <label><span className="gf-label">{ar ? "نسبة الحضور %" : "Booked → attended %"}</span><input type="number" name="show_rate" step="0.1" min={1} max={100} defaultValue={pctIn(gs.show_rate)} className="gf-input num" disabled={!canEdit} /></label>
+        <label><span className="gf-label">{ar ? "الزيادة من عملاء جدد %" : "Growth from new leads %"}</span><input type="number" name="new_lead_share" step="1" min={0} max={100} defaultValue={pctIn(gs.new_lead_share)} className="gf-input num" disabled={!canEdit} /></label>
+        {canEdit && <div className="flex items-end"><SubmitButton pendingLabel="…" className="gf-btn-gold w-full">{ar ? "حفظ الافتراضات" : "Save assumptions"}</SubmitButton></div>}
+        <p className="text-[11px] text-ivory-300/70 sm:col-span-3 lg:col-span-6">
+          {ar ? "نسب الحجز والحضور افتراضات مبدئية. بعد أول أسبوع شغل، استبدل نسبة الحجز بالنسبة الفعلية الظاهرة في لوحة التحكم (حجز ÷ إجمالي العملاء)."
+              : "Booking and show rates are starting assumptions. After the first working week, replace the booking rate with the measured one on the control board (booked ÷ total leads)."}
+        </p>
+      </form>
+      <div className="gf-card overflow-x-auto">
+        <table className="w-full min-w-[720px]">
+          <thead><tr>{[ar ? "القسم" : "Department", ar ? "مرضى اليوم / شهر" : "Patients today / mo", ar ? "هدف م١" : "Phase 1", ar ? "هدف م٢" : "Phase 2", ar ? "هدف م٣" : "Phase 3", ""].map((h, i) => <th key={i} className="gf-th">{h}</th>)}</tr></thead>
+          <tbody className="divide-y divide-coal-600/70">
+            {depts.map((d) => (
+              <tr key={d.code}>
+                <td className="gf-td font-semibold">{ar ? d.name_ar : d.name_en}</td>
+                {(["baseline_month", "target_p1", "target_p2", "target_p3"] as const).map((k) => (
+                  <td key={k} className="gf-td"><input form={`gd-${d.code}`} name={k} type="number" min={0} defaultValue={d[k]} className="gf-input num w-24" disabled={!canEdit} aria-label={k} /></td>
+                ))}
+                <td className="gf-td">{canEdit && <form id={`gd-${d.code}`} action={saveGrowthDepartment}><input type="hidden" name="code" value={d.code} />
+                  <SubmitButton pendingLabel="…" className="gf-btn-ghost min-h-0 px-3 py-1.5 text-xs">{ar ? "حفظ" : "Save"}</SubmitButton></form>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function CampaignForm({ c, ar, canEdit, depts }: { c?: Campaign; ar: boolean; canEdit: boolean; depts: Dept[] }) {
   return (
     <details data-form className="gf-card" open={!c}>
       <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3">
@@ -136,6 +181,11 @@ function CampaignForm({ c, ar, canEdit }: { c?: Campaign; ar: boolean; canEdit: 
           <input name="meta_ad_ids" defaultValue={c?.meta_ad_ids.join(", ")} className="gf-input num" disabled={!canEdit} /></label>
         <label><span className="gf-label">{ar ? "من" : "Starts"}</span><input type="date" name="starts_on" defaultValue={c?.starts_on ?? ""} className="gf-input num" disabled={!canEdit} /></label>
         <label><span className="gf-label">{ar ? "إلى" : "Ends"}</span><input type="date" name="ends_on" defaultValue={c?.ends_on ?? ""} className="gf-input num" disabled={!canEdit} /></label>
+        <label className="sm:col-span-2"><span className="gf-label">{ar ? "يُحسب لقسم (أهداف النمو)" : "Counts toward department (growth targets)"}</span>
+          <select name="growth_department" defaultValue={c?.growth_department ?? ""} className="gf-input" disabled={!canEdit}>
+            <option value="">{ar ? "— لا يُحسب لقسم —" : "— no department —"}</option>
+            {depts.map((d) => <option key={d.code} value={d.code}>{ar ? d.name_ar : d.name_en}</option>)}
+          </select></label>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_active" defaultChecked={c?.is_active ?? true} disabled={!canEdit} />{ar ? "نشطة" : "Active"}</label>
         {canEdit && <SubmitButton pendingLabel="…" className="gf-btn-gold sm:col-span-2">{ar ? "حفظ الحملة" : "Save campaign"}</SubmitButton>}
       </form>

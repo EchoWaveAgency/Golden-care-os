@@ -22,6 +22,10 @@ type SrcRow = { source: string; ad_id: string | null; ad_name: string | null; ad
 type AlertLead = { id: string; code: string; full_name: string; cc_status: string; created_at: string; next_follow_up_at: string | null; booking_at: string | null;
   booking_service: string | null; assigned_to: string | null; campaign: { code: string } | null };
 
+type GrowthRow = { code: string; name_ar: string; name_en: string; phase: number; baseline_month: number; target_p1: number; target_p2: number; target_p3: number;
+  target_month: number; target_patients: number; actual_patients: number; target_leads: number; actual_leads: number; booked: number };
+type GrowthSettings = { phase1_start: string | null; phase_weeks: number; booking_rate: number; show_rate: number; new_lead_share: number; weeks_per_month: number };
+
 const isDate = (s?: string) => /^\d{4}-\d{2}-\d{2}$/.test(s ?? "");
 
 export default async function GoldenControl({ searchParams }: { searchParams: { p?: string; from?: string; to?: string; c?: string; error?: string; ok?: string } }) {
@@ -33,7 +37,7 @@ export default async function GoldenControl({ searchParams }: { searchParams: { 
   const to = isDate(searchParams.to) ? searchParams.to! : preset.to;
   const campaign = searchParams.c && /^[0-9a-f-]{36}$/.test(searchParams.c) ? searchParams.c : null;
 
-  const [dash, camps, agents, days, sources, list, people] = await Promise.all([
+  const [dash, camps, agents, days, sources, list, people, growth, gset] = await Promise.all([
     ctx.supabase.rpc("lead_dashboard", { p_from: from, p_to: to, p_campaign: campaign }),
     ctx.supabase.rpc("lead_campaign_report", { p_from: from, p_to: to }),
     ctx.supabase.rpc("lead_agent_report", { p_from: from, p_to: to }),
@@ -41,6 +45,8 @@ export default async function GoldenControl({ searchParams }: { searchParams: { 
     ctx.supabase.rpc("lead_source_report", { p_from: from, p_to: to }),
     ctx.supabase.from("lead_campaigns").select("id, code").order("code"),
     ctx.supabase.rpc("lead_agents"),
+    ctx.supabase.rpc("growth_progress", { p_from: from, p_to: to }),
+    ctx.supabase.from("growth_settings").select("phase1_start, phase_weeks, booking_rate, show_rate, new_lead_share, weeks_per_month").maybeSingle<GrowthSettings>(),
   ]);
   const d = (dash.data ?? {}) as Dash;
   const total = d.total ?? 0;
@@ -163,6 +169,9 @@ export default async function GoldenControl({ searchParams }: { searchParams: { 
         {onDuty.length ? onDuty.map((s) => `${s.full_name} (${s.new_leads} ${ar ? "جديد" : "new"})`).join(" · ") : <span className="font-semibold text-red-300">{ar ? "لا أحد — العملاء الجدد لن يُسندوا تلقائيًا" : "nobody — new leads will not be auto-assigned"}</span>}
       </p>
 
+      <Growth ar={ar} rows={(growth.data ?? []) as GrowthRow[]} settings={gset.data} measuredBooking={total ? (d.booked ?? 0) / total : null}
+        leads={total} from={from} to={to} canEdit={ctx.can("lead.campaigns")} />
+
       {/* Campaign performance */}
       <Table title={ar ? "أداء الحملات" : "Campaign performance"} head={[ar ? "الحملة" : "Campaign", ar ? "عملاء" : "Leads", ar ? "تواصل" : "Contacted", ar ? "مهتم" : "Interested",
         ar ? "متابعات" : "Follow-ups", ar ? "حجز" : "Booked", ar ? "نسبة الحجز" : "Booking rate", ar ? "متوسط الرد" : "Avg response", "SLA"]}
@@ -209,6 +218,80 @@ function Table({ title, head, rows }: { title: string; head: string[]; rows: Rea
           </tbody>
         </table>
       )}
+    </section>
+  );
+}
+
+/** Department targets from the growth plan: actual vs target for the selected period, per phase. */
+function Growth({ ar, rows, settings, measuredBooking, leads, from, to, canEdit }: { ar: boolean; rows: GrowthRow[]; settings: GrowthSettings | null;
+  measuredBooking: number | null; leads: number; from: string; to: string; canEdit: boolean }) {
+  if (!rows.length || !settings) return null;
+  const phase = rows[0].phase;
+  const sum = (k: keyof GrowthRow) => rows.reduce((a, r) => a + Number(r[k] ?? 0), 0);
+  const f1 = (n: number) => (Math.round(n * 10) / 10).toLocaleString("en-US");
+  const p = (n: number) => `${Math.round(n * 100)}%`;
+  const bar = (actual: number, target: number) => {
+    if (!target) return <span className="gf-muted">—</span>;
+    const r = actual / target;
+    const tone = r >= 1 ? "bg-emerald-400" : r >= 0.7 ? "bg-gold-300" : "bg-red-400";
+    return (
+      <span className="flex min-w-[110px] items-center gap-2">
+        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-coal-700"><span className={`block h-full ${tone}`} style={{ width: `${Math.min(100, r * 100)}%` }} /></span>
+        <span className={`num text-xs ${r >= 1 ? "text-emerald-300" : r >= 0.7 ? "text-gold-200" : "text-red-300"}`}>{p(r)}</span>
+      </span>
+    );
+  };
+  const phaseCell = (r: GrowthRow, n: 1 | 2 | 3) => {
+    const v = n === 1 ? r.target_p1 : n === 2 ? r.target_p2 : r.target_p3;
+    return <span className={n === phase ? "font-bold text-gold-200" : "gf-muted"}>{v}</span>;
+  };
+  const tot = { tp: sum("target_patients"), ap: sum("actual_patients"), tl: sum("target_leads"), al: sum("actual_leads"), b: sum("booked") };
+  return (
+    <section className="gf-card mb-5 overflow-x-auto" data-growth>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-coal-600 px-4 py-3">
+        <h2 className="text-sm font-semibold text-gold-100">{ar ? `أهداف الأقسام — المرحلة ${phase}` : `Department targets — phase ${phase}`}</h2>
+        <span className="text-[11px] text-ivory-300/70">
+          {ar ? "الافتراضات: " : "Assumptions: "}
+          {ar ? "حجز من العملاء " : "lead → booked "}<span className="num">{p(settings.booking_rate)}</span>
+          {measuredBooking != null && leads >= 20 && <> ({ar ? "الفعلي " : "measured "}<span className={`num ${measuredBooking >= settings.booking_rate ? "text-emerald-300" : "text-red-300"}`}>{p(measuredBooking)}</span>)</>}
+          {" · "}{ar ? "حضور " : "booked → attended "}<span className="num">{p(settings.show_rate)}</span>
+          {" · "}{ar ? "بداية المرحلة الأولى: " : "phase 1 start: "}<span className="num">{settings.phase1_start ?? (ar ? "لم تُحدد" : "not set")}</span>
+        </span>
+        {canEdit && <Link href="/os/golden/settings#growth" className="ms-auto text-xs text-gold-300 hover:underline">{ar ? "تعديل الأهداف" : "Edit targets"}</Link>}
+      </div>
+      <table className="w-full min-w-[980px]">
+        <thead><tr>
+          {[ar ? "القسم" : "Department", ar ? "اليوم / شهر" : "Today / mo", ar ? "م١" : "P1", ar ? "م٢" : "P2", ar ? "م٣" : "P3",
+            ar ? "مرضى مستهدف" : "Target patients", ar ? "مرضى فعلي" : "Actual patients", ar ? "التقدم" : "Progress",
+            ar ? "عملاء مستهدف" : "Target leads", ar ? "عملاء فعلي" : "Actual leads", ar ? "التقدم" : "Progress", ar ? "حجز" : "Booked"].map((h, i) => <th key={i} className="gf-th">{h}</th>)}
+        </tr></thead>
+        <tbody className="divide-y divide-coal-600/70">
+          {rows.map((r) => (
+            <tr key={r.code} className="hover:bg-coal-700/40">
+              <td className="gf-td font-semibold">{ar ? r.name_ar : r.name_en}</td>
+              <td className="gf-td num">{r.baseline_month}</td>
+              <td className="gf-td num">{phaseCell(r, 1)}</td><td className="gf-td num">{phaseCell(r, 2)}</td><td className="gf-td num">{phaseCell(r, 3)}</td>
+              <td className="gf-td num">{f1(r.target_patients)}</td>
+              <td className="gf-td num">{r.actual_patients}</td>
+              <td className="gf-td">{bar(r.actual_patients, Number(r.target_patients))}</td>
+              <td className="gf-td num">{f1(r.target_leads)}</td>
+              <td className="gf-td num">{r.actual_leads}</td>
+              <td className="gf-td">{bar(r.actual_leads, Number(r.target_leads))}</td>
+              <td className="gf-td num">{r.booked}</td>
+            </tr>
+          ))}
+          <tr className="font-bold">
+            <td className="gf-td">{ar ? "الإجمالي" : "Total"}</td>
+            <td className="gf-td num">{sum("baseline_month")}</td><td className="gf-td num">{sum("target_p1")}</td><td className="gf-td num">{sum("target_p2")}</td><td className="gf-td num">{sum("target_p3")}</td>
+            <td className="gf-td num">{f1(tot.tp)}</td><td className="gf-td num">{tot.ap}</td><td className="gf-td">{bar(tot.ap, tot.tp)}</td>
+            <td className="gf-td num">{f1(tot.tl)}</td><td className="gf-td num">{tot.al}</td><td className="gf-td">{bar(tot.al, tot.tl)}</td><td className="gf-td num">{tot.b}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p className="px-4 py-2 text-[11px] text-ivory-300/60">
+        {ar ? `المستهدف محسوب للفترة ${from} → ${to} من هدف الشهر للمرحلة الحالية. المرضى الفعليون = مرضى مختلفون حضروا موعدًا في تخصصات القسم. العملاء الفعليون = عملاء الحملات المرتبطة بالقسم. عملاء مستهدف = (هدف المرحلة − مرضى اليوم) ÷ (نسبة الحجز × نسبة الحضور).`
+            : `Targets are prorated for ${from} → ${to} from the current phase's monthly target. Actual patients = distinct patients who attended an appointment in the department's specialties. Actual leads = leads from campaigns linked to the department. Target leads = (phase target − today's patients) ÷ (booking rate × show rate).`}
+      </p>
     </section>
   );
 }
