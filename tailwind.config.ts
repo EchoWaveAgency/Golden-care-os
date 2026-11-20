@@ -17,6 +17,8 @@ const config: Config = {
         danger: { DEFAULT: "#B42318", 50: "#FDECEA" },
         info: { DEFAULT: "#1D5FA8", 50: "#E8F0FA" },
         ink: { DEFAULT: "#1F2328", 500: "#57606A", 300: "#8C959F" },
+        // Golden Friday campaign surfaces (call center, control): black / deep charcoal / gold.
+        coal: { DEFAULT: "#141416", 950: "#0B0B0C", 900: "#121214", 800: "#1A1B1E", 700: "#232428", 600: "#303238", 500: "#454852" },
       },
       fontFamily: {
         sans: ["var(--font-sans)", "IBM Plex Sans Arabic", "Noto Sans Arabic", "Segoe UI", "Tahoma", "sans-serif"],

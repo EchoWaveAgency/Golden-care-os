@@ -8,6 +8,8 @@ export type NavItem = { href: string; label: DictKey; section: DictKey; any: str
 export const NAV: NavItem[] = [
   { href: "/os/executive", label: "nav.executive", section: "nav.section.governance", any: ["dashboard.executive"] },
   { href: "/os/reception", label: "nav.reception", section: "nav.section.front", any: ["appointment.write"] },
+  { href: "/os/calls", label: "nav.calls", section: "nav.section.front", any: ["lead.own", "lead.write"] },
+  { href: "/os/campaigns", label: "nav.golden", section: "nav.section.web", any: ["lead.report", "lead.assign"] },
   { href: "/os/leads", label: "nav.leads", section: "nav.section.front", any: ["lead.read"] },
   { href: "/os/care", label: "nav.care", section: "nav.section.front", any: ["care.read", "care.settings", "clinical.write.own"] },
   { href: "/os/tickets", label: "nav.tickets", section: "nav.section.front", any: ["ticket.read"] },
@@ -45,8 +47,10 @@ export function navFor(perms: Set<string>): NavItem[] {
 
 /** Landing page for a user: the first workspace their permissions open. */
 export function homeFor(perms: Set<string>): string | null {
-  const order = ["/os/executive", "/os/reception", "/os/doctor", "/os/cashier", "/os/billing", "/os/accounting", "/os/hr", "/os/payroll", "/os/content", "/os/leads", "/os/patients", "/os/laser", "/os/inventory", "/os/devices", "/os/settings", "/os/audit"];
+  const order = ["/os/executive", "/os/calls", "/os/reception", "/os/doctor", "/os/cashier", "/os/billing", "/os/accounting", "/os/hr", "/os/payroll", "/os/content", "/os/leads", "/os/patients", "/os/laser", "/os/inventory", "/os/devices", "/os/settings", "/os/audit"];
   const allowed = new Set(navFor(perms).map((i) => i.href));
+  // Call-center agents start in their queue.
+  if (allowed.has("/os/calls") && perms.has("lead.own") && !allowed.has("/os/executive")) return "/os/calls";
   // Patient Relations (inquiries, no cash handling) starts in the inquiry inbox, not reception.
   if (allowed.has("/os/leads") && perms.has("lead.write") && !perms.has("payment.collect") && !allowed.has("/os/executive")) return "/os/leads";
   return order.find((h) => allowed.has(h)) ?? null;

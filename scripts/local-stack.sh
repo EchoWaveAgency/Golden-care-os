@@ -18,7 +18,7 @@ if [ ! -x "$BIN/auth" ]; then
   curl -sSL https://github.com/supabase/auth/releases/download/v2.169.0/auth-v2.169.0-x86.tar.gz | tar xz -C "$BIN"
 fi
 
-stop() { for pat in "[.]localstack/bin/postgrest" "[.]localstack/bin/auth serve" "scripts/local/[p]roxy.mjs"; do
+stop() { for pat in "golden-care-os/[.]localstack/bin/postgrest" "golden-care-os/[.]localstack/bin/auth serve" "golden-care-os/scripts/local/[p]roxy.mjs"; do
            pkill -f "$pat" 2>/dev/null || true; done
          "${RUN_AS[@]}" "$PGBIN/pg_ctl" -D "$DATA" -m fast stop >/dev/null 2>&1 || true; }
 if [ "${1:-}" = "stop" ]; then stop; exit 0; fi

@@ -30,6 +30,8 @@ const people = [
   { email: "cashier@demo.goldencare.local", ar: "أمين الخزينة", en: "Cashier", role: "cashier", branch: BRANCH, kind: "finance" },
   { email: "auditor@demo.goldencare.local", ar: "المراجع المالي", en: "Financial Auditor", role: "financial_auditor", branch: null },
   { email: "marketing@demo.goldencare.local", ar: "فريق التسويق", en: "Marketing Team", role: "marketing", branch: null },
+  { email: "cc1@demo.goldencare.local", ar: "أحمد — كول سنتر", en: "Ahmed — Call Center", role: "call_center_agent", branch: BRANCH },
+  { email: "cc2@demo.goldencare.local", ar: "منة — كول سنتر", en: "Menna — Call Center", role: "call_center_agent", branch: BRANCH },
   { email: "inventory@demo.goldencare.local", ar: "أمين المخزن", en: "Store Keeper", role: "inventory_controller", branch: null, kind: "other" },
   { email: "devices@demo.goldencare.local", ar: "مسؤول الأجهزة", en: "Device Officer", role: "device_officer", branch: BRANCH, kind: "maintenance" },
   { email: "hr@demo.goldencare.local", ar: "مدير الموارد البشرية", en: "HR Manager", role: "hr_manager", branch: BRANCH, kind: "hr" },

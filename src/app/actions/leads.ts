@@ -39,7 +39,7 @@ export async function addLeadActivity(form: FormData) {
 export async function assignLeadToMe(form: FormData) {
   const ctx = await getContext();
   const id = String(form.get("id"));
-  const { error } = await ctx.supabase.from("leads").update({ assigned_to: ctx.user.id }).eq("id", id);
+  const { error } = await ctx.supabase.rpc("lead_assign", { p_lead: id, p_user: ctx.user.id });
   if (error) fail(`/os/leads/${id}`, friendlyError(error.message, ctx.locale));
   revalidatePath(`/os/leads/${id}`);
   redirect(`/os/leads/${id}`);

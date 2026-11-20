@@ -153,7 +153,21 @@ CMSG=$("${PSQL[@]}" -c "select count(*) from public.care_messages where journey_
 CV2=$("${PSQL[@]}" -c "select version from public.care_journeys where id = '$CJ'")
 [ "$CMSG" = "1" ] && [ "$CV2" = "$((CV + 1))" ] || { echo "care step applied $CMSG times"; exit 1; }
 
+# 8b) Lead capture: ten first WhatsApp messages from one new number at the same instant (different message ids,
+#     same campaign) → exactly one lead holding all ten messages; the same Meta message delivered 5× → stored once.
+for i in $(seq 1 10); do
+  "${PSQL[@]}" -c "select public.svc_lead_capture('{\"phone\": \"01200000099\", \"provider_id\": \"wamid.CC$i\", \"text\": \"GF26-LASER $i\"}');" >/dev/null 2>&1 &
+done
+for i in $(seq 1 5); do
+  "${PSQL[@]}" -c "select public.svc_lead_capture('{\"phone\": \"01200000098\", \"provider_id\": \"wamid.SAME\", \"text\": \"GF26-SKIN\"}');" >/dev/null 2>&1 &
+done
+wait
+LEADS=$("${PSQL[@]}" -c "select count(*) from public.leads where phone = '+201200000099'")
+LMSG=$("${PSQL[@]}" -c "select count(*) from public.lead_messages m join public.leads l on l.id = m.lead_id where l.phone = '+201200000099'")
+SAME=$("${PSQL[@]}" -c "select (select count(*) from public.leads where phone = '+201200000098') || '/' || (select count(*) from public.lead_messages where provider_message_id = 'wamid.SAME')")
+[ "$LEADS" = "1" ] && [ "$LMSG" = "10" ] && [ "$SAME" = "1/1" ] || { echo "lead capture leads=$LEADS messages=$LMSG retry=$SAME"; exit 1; }
+
 # 9) Whole ledger still balances.
 BAL=$("${PSQL[@]}" -c "select sum(debit) - sum(credit) from public.journal_lines")
 [ "$BAL" = "0.00" ] || { echo "ledger imbalance $BAL"; exit 1; }
-echo "bookings=1 payments=1 split-paid=$PAID2 gateway-callbacks=1 stock-issues=$ISS/10 package-redemptions=$RED/5 advance-applied=$APPLIED care-claims=$UNIQUE/5 care-step=$CMSG ledger-balance=$BAL"
+echo "bookings=1 payments=1 split-paid=$PAID2 gateway-callbacks=1 stock-issues=$ISS/10 package-redemptions=$RED/5 advance-applied=$APPLIED care-claims=$UNIQUE/5 care-step=$CMSG lead-capture=$LEADS/$LMSG ledger-balance=$BAL"

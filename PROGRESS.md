@@ -327,3 +327,30 @@ SQL suite 26 ✅ (also: consent withdrawn from the portal); browser journey m16 
 
 ### Not verified here (needs the clinic's accounts)
 Real SMS delivery (Twilio or an Egyptian SMS provider, sender id), Supabase Storage in a hosted project (bucket must be private), real gateway payments for installments (Paymob sandbox).
+
+## Session 17 — 2026-11-20: Golden Friday lead flow × call center
+
+### Root cause found
+WhatsApp messages from ads reached the database but not the call center: known patients' messages became support tickets, a number's 4th+ message in 24 h was dropped, voice notes / images from unknown numbers went to care escalations, and the ad referral and WhatsApp name were never stored.
+
+### Delivered
+- **Migration 0034**: campaign codes (`GF26-LASER`, `-DENTAL`, `-SKIN`, `-OFFER`, `-CHECKUP`; admin-editable keywords, Meta ad ids, dates), settings (id prefix, SLA 5 min, auto-assign), lead ids `GF26-XXXXXX`, call-center status (NEW · CONTACTED · INTERESTED · NOT INTERESTED · NO RESPONSE · FOLLOW-UP · BOOKED · CLOSED), source (Meta / Facebook / Instagram / WhatsApp / organic / manual / other) with ad id, ad / ad set / campaign names, click id and UTM; owner with round-robin auto-assignment to agents on duty; first-contact time and response SLA; follow-ups; booking details; archive instead of delete; message history (`lead_messages`); activity log; reports (dashboard, campaign, source/ad, agent, daily); audited export; new role **Call Center Agent** (own leads only) and permissions `lead.own / assign / campaigns / export / report`.
+- **Capture** (`svc_lead_capture`) in the WhatsApp webhook before the care assistant: idempotent per Meta message id, serialized per phone, one open lead per phone + campaign, every message kept. Care-assistant routing fixed (open lead takes the message; unknown sender → one lead; voice notes → lead; one auto-reply per new lead).
+- **Screens**: `/os/calls` call center (urgent first, live timers, one-tap actions, mobile), `/os/calls/[id]` lead workspace, `/os/golden` control dashboard, `/os/golden/settings`, CSV export. Black / charcoal / gold, Arabic RTL with English.
+- **Meta ad names** (optional `META_ADS_TOKEN`) in the dispatcher job.
+- Setup guide: `docs/LEAD_FLOW_CALL_CENTER.md`.
+
+### Verified
+SQL suites 27/27 + concurrency (10 simultaneous first messages → 1 lead / 10 messages); unit 134/134; typecheck, lint, build ✅; browser journey `gf-journey.mjs` 29/29 (all 12 acceptance tests through a signed webhook on the running app). A dashboard bug found by the journey (empty period showed total 1) fixed with a regression test.
+
+### Not verified here (needs the clinic's Meta accounts)
+Real Meta webhook delivery and signature with the clinic's app secret; real Click-to-WhatsApp referral payloads from live ads; sending replies through the clinic's number; Marketing API ad names.
+
+## Session 18 — 2026-11-20: HORUS Engage integration
+HORUS Engage (separate EchoWave product: WhatsApp / Messenger / Instagram / comments bot with human handoff) posts signed events to `POST /api/integrations/engage` (`ENGAGE_SECRET`). Migration 0035 `svc_lead_external`: each event becomes or joins a call-center lead through the same capture rules (one open lead per phone + campaign, idempotent per event), with source (Messenger → Facebook, Instagram), campaign code, booking request (day + period) and the conversation summary. Leads arrive as NEW so the response SLA applies. Verified: SQL suite 28, all suites + concurrency, and the cross-system journey (24/24). Local stacks now stop only their own processes, so Golden Care and Engage can run side by side.
+
+## Session 19 — 2026-11-20: Growth plan targets on the Golden Friday board
+Migration 0036: `growth_departments` (monthly patients today + phase 1/2/3 targets per department, seeded from the growth plan, mapped to specialties) and `growth_settings` (phase 1 start, weeks per phase, booking / show rates, share of growth from new leads). `lead_campaigns.growth_department` links a campaign's leads to a department. `growth_progress(from, to)` (lead.report / lead.assign) returns, per department, the current phase's target prorated to the period, actual distinct patients who attended an appointment in the department's specialties, target leads = (phase target − today) × share ÷ (booking × show), actual leads and bookings. Edits only through `growth_update_settings` / `growth_update_department` (lead.campaigns), audited, no deletes. The control board shows a "Department targets" table with progress bars and the measured booking rate beside the assumed one; settings has the assumptions, the target grid and the department on each campaign. Verified: SQL suite 29, all suites + concurrency, typecheck, lint, unit tests, build, Arabic screens.
+
+## Session 20 — 2026-11-20: Lead flow permanent for all campaigns
+Golden Friday is a November campaign; the lead flow is the clinic's permanent system. Migration 0037: `lead_campaigns.always_on` (no dates allowed); seven always-on campaigns (GC-LASER, SKIN, DENTAL, GYN, NUTRITION, VASCULAR, GENERAL) linked to growth departments; detection order explicit code > ad id > keyword of a live campaign with seasonal before always-on; Golden Friday codes dated 1–30 Nov 2026; new lead ids `GC-XXXXXX` (existing ids kept). UI: control page moved to `/os/campaigns` (old `/os/golden` redirects), neutral titles, "This month" period, always-on toggle and date badge per campaign. Test 27 runs the Golden Friday codes undated so it does not depend on today's date. Verified: SQL suites 27–30, all suites + concurrency, typecheck, lint, unit tests, build.
