@@ -11,6 +11,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Consent } from "@/components/site/Consent";
 import { WhatsAppFab } from "@/components/site/WhatsAppFab";
+import { MobileActionBar } from "@/components/site/MobileActionBar";
 
 export const revalidate = 60;
 export function generateStaticParams() {
@@ -49,6 +50,7 @@ export default async function SiteLayout({ children, params }: { children: React
         <main id="main">{children}</main>
         <SiteFooter lang={lang} address={s("address")} mobile={s("mobile")} whatsapp={whatsapp} hours={s("hours")} mapUrl={s("map_url")} />
         {whatsapp && <WhatsAppFab number={whatsapp} label={c.whatsapp} />}
+        <MobileActionBar lang={lang} whatsapp={whatsapp} mobile={s("mobile")} />
         <Consent ids={{ ga4: s("analytics.ga4"), meta: s("analytics.meta_pixel"), tiktok: s("analytics.tiktok_pixel"), ads: s("analytics.google_ads") }}
           text={c.cookiesText} accept={c.accept} reject={c.reject} />
       </body>

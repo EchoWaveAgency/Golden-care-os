@@ -14,7 +14,7 @@ export default async function Doctors({ params }: { params: { lang: Lang } }) {
   return (
     <>
       <PageHero title={c.ourDoctors} />
-      <div className="mx-auto grid max-w-7xl gap-5 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-3">
+      <div className="mx-auto grid max-w-7xl gap-x-10 gap-y-12 px-4 py-14 sm:grid-cols-2 sm:px-6 lg:grid-cols-3">
         {list.map((d) => <DoctorCard key={d.slug} doctor={d} lang={params.lang} />)}
       </div>
     </>
