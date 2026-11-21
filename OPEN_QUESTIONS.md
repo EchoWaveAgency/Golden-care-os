@@ -33,9 +33,9 @@ Each item has a configurable mechanism already (or planned). Placeholders are cl
 20. Patient-facing tagline: "A place where beauty meets wellness" (logo) vs "نرعاك لحياة أفضل" (service promise). Both are stored on the organization and editable.
 
 ## Website (added session 2)
-21. Official mobile and WhatsApp numbers, Google Maps link and working hours (set in `/os/settings?tab=site`; nothing is shown until set).
+21. ~~Official mobile and WhatsApp numbers, Google Maps link and working hours~~ — answered 2026-11-22 (+20 100 202 8808 for both, Maps link, Town Center Mall 3rd floor, Sat–Thu 10–10). Loaded by `supabase/content/2026-11-22_golden_care_site_content.sql`.
 22. Legal review of privacy, terms, appointment and communication-consent texts (`src/lib/site/legal.ts`) before launch.
-23. Real specialty page content, doctor biographies and photos — approved by the Medical Director (demo content must be replaced).
+23. Real specialty page content, doctor biographies and photos — approved by the Medical Director (demo content must be replaced). **Partly answered 2026-11-22:** 21 doctor names per specialty are loaded as DRAFT profiles (no personal phone numbers, no titles/bios/photos yet); the Medical Director must approve and publish them in the CMS, then add titles, bios and photos.
 24. Response-time SLA for new inquiries (default 30 minutes) and working-hours rules for it.
 25. Production domain (`NEXT_PUBLIC_SITE_URL`) and analytics/pixel IDs.
 26. Whether website booking requests should hold the slot until confirmed (website: they do not; portal bookings by signed-in patients do hold it as "requested").

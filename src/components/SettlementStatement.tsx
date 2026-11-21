@@ -51,7 +51,7 @@ export async function SettlementStatement({ ctx, id, error, ok, manage }: { ctx:
           <div className="flex items-center gap-3">
             <StatusBadge status={st?.[2] ?? "draft"} label={(ar ? st?.[0] : st?.[1]) ?? run.status} />
             <PrintButton label={ctx.t("common.print")} />
-            <Image src="/brand/emblem.png" alt="" width={70} height={44} className="hidden print:block" />
+            <Image src="/brand/emblem.png" alt="" width={70} height={37} className="hidden print:block" />
           </div>
         </header>
         {run.stale && run.status === "draft" && (

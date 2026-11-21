@@ -16,7 +16,7 @@ export default async function MfaPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-ivory-100 px-6 py-12">
       <div className="card w-full max-w-sm p-8">
-        <Image src="/brand/emblem.png" alt="" width={110} height={69} className="mx-auto" />
+        <Image src="/brand/emblem.png" alt="" width={110} height={58} className="mx-auto" />
         <h1 className="mt-6 text-xl font-semibold text-navy-700">{enrolled ? (ar ? "التحقق الثنائي" : "Two-factor sign-in") : (ar ? "فعّل التحقق الثنائي" : "Set up two-factor sign-in")}</h1>
         <p className="mb-6 mt-1 text-sm text-ink-500">{enrolled
           ? (ar ? "اكتب الرمز الحالي من تطبيق المصادقة على هاتفك." : "Enter the current code from the authenticator app on your phone.")

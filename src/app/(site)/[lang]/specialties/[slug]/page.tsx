@@ -59,13 +59,13 @@ export default async function SpecialtyPage({ params }: { params: { lang: Lang; 
           {s.doctors.length > 0 && (
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-navy-700">{c.doctors}</h2>
-              <div className="grid gap-5 sm:grid-cols-2">{s.doctors.map((d) => <DoctorCard key={d.slug} doctor={d} lang={lang} />)}</div>
+              <div className="grid gap-x-8 gap-y-10 sm:grid-cols-2">{s.doctors.map((d) => <DoctorCard key={d.slug} doctor={d} lang={lang} />)}</div>
             </section>
           )}
           {s.offers.length > 0 && (
             <section>
               <h2 className="mb-4 text-2xl font-semibold text-navy-700">{c.currentOffers}</h2>
-              <div className="grid gap-5 sm:grid-cols-2">{s.offers.map((o) => <OfferCard key={o.slug} offer={o} lang={lang} />)}</div>
+              <div className="grid gap-6">{s.offers.map((o) => <OfferCard key={o.slug} offer={o} lang={lang} />)}</div>
             </section>
           )}
           {faq.length > 0 && (

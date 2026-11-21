@@ -58,7 +58,7 @@ export default async function Landing({ params }: { params: { lang: Lang; slug: 
       </section>
       <div className="mx-auto max-w-7xl space-y-14 px-4 py-14 sm:px-6">
         {pick(l, "body", lang) && <p className="max-w-3xl whitespace-pre-wrap leading-8">{pick(l, "body", lang)}</p>}
-        {l.offer && <div className="max-w-md"><OfferCard offer={l.offer} lang={lang} /></div>}
+        {l.offer && <div className="max-w-2xl"><OfferCard offer={l.offer} lang={lang} /></div>}
         {l.doctors.length > 0 && <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{l.doctors.map((d) => <DoctorCard key={d.slug} doctor={d} lang={lang} />)}</div>}
         {faq.length > 0 && (
           <div className="max-w-3xl space-y-2">

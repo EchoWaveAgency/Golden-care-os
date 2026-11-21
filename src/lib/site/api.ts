@@ -73,3 +73,10 @@ export function setting(site: Record<string, Bi>, key: string, lang: Lang): stri
   const v = site[key];
   return (v?.[lang] ?? v?.ar ?? null) || null;
 }
+
+// "+201002028808" → "+20 100 202 8808" for display; links keep the raw E.164 number.
+export function displayPhone(e164: string | null): string | null {
+  if (!e164) return null;
+  const m = e164.replace(/[^\d+]/g, "").match(/^\+20(1\d)(\d)(\d{3})(\d{4})$/);
+  return m ? `+20 ${m[1]}${m[2]} ${m[3]} ${m[4]}` : e164;
+}

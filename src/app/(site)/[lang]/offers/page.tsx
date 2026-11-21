@@ -14,7 +14,7 @@ export default async function Offers({ params }: { params: { lang: Lang } }) {
   return (
     <>
       <PageHero title={c.currentOffers} subtitle={c.medicalNote} />
-      <div className="mx-auto grid max-w-7xl gap-5 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-12 sm:px-6 lg:grid-cols-2">
         {list.length === 0 ? <p className="text-ink-500">{params.lang === "ar" ? "لا توجد عروض سارية حاليًا." : "No active offers right now."}</p>
           : list.map((o) => <OfferCard key={o.slug} offer={o} lang={params.lang} />)}
       </div>

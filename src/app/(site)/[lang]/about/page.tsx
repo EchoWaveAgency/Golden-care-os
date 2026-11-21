@@ -26,7 +26,7 @@ export default async function About({ params }: { params: { lang: Lang } }) {
           <p className="mt-5 leading-8 text-ink-500">{ar ? "رمزنا مستوحى من الصقر المصري بجناحين مفتوحين: حماية ورعاية تمتد لكل مريض ولأسرته." : "Our emblem is inspired by the Egyptian falcon with open wings: protection and care that extend to every patient and their family."}</p>
           {setting(site, "address", lang) && <p className="mt-4 text-sm text-teal-700">{setting(site, "address", lang)}</p>}
         </div>
-        <Image src="/brand/logo.png" alt={c.brand} width={420} height={420} className="mx-auto rounded-3xl shadow-card" />
+        <Image src="/brand/logo-full.png" alt={c.brand} width={420} height={391} className="mx-auto" />
       </div>
       <section className="bg-white py-14">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
