@@ -69,7 +69,7 @@ export default async function InvoicePage({ params, searchParams }: { params: { 
               <p className="num text-sm">{t("bill.invoice")} {inv.invoice_no} · {inv.issued_at ? dateTime(inv.issued_at, locale) : ""}</p>
               {patient && <p className="text-sm">{patient.full_name_ar} · <span className="num">{patient.mrn}</span></p>}
             </div>
-            <Image src="/brand/emblem.png" alt="" width={90} height={57} />
+            <Image src="/brand/emblem.png" alt="" width={90} height={48} />
           </div>
 
           {(lines ?? []).length === 0 ? <Empty text={t("common.none")} /> : (

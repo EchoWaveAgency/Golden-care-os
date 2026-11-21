@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { Lang } from "@/lib/site/api";
+import { displayPhone, type Lang } from "@/lib/site/api";
 import { copy } from "@/lib/site/copy";
 import { Feathers } from "./Feathers";
 
@@ -12,7 +12,7 @@ export function SiteFooter({ lang, address, mobile, whatsapp, hours, mapUrl }: {
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-center gap-3">
-            <Image src="/brand/emblem.png" alt="" width={64} height={40} />
+            <Image src="/brand/emblem.png" alt="" width={64} height={34} />
             <div>
               <p className="text-lg font-semibold text-gold-300">{c.brand}</p>
               <p className="text-sm text-ivory-300">{c.promise}</p>
@@ -24,8 +24,8 @@ export function SiteFooter({ lang, address, mobile, whatsapp, hours, mapUrl }: {
           <p className="font-medium text-white">{c.visitUs}</p>
           {address && <p className="leading-7 text-ivory-300">{address}</p>}
           {hours && <p className="text-ivory-300">{hours}</p>}
-          {mapUrl && <a href={mapUrl} target="_blank" rel="noopener" className="text-gold-300 hover:underline">{c.openMap}</a>}
-          {mobile && <p><a href={`tel:${mobile}`} className="num text-ivory-100 hover:underline">{mobile}</a></p>}
+          {mapUrl && <a href={mapUrl} target="_blank" rel="noopener" className="block text-gold-300 hover:underline">{c.openMap}</a>}
+          {mobile && <p><a href={`tel:${mobile}`} className="num text-ivory-100 hover:underline">{displayPhone(mobile)}</a></p>}
           {whatsapp && <p><a href={`https://wa.me/${whatsapp}`} target="_blank" rel="noopener" className="text-gold-300 hover:underline">{c.whatsapp}</a></p>}
         </div>
         <div className="space-y-2 text-sm">

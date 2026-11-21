@@ -18,7 +18,7 @@ export function RxSheet(d: RxSheetData) {
           <p className="text-sm text-ink-500">{d.doctorName}{d.specialty ? ` — ${d.specialty}` : ""}</p>
           {d.address && <p className="text-xs text-ink-300">{d.address}</p>}
         </div>
-        <Image src="/brand/emblem.png" alt="" width={90} height={57} />
+        <Image src="/brand/emblem.png" alt="" width={90} height={48} />
       </header>
       <section className="my-4 grid grid-cols-2 gap-2 text-sm">
         <p><span className="text-ink-500">{ar ? "المريض:" : "Patient:"}</span> {d.patientName}</p>

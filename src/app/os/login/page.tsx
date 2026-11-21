@@ -14,7 +14,7 @@ export default async function LoginPage() {
       <section className="relative hidden items-center justify-center overflow-hidden bg-navy-700 lg:flex">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(184,135,47,.35),transparent_55%),radial-gradient(circle_at_80%_90%,rgba(15,94,99,.6),transparent_50%)]" />
         <div className="relative max-w-md px-10 text-center text-ivory">
-          <Image src="/brand/emblem.png" alt="" width={260} height={164} className="mx-auto" priority />
+          <Image src="/brand/emblem.png" alt="" width={260} height={137} className="mx-auto" priority />
           <p className="mt-8 text-3xl font-semibold tracking-wide text-gold-300">{t("app.name")}</p>
           <p className="mt-2 text-sm uppercase tracking-[0.2em] text-ivory-300">{t("app.system")}</p>
           <p className="mt-10 text-lg text-ivory-200">{t("app.promise")}</p>
@@ -23,7 +23,7 @@ export default async function LoginPage() {
       <section className="flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center lg:hidden">
-            <Image src="/brand/emblem.png" alt="" width={140} height={88} className="mx-auto" priority />
+            <Image src="/brand/emblem.png" alt="" width={140} height={74} className="mx-auto" priority />
             <p className="mt-3 text-xl font-semibold text-gold-700">{t("app.name")}</p>
           </div>
           <h1 className="text-2xl font-semibold text-navy-700">{t("auth.login")}</h1>

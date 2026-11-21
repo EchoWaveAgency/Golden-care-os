@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getDoctors, getOffers, getSite, getSpecialties, getTestimonials, pick, setting, type Lang } from "@/lib/site/api";
+import { displayPhone, getDoctors, getOffers, getSite, getSpecialties, getTestimonials, pick, setting, type Lang } from "@/lib/site/api";
 import { copy } from "@/lib/site/copy";
 import { Feathers } from "@/components/site/Feathers";
 import { SpecialtyDirectory } from "@/components/site/SpecialtyDirectory";
@@ -68,7 +68,7 @@ export default async function Home({ params }: { params: { lang: Lang } }) {
             <div className="relative aspect-square overflow-hidden sm:aspect-[5/6] rounded-t-[999px] bg-navy-700 lg:-me-24 xl:-me-40">
               <div className="absolute inset-3 rounded-t-[999px] border border-gold-300/30" />
               <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-navy-900/70 to-transparent" />
-              <Image src="/brand/emblem.png" alt="" width={360} height={227} priority unoptimized
+              <Image src="/brand/emblem-hd.png" alt="" width={1601} height={847} priority sizes="(min-width:1024px) 440px, 80vw"
                 className="gc-rise absolute left-1/2 top-[42%] w-[80%] max-w-[440px] -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_20px_30px_rgba(0,0,0,.35)]" />
               <div className="absolute inset-x-0 bottom-8 text-center">
                 <p className="text-2xl font-bold text-gold-300">{ar ? "عيادات جولدن كير" : "Golden Care Clinics"}</p>
@@ -177,7 +177,7 @@ export default async function Home({ params }: { params: { lang: Lang } }) {
               <dl className="mt-8 space-y-6">
                 {s("address") && <div><dt className="text-sm text-ink-300">{c.address}</dt><dd className="mt-1 text-lg font-medium leading-8 text-navy-700">{s("address")}</dd></div>}
                 {s("hours") && <div><dt className="text-sm text-ink-300">{c.hours}</dt><dd className="mt-1 text-lg font-medium leading-8 text-navy-700">{s("hours")}</dd></div>}
-                {s("mobile") && <div><dt className="text-sm text-ink-300">{c.callUs}</dt><dd className="mt-1 text-lg font-medium"><a href={`tel:${s("mobile")}`} className="num text-teal-700 hover:underline">{s("mobile")}</a></dd></div>}
+                {s("mobile") && <div><dt className="text-sm text-ink-300">{c.callUs}</dt><dd className="mt-1 text-lg font-medium"><a href={`tel:${s("mobile")}`} className="num text-teal-700 hover:underline">{displayPhone(s("mobile"))}</a></dd></div>}
               </dl>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href={`/${lang}/book`} className="rounded-full bg-teal-700 px-6 py-3 text-sm font-semibold text-white hover:bg-teal-900">{c.book}</Link>
@@ -185,7 +185,7 @@ export default async function Home({ params }: { params: { lang: Lang } }) {
               </div>
             </div>
             <div className="relative min-h-[260px] overflow-hidden bg-ivory-200" aria-hidden="true">
-              <Image src="/brand/logo.png" alt="" fill sizes="(min-width:1024px) 50vw, 100vw" className="object-cover object-center opacity-90" />
+              <Image src="/brand/logo-full.png" alt="" fill sizes="(min-width:1024px) 40vw, 90vw" className="object-contain p-10 sm:p-14" />
             </div>
           </div>
         </section>

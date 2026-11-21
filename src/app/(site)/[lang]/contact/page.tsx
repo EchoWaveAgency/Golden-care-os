@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { getSite, setting, type Lang } from "@/lib/site/api";
+import { displayPhone, getSite, setting, type Lang } from "@/lib/site/api";
 import { copy } from "@/lib/site/copy";
 import { PageHero } from "@/components/site/PageHero";
 import { InquiryForm } from "@/components/site/InquiryForm";
@@ -21,7 +21,7 @@ export default async function Contact({ params }: { params: { lang: Lang } }) {
         <div className="space-y-5 md:col-span-2">
           {s("address") && <Info label={c.address} value={s("address")!} />}
           {s("hours") && <Info label={c.hours} value={s("hours")!} />}
-          {s("mobile") && <Info label={c.callUs} value={<a href={`tel:${s("mobile")}`} className="num text-teal-700">{s("mobile")}</a>} />}
+          {s("mobile") && <Info label={c.callUs} value={<a href={`tel:${s("mobile")}`} className="num text-teal-700">{displayPhone(s("mobile"))}</a>} />}
           {wa && <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener" className="block rounded-full bg-[#1f8f5f] px-5 py-3 text-center font-medium text-white">{c.whatsapp}</a>}
           {s("map_url") && <a href={s("map_url")!} target="_blank" rel="noopener" className="block rounded-full border border-navy-700/20 px-5 py-3 text-center text-navy-700">{c.openMap}</a>}
         </div>
